@@ -24,10 +24,8 @@
       doggo      # dig
       duf        # better df
       dust       # du + rust
-      eza        # better ls
       fd         # better find
       fping      # ping for mult
-      fzf
       git-absorb
       glow       # markdown viewer
       gum        # fancy cli snippets
@@ -52,7 +50,6 @@
       wishlist   # ssh helper
       xh         # better curl
       zellij
-      zoxide     # cd
 
       _1password-gui
       discord
