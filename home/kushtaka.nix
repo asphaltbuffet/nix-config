@@ -56,6 +56,7 @@
 
       _1password-gui
       discord
+      kitty
       signal-desktop
       obsidian
     ];
