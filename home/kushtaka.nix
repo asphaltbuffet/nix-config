@@ -51,6 +51,7 @@
       viddy      # better watch
       wishlist   # ssh helper
       xh         # better curl
+      zellij
       zoxide     # cd
 
       _1password-gui
