@@ -11,29 +11,32 @@
     nixos-hardware.url = "github:nixos/nixos-hardware/master";
   };
 
-  outputs = { nixpkgs, home-manager, nixos-hardware, ... }: {
-    homeConfigurations = {
-      "grue@kushtaka" = home-manager.lib.homeManagerConfiguration {
-        pkgs = nixpkgs.legacyPackages.x86_64-linux;
-        extraSpecialArgs = {
-          username = "grue";
-          hostname = "kushtaka";
-        };
-        modules = [
-          ./home/kushtaka.nix
-        ];
-      };
-    };
-
+  outputs = inputs@{ self, nixpkgs, home-manager, nixos-hardware, systems, ... }:
+  let
+    inherit (self) outputs;
+    perSystem = callback: nixpkgs.lib.getAttrs (import systems) (system: callback (pkgs system));
+    flakePath = config: "${config.home.homeDirectory}/dev/nix-config";
+    pkgs = system: import nixpkgs { inherit system; };
+    extraSpecialArgs = { inherit flakePath inputs outputs; };
+  in
+  {
     nixosConfigurations = {
       "kushtaka" = nixpkgs.lib.nixosSystem {
-        system = "x86_64";
+        specialArgs = { inherit inputs outputs; };
         modules = [
           nixos-hardware.nixosModules.lenovo-thinkpad-t14
           ./nixos/kushtaka/configuration.nix
-          ./nixos/kushtaka/hardware-configuration.nix
+
+          home-manager.nixosModules.home-manager {
+            home-manager = {
+              inherit extraSpecialArgs;
+              useGlobalPkgs = true;
+              users.grue = import ./home/kushtaka.nix;
+            };
+          }
         ];
       };
+      # add additional systems here...
     };
 
     inherit home-manager;

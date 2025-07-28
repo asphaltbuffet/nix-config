@@ -1,19 +1,17 @@
-{ config, username, pkgs, ...}: {
-  nixpkgs = {
-    overlays = [];
-    config = {
-      allowUnfree = true;
-      allowUnfreePredicte = (_: true);
-    };
-  };
+{ lib, pkgs, ...}: {
+
+  imports = [
+    ./common
+  ];
 
   targets.genericLinux.enable = true;
+  systemd.user.startServices = "sd-switch";
 
   home = {
-    inherit username;
-    homeDirectory = "/home/${username}";
-
+    username = lib.mkDefault "grue";
+    homeDirectory = lib.mkDefault "/home/grue";
     stateVersion = "25.05";
+    shell.enableZshIntegration = true;
 
     packages = with pkgs; [
       _1password-cli
@@ -69,6 +67,5 @@
   programs.home-manager.enable = true;
   programs.firefox.enable = true;
 
-  systemd.user.startServices = "sd-switch";
 
 }

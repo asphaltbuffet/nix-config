@@ -6,7 +6,7 @@
 
 {
   imports =
-    [ # Include the results of the hardware scan.
+    [
       ./hardware-configuration.nix
     ];
 
@@ -46,6 +46,11 @@
   # You can disable this if you're only using the Wayland session.
   services.xserver.enable = true;
 
+  # enable fingerprint scanner
+  #services.fprintd.enable = true;
+  #security.pam.services.login.fprintAuth = true;
+  #security.pam.services.xscreensaver.fprintAuth = true;
+
   # Enable the KDE Plasma Desktop Environment.
   services.displayManager.sddm.enable = true;
   services.desktopManager.plasma6.enable = true;
@@ -53,7 +58,7 @@
   # Configure keymap in X11
   services.xserver.xkb = {
     layout = "us";
-    xkbOptions = "caps:swapescape";
+    options = "caps:swapescape";
     variant = "";
   };
 
@@ -83,11 +88,18 @@
   users.users.grue = {
     isNormalUser = true;
     description = "ben";
+    shell = pkgs.zsh;
     extraGroups = [ "networkmanager" "wheel" ];
   };
 
   # Install firefox.
   programs.firefox.enable = true;
+
+  programs.zsh.enable = true;
+
+  environment.shells = with pkgs; [
+    zsh
+  ];
 
   programs.steam = {
     enable = true;
@@ -119,9 +131,10 @@
   # };
 
   # List services that you want to enable:
+  services.openssh.enable = true;
+  services.envfs.enable = true;
 
   # Enable the OpenSSH daemon.
-  services.openssh.enable = true;
 
 
   # Open ports in the firewall.
