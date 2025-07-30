@@ -3,23 +3,24 @@
     enable = true;
     defaultEditor = true;
     plugins = with pkgs.vimPlugins; [
-      vim-commentary
-      vim-fugitive
-      vim-gitgutter
-      delimitMate
       ale
+      delimitMate
+      editorconfig-vim
+      fzf-vim
+      jq-vim
+      papercolor-theme
       vim-airline
       vim-airline-themes
-      papercolor-theme
-      fzf-vim
-      vim-indent-guides
-      vim-rhubarb  # required by vim-fugitive
-      editorconfig-vim
+      vim-commentary
       vim-easy-align
+      vim-fugitive
+      vim-gitgutter
+      vim-indent-guides
+      vim-lastplace
       vim-repeat
+      vim-rhubarb  # required by vim-fugitive
       vim-surround
       vim-unimpaired
-      jq-vim
     ];
 
     settings = {
@@ -42,11 +43,7 @@
       " disable blinking cursor
       set gcr=a:blinkon0
       let mapleader=','
-      set ruler
-      set wildmenu
-      set backspace=indent,eol,start
       set hlsearch
-      set incsearch
       set fileformats=unix,dos,mac
 
       set signcolumn=yes

@@ -122,9 +122,38 @@
   environment.systemPackages = with pkgs; [
     curl
     git
-    vim
     wget
   ];
+
+  programs.vim = {
+    enable = true;
+    defaultEditor = true;
+    package = (pkgs.vim_configurable.override {  }).customize{
+      name = "vim";
+      # Install plugins for example for syntax highlighting of nix files
+      vimrcConfig.packages.myplugins = with pkgs.vimPlugins; {
+        start = [
+          vim-sensible
+          vim-nix
+          vim-lastplace
+          vim-surround
+          vim-commentary
+          vim-repeat
+          vim-unimpaired
+      ];
+        opt = [];
+      };
+      vimrcConfig.customRC = ''
+        set gcr=a:blinkon0
+        let mapleader=','
+        set hlsearch
+        set fileformats=unix,dos,mac
+
+        noremap <leader>h :<C-u>split<CR>
+        noremap <leader>v :<C-u>vsplit<CR>
+      '';
+    };
+  };
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
