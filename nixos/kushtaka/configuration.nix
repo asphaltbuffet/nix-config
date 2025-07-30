@@ -92,6 +92,10 @@
     extraGroups = [ "networkmanager" "wheel" ];
   };
 
+  security.sudo.extraConfig = ''
+    %wheel ALL=(ALL) NOPASSWD: ALL
+  '';
+
   # Install firefox.
   programs.firefox.enable = true;
 
