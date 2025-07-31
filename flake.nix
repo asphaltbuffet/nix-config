@@ -15,7 +15,7 @@
   let
     inherit (self) outputs;
     perSystem = callback: nixpkgs.lib.getAttrs (import systems) (system: callback (pkgs system));
-    flakePath = config: "${config.home.homeDirectory}/dev/nix-config";
+    flakePath = config: "${config.home.homeDirectory}/nix-config";
     pkgs = system: import nixpkgs { inherit system; };
     extraSpecialArgs = { inherit flakePath inputs outputs; };
   in
@@ -32,6 +32,21 @@
               inherit extraSpecialArgs;
               useGlobalPkgs = true;
               users.grue = import ./home/kushtaka.nix;
+            };
+          }
+        ];
+      };
+      "wendigo" = nixpkgs.lib.nixosSystem {
+        specialArgs = { inherit inputs outputs; };
+        modules = [
+          nixos-hardware.nixosModules.lenovo-thinkpad-t14
+          ./nixos/wendigo/configuration.nix
+
+          home-manager.nixosModules.home-manager {
+            home-manager = {
+              inherit extraSpecialArgs;
+              useGlobalPkgs = true;
+              users.grue = import ./home/wendigo.nix;
             };
           }
         ];
