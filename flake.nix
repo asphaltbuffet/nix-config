@@ -31,7 +31,7 @@
             home-manager = {
               inherit extraSpecialArgs;
               useGlobalPkgs = true;
-              users.grue = import ./home/kushtaka.nix;
+              users.grue = import ./home/users/grue/kushtaka.nix;
             };
           }
         ];
@@ -46,7 +46,7 @@
             home-manager = {
               inherit extraSpecialArgs;
               useGlobalPkgs = true;
-              users.grue = import ./home/wendigo.nix;
+              users.grue = import ./home/users/grue/wendigo.nix;
             };
           }
         ];

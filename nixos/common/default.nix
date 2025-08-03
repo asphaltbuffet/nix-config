@@ -19,12 +19,13 @@
   services.printing.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.grue = {
-    isNormalUser = true;
-    description = "grue";
-    shell = pkgs.zsh;
-    extraGroups = [ "networkmanager" "wheel" ];
+  users.users = {
+    grue    = import ../users/grue/default.nix;
+    jsquats = import ../users/jsquats/default.nix;
+    sukey   = import ../users/sukey/default.nix;
   };
+
+  users.defaultUserShell = pkgs.zsh;
 
   security.sudo.extraConfig = ''
     %wheel ALL=(ALL) NOPASSWD: ALL
@@ -48,6 +49,9 @@
     curl
     git
     wget
+
+    nixfmt-rfc-style
+    nh
   ];
 
   programs.vim = {
@@ -84,6 +88,9 @@
   services.openssh.enable = true;
   services.envfs.enable = true;
 
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 
 }
