@@ -1,7 +1,8 @@
+# .../home/users/grue/kushtaka.nix
 { lib, pkgs, ...}: {
 
   imports = [
-    ../common
+    ../../common
   ];
 
   targets.genericLinux.enable = true;
