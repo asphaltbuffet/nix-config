@@ -48,7 +48,6 @@
       trippy     # tui network tool
       vhs        # terminal gifs
       viddy      # better watch
-      wishlist   # ssh helper
       xh         # better curl
       zellij
 
