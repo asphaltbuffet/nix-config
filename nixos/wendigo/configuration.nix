@@ -9,6 +9,7 @@
       ./hardware-configuration.nix
 
       ../common
+      ../common/firefox.nix
     ];
 
   networking.hostName = "wendigo"; # Define your hostname.
@@ -64,7 +65,7 @@
   };
 
   # Install firefox.
-  programs.firefox.enable = true;
+  # programs.firefox.enable = true;
 
   programs.steam = {
     enable = true;
