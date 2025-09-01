@@ -46,6 +46,7 @@
       tmux
       tmux-xpanes
       trippy     # tui network tool
+      vlc
       vhs        # terminal gifs
       viddy      # better watch
       xh         # better curl
