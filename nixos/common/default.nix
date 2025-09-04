@@ -87,6 +87,7 @@
   # List services that you want to enable:
   services.openssh.enable = true;
   services.envfs.enable = true;
+  services.fwupd.enable = true;
 
   nix.settings.experimental-features = [
     "nix-command"
