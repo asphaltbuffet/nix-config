@@ -40,6 +40,7 @@
               home-manager = {
                 inherit extraSpecialArgs;
                 useGlobalPkgs = true;
+                backupFileExtension = "backup";
                 users.grue = import ./home/users/grue/kushtaka.nix;
               };
             }
