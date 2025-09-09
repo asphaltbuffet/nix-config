@@ -18,6 +18,10 @@ build host=hostname:
 switch host=hostname:
     nh os switch -H {{ host }} .
 
+# update, rebuild and switch
+update-switch host=hostname:
+    nh os switch -uH {{ host }} .
+
 # remove old build artifacts
 clean generations="3" since="5d":
     nh clean all --keep {{ generations }} -K {{ since }} -a
