@@ -1,5 +1,5 @@
-
-{ pkgs, ... }: {
+{ pkgs, ... }:
+{
   programs.firefox = {
     enable = true;
     profiles = {
@@ -31,7 +31,12 @@
               urls = [
                 {
                   template = "https://kagi.com/search?";
-                  params = [ { name = "q"; value = "{searchTerms}"; } ];
+                  params = [
+                    {
+                      name = "q";
+                      value = "{searchTerms}";
+                    }
+                  ];
                 }
               ];
             };

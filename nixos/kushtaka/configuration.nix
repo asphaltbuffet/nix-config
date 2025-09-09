@@ -6,10 +6,10 @@
 
 {
   imports = [
-      ./hardware-configuration.nix
+    ./hardware-configuration.nix
 
-      ../common
-    ];
+    ../common
+  ];
 
   networking.hostName = "kushtaka"; # Define your hostname.
 
@@ -78,4 +78,3 @@
   };
 
 }
-

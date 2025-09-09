@@ -1,4 +1,5 @@
-{ ... }: {
+{ ... }:
+{
   imports = [
     ../programs/eza.nix
     ../programs/firefox.nix

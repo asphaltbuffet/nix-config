@@ -6,11 +6,11 @@
 
 {
   imports = [
-      ./hardware-configuration.nix
+    ./hardware-configuration.nix
 
-      ../common
-      ../common/firefox.nix
-    ];
+    ../common
+    ../common/firefox.nix
+  ];
 
   networking.hostName = "wendigo"; # Define your hostname.
 
@@ -74,4 +74,3 @@
   };
 
 }
-

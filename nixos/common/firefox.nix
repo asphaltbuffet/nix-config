@@ -12,7 +12,8 @@ let
     Value = "";
     Status = "locked";
   };
-in {
+in
+{
   programs.firefox = {
     enable = true;
 
@@ -42,10 +43,10 @@ in {
           install_url = "https://addons.mozilla.org/firefox/downloads/latest/privacy-badger17/latest.xpi";
           installation_mode = "force_installed";
         };
-				"kagi-search@kagi" = {
-					install_url = "https://addons.mozilla.org/firefox/downloads/latest/kagi-search-for-firefox/latest.xpi";
-					installation_mode = "force_installed";
-				};
+        "kagi-search@kagi" = {
+          install_url = "https://addons.mozilla.org/firefox/downloads/latest/kagi-search-for-firefox/latest.xpi";
+          installation_mode = "force_installed";
+        };
         "extension@tabliss.io" = {
           install_url = "https://addons.mozilla.org/firefox/downloads/file/3940751/tabliss-2.6.0.xpi";
           installation_mode = "force_installed";
@@ -54,4 +55,3 @@ in {
     };
   };
 }
-

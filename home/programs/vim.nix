@@ -1,4 +1,5 @@
-{ pkgs, ... }: {
+{ pkgs, ... }:
+{
   programs.vim = {
     enable = true;
     defaultEditor = true;
@@ -18,7 +19,7 @@
       vim-indent-guides
       vim-lastplace
       vim-repeat
-      vim-rhubarb  # required by vim-fugitive
+      vim-rhubarb # required by vim-fugitive
       vim-surround
       vim-unimpaired
     ];

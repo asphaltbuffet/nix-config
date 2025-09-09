@@ -1,4 +1,5 @@
-{ pkgs, ... }: {
+{ pkgs, ... }:
+{
   programs.git = {
     enable = true;
 
@@ -14,9 +15,15 @@
     userName = "Ben Lechlitner";
 
     extraConfig = {
-      branch = { sort = "-committerdate"; };
-      column = { ui = "auto"; };
-      commit = { verbose = true; };
+      branch = {
+        sort = "-committerdate";
+      };
+      column = {
+        ui = "auto";
+      };
+      commit = {
+        verbose = true;
+      };
       diff = {
         algorithm = "histogram";
         colorMoved = "plain";
@@ -28,13 +35,19 @@
         pruneTags = true;
         all = true;
       };
-      help = { autocorrect = "prompt"; };
-      init = { defaultBranch = "main"; };
+      help = {
+        autocorrect = "prompt";
+      };
+      init = {
+        defaultBranch = "main";
+      };
       merge = {
         conflictstyle = "zdiff3";
         tool = "vimdiff";
       };
-      mergetool = { prompt = false; };
+      mergetool = {
+        prompt = false;
+      };
       push = {
         default = "simple";
         autoSetupRemote = true;
@@ -49,7 +62,9 @@
         enabled = true;
         autoupdate = true;
       };
-      tag = { sort = "version:refname"; };
+      tag = {
+        sort = "version:refname";
+      };
     };
 
     ignores = [
