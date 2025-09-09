@@ -25,8 +25,13 @@
   boot.loader.efi.canTouchEfiVariables = true;
 
   # Enable networking
-  networking.networkmanager.enable = true;
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
+  networking = {
+    networkmanager = {
+      enable = true;
+      wifi.powersave = false; # reconnect faster after suspend
+    };
+    # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
+  };
 
   # Enable the X11 windowing system.
   # You can disable this if you're only using the Wayland session.
