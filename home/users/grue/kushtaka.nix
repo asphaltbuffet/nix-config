@@ -10,8 +10,8 @@
   systemd.user.startServices = "sd-switch";
 
   home = {
-    username = lib.mkDefault "grue";
-    homeDirectory = lib.mkDefault "/home/grue";
+    username = "grue";
+    homeDirectory = "/home/grue";
     stateVersion = "25.05";
     shell.enableZshIntegration = true;
 
@@ -37,7 +37,6 @@
       tmux
       tmux-xpanes
       trippy # tui network tool
-      vlc
       viddy # better watch
       xh # better curl
 
@@ -45,7 +44,9 @@
       discord
       flameshot
       kitty
+      prismlauncher
       signal-desktop
+      vlc
     ];
   };
 
