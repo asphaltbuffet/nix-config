@@ -23,6 +23,7 @@
       kitty
       prismlauncher
       signal-desktop
+      tuxtype
       vlc
     ];
   };
