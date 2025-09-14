@@ -32,6 +32,7 @@
       glow # markdown viewer
       gum # fancy cli snippets
       ijq # interactive jq
+      ipcalc
       iperf
       jq
       just
@@ -39,6 +40,7 @@
       mcfly # history search
       moreutils
       ncdu
+      nmap
       pop # email from cli
       presenterm # presentations
       ripgrep
