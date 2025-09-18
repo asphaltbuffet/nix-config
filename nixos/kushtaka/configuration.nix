@@ -33,6 +33,22 @@
     # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
   };
 
+  systemd.services.network-reconnect = {
+    description = "Restart network services after resume";
+    wantedBy = [ "post-resume.target" ];
+    after = [
+      "NetworkManager.service"
+      "post-resume.target"
+    ];
+    restartIfChanged = false; # keep the unit across nixos-rebuild
+    serviceConfig = {
+      Type = "oneshot";
+      User = "root";
+      ExecStartPre = "${pkgs.bash}/bin/sleep 3"; # let NetworkManager settle
+      ExecStart = "${pkgs.bash}/bin/systemctl restart NetworkManager";
+    };
+  };
+
   # Enable the X11 windowing system.
   # You can disable this if you're only using the Wayland session.
   services.xserver.enable = true;
