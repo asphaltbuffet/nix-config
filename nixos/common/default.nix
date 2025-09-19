@@ -47,9 +47,22 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    bat
+    comma
     curl
+    fd
     git
+    ipcalc
+    jq
+    just
+    lnav
+    moreutils # to get parallel
+    ncdu
+    nmap
+    ripgrep
+    trippy
     wget
+    xh
 
     nixfmt-rfc-style
   ];

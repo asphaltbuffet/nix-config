@@ -17,28 +17,18 @@
 
     packages = with pkgs; [
       _1password-cli
-      bat # better cat
       bottom # better top
       delta # better git-diff
       doggo # dig
       duf # better df
       dust # du + rust
-      fd # better find
       git-absorb
       glow # markdown viewer
       gum # fancy cli snippets
       ijq # interactive jq
-      jq
-      just
-      lnav
-      moreutils
-      ncdu
-      ripgrep
       tmux
       tmux-xpanes
-      trippy # tui network tool
       viddy # better watch
-      xh # better curl
 
       _1password-gui
       discord
