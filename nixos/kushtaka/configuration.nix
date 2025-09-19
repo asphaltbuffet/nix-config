@@ -33,6 +33,12 @@
     # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
   };
 
+  powerManagement.resumeCommands = ''
+    ${pkgs.bash}/bin/sleep 8 && \
+    ${pkgs.systemd}/bin/systemctl restart systemd-resolved && \
+    ${pkgs.systemd}/bin/systemctl restart NetworkManager
+  '';
+
   # Enable the X11 windowing system.
   # You can disable this if you're only using the Wayland session.
   services.xserver.enable = true;
