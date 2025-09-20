@@ -49,6 +49,7 @@
                 useGlobalPkgs = true;
                 backupFileExtension = "backup";
                 users.grue = import ./home/users/grue/kushtaka.nix;
+                users.jsquats = import ./home/users/jsquats/kushtaka.nix;
               };
             }
           ];
