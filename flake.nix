@@ -40,7 +40,7 @@
             ./nixos/kushtaka/configuration.nix
 
             nix-index-database.nixosModules.nix-index
-  { programs.nix-index-database.comma.enable = true; }
+            { programs.nix-index-database.comma.enable = true; }
 
             home-manager.nixosModules.home-manager
             {
@@ -61,11 +61,15 @@
             nixos-hardware.nixosModules.lenovo-thinkpad-t14
             ./nixos/wendigo/configuration.nix
 
+            nix-index-database.nixosModules.nix-index
+            { programs.nix-index-database.comma.enable = true; }
+
             home-manager.nixosModules.home-manager
             {
               home-manager = {
                 inherit extraSpecialArgs;
                 useGlobalPkgs = true;
+                backupFileExtension = "backup";
                 users.grue = import ./home/users/grue/wendigo.nix;
               };
             }
