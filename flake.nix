@@ -50,6 +50,7 @@
                 backupFileExtension = "backup";
                 users.grue = import ./home/users/grue/kushtaka.nix;
                 users.jsquats = import ./home/users/jsquats/kushtaka.nix;
+                users.sukey = import ./home/users/sukey/kushtaka.nix;
               };
             }
           ];

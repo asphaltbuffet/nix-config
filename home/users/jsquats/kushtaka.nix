@@ -19,11 +19,9 @@
       _1password-cli
       _1password-gui
       discord
-      flameshot
       kitty
       prismlauncher
       signal-desktop
-      tuxtype
       vlc
     ];
   };
