@@ -1,5 +1,12 @@
-{ pkgs, ... }:
+{ config, pkgs, lib, ... }:
 {
+
+  # Set your time zone.
+  time.timeZone = "America/New_York";
+
+  # Enable networking
+  networking.networkmanager.enable = true;
+  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
@@ -16,16 +23,6 @@
     LC_TIME = "en_US.UTF-8";
   };
 
-  # Enable CUPS to print documents.
-  services.printing.enable = true;
-
-  # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users = {
-    grue = import ../users/grue/default.nix;
-    jsquats = import ../users/jsquats/default.nix;
-    sukey = import ../users/sukey/default.nix;
-  };
-
   users.defaultUserShell = pkgs.zsh;
 
   security.sudo.extraConfig = ''
@@ -38,34 +35,21 @@
     zsh
   ];
 
-  # install tailscale
-  services.tailscale.enable = true;
-
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
-  # List packages installed in system profile. To search, run:
-  # $ nix search wget
-  environment.systemPackages = with pkgs; [
-    bat
-    comma
-    curl
-    fd
-    git
-    ipcalc
-    jq
-    just
-    lnav
-    moreutils # to get parallel
-    ncdu
-    nmap
-    ripgrep
-    trippy
-    wget
-    xh
+  # List services that you want to enable:
+  services.envfs.enable = true;
+  services.fwupd.enable = true;
+  services.tailscale.enable = lib.mkDefault true;
+  services.openssh.enable = lib.mkDefault true;
+  services.printing.enable = lib.mkDefault true;
 
-    nixfmt-rfc-style
-  ];
+  nix.settings = {
+    experimental-features = [ "nix-command" "flakes" ];
+    warn-dirty = false;
+    auto-optimize-store = true;
+  };
 
   programs.nh = {
     enable = true;
@@ -103,14 +87,10 @@
     };
   };
 
-  # List services that you want to enable:
-  services.openssh.enable = true;
-  services.envfs.enable = true;
-  services.fwupd.enable = true;
-
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
+  environment.systemPackages = with pkgs; [
+    git
+    curl
+    wget
+    vim
   ];
-
 }
