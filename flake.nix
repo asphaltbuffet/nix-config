@@ -36,7 +36,7 @@
         "kushtaka" = nixpkgs.lib.nixosSystem {
           specialArgs = { inherit inputs outputs; };
           modules = [
-            nixos-hardware.nixosModules.lenovo-thinkpad-t14
+            nixos-hardware.nixosModules.lenovo-thinkpad-t14-intel-gen1
             ./nixos/kushtaka/configuration.nix
 
             nix-index-database.nixosModules.nix-index
@@ -58,7 +58,7 @@
         "wendigo" = nixpkgs.lib.nixosSystem {
           specialArgs = { inherit inputs outputs; };
           modules = [
-            nixos-hardware.nixosModules.lenovo-thinkpad-t14
+            nixos-hardware.nixosModules.lenovo-thinkpad-t14-intel-gen1
             ./nixos/wendigo/configuration.nix
 
             nix-index-database.nixosModules.nix-index
