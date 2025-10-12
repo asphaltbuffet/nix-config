@@ -12,6 +12,8 @@
 
     nix-index-database.url = "github:nix-community/nix-index-database";
     nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
+
+    opnix.url = "github:brizzbuzz/opnix";
   };
 
   outputs =
@@ -21,6 +23,7 @@
       nix-index-database,
       home-manager,
       nixos-hardware,
+      opnix,
       systems,
       ...
     }:
@@ -59,6 +62,7 @@
           specialArgs = { inherit inputs outputs; };
           modules = [
             nixos-hardware.nixosModules.lenovo-thinkpad-t14-intel-gen1
+            opnix.nixosModules.default
             ./nixos/wendigo/configuration.nix
 
             nix-index-database.nixosModules.nix-index
