@@ -5,7 +5,6 @@
   # Pull in your shared app modules so every user gets consistent configs
   imports = [
     ../modules/git.nix
-    ../modules/delta.nix
     ../modules/zsh.nix
   #   ../modules/firefox-user.nix
   ];
@@ -27,8 +26,6 @@
     fd
     fzf
     ripgrep
-    jq
-    tree
     wget
     curl
     unzip

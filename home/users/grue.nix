@@ -3,7 +3,7 @@
 {
   imports = [
     ../roles/base.nix
-    # ../roles/dev.nix
+    ../roles/dev.nix
   ];
 
   home.username = "grue";
@@ -12,7 +12,7 @@
 
   programs.git.settings.user = {
     name = "Ben Lechlitner";
-    email = "otherland@gmail.com";
+    email = "30903912+asphaltbuffet@users.noreply.github.com";
   };
 
   # Personal touches

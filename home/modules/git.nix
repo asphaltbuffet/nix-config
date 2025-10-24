@@ -1,10 +1,18 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   programs.git = {
     enable = true;
     package = pkgs.gitAndTools.gitFull;
 
+
     settings = {
+      alias = {
+        co = "checkout";
+        cb = "checkout -b";
+        please = "push --force-with-lease";
+        st = "status";
+        cm = "checkout main";
+      };
       branch.sort = "-committerdate";
       column.ui = "auto";
       commit.verbose = true;
@@ -43,25 +51,7 @@
       tag.sort = "version:refname";
     };
 
-    ignores = [
-      # vim
-      "[._]*.s[a-v][a-z]"
-      "!*svg"
-      "[._]*.sw[a-p]"
-      "[._]s[a-rt-v][a-z]"
-      "[._]ss[a-gi-z]"
-      "[._]sw[a-p]"
-      "Session.vim"
-      "Sessionx.vim"
-      ".netrwhist"
-      "[._]*.un~"
+    ignores = lib.splitString "\n" (builtins.readFile ./gitignore_common);
 
-      # linux
-      "*~"
-      ".fuse_hidden*"
-      ".directory"
-      ".Trash-*"
-      ".nfs*"
-    ];
   };
 }
