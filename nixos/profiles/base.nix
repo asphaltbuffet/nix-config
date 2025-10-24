@@ -1,5 +1,18 @@
-{ config, pkgs, lib, ... }:
 {
+  inputs,
+  config,
+  pkgs,
+  lib,
+  ...
+}:
+{
+
+  imports = [
+    inputs.home-manager.nixosModules.home-manager
+  ];
+
+  home-manager.useGlobalPkgs = true;
+  home-manager.useUserPackages = true;
 
   # Set your time zone.
   time.timeZone = "America/New_York";
@@ -50,9 +63,12 @@
   services.printing.enable = lib.mkDefault true;
 
   nix.settings = {
-    experimental-features = [ "nix-command" "flakes" ];
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
     warn-dirty = false;
-    auto-optimize-store = true;
+    # auto-optimize-store = true;
   };
 
   programs.nh = {

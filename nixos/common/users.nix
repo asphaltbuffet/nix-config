@@ -3,7 +3,10 @@
   users.users.grue = {
     isNormalUser = true;
     description = "grue";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+    ];
     shell = pkgs.zsh;
   };
 
@@ -22,8 +25,7 @@
   };
 
   # Attach Home-Manager configs
-  home-manager.users.grue   = import ../../home/users/grue.nix;
+  home-manager.users.grue = import ../../home/users/grue.nix;
   home-manager.users.jsquats = import ../../home/users/jsquats.nix;
   home-manager.users.sukey   = import ../../home/users/sukey.nix;
 }
-

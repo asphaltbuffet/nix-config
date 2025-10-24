@@ -1,5 +1,10 @@
 # nixos/profiles/laptop.nix
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   #### Display server / desktop environment ####
   services.xserver.enable = true;
@@ -19,8 +24,8 @@
 
   #### Desktop-related system packages ####
   environment.systemPackages = with pkgs; [
-    xdg-utils        # useful for opening URLs
-    pavucontrol      # audio control GUI
+    xdg-utils # useful for opening URLs
+    pavucontrol # audio control GUI
     # Add any desktop apps you want every graphical system to have
   ];
 
@@ -30,4 +35,3 @@
     xdg-desktop-portal-gtk
   ];
 }
-

@@ -1,5 +1,10 @@
 # nixos/profiles/gaming.nix
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   #### Steam ####
   programs.steam = {
@@ -17,7 +22,7 @@
 
   #### Extra gaming tools ####
   environment.systemPackages = with pkgs; [
-    lutris        # launcher for non-Steam games
+    lutris # launcher for non-Steam games
     # mangohud      # FPS/metrics overlay
     # protonup      # easy Proton-GE installer
     prismlauncher
@@ -27,4 +32,3 @@
   # These can be overridden by a laptop profile if needed
   hardware.opengl.enable = true;
 }
-

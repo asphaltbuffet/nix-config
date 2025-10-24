@@ -31,16 +31,28 @@
     let
       systems = [ "x86_64-linux" ];
 
-      mkPkgs = system: import nixpkgs {
-        inherit system;
-        overlays = [ (import ./overlays) ];
-        config.allowUnfree = true;
-      };
+      mkPkgs =
+        system:
+        import nixpkgs {
+          inherit system;
+          overlays = [ (import ./overlays) ];
+          config.allowUnfree = true;
+        };
 
-      mkHost = hostname: system:
+      mkHost =
+        hostname: system:
         nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit self nixpkgs home-manager alejandra nixos-hardware; };
+          specialArgs = {
+            inherit
+              self
+              inputs
+              nixpkgs
+              home-manager
+              alejandra
+              nixos-hardware
+              ;
+          };
           modules = [
             ./nixos/hosts/${hostname}/configuration.nix
           ];
@@ -51,9 +63,11 @@
 
     in
     {
-      nixosConfigurations = 
-        builtins.listToAttrs (map
-          (h: { name = h; value = mkHost h "x86_64-linux"; })
-          hostnames);
-      };
+      nixosConfigurations = builtins.listToAttrs (
+        map (h: {
+          name = h;
+          value = mkHost h "x86_64-linux";
+        }) hostnames
+      );
+    };
 }

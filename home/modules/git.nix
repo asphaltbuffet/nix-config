@@ -2,28 +2,12 @@
 {
   programs.git = {
     enable = true;
-
     package = pkgs.gitAndTools.gitFull;
-    delta = {
-      enable = true;
-      options = {
-        navigate = true;
-        line-numbers = true;
-      };
-    };
-    userEmail = "otherland@gmail.com";
-    userName = "Ben Lechlitner";
 
-    extraConfig = {
-      branch = {
-        sort = "-committerdate";
-      };
-      column = {
-        ui = "auto";
-      };
-      commit = {
-        verbose = true;
-      };
+    settings = {
+      branch.sort = "-committerdate";
+      column.ui = "auto";
+      commit.verbose = true;
       diff = {
         algorithm = "histogram";
         colorMoved = "plain";
@@ -35,19 +19,13 @@
         pruneTags = true;
         all = true;
       };
-      help = {
-        autocorrect = "prompt";
-      };
-      init = {
-        defaultBranch = "main";
-      };
+      help.autocorrect = "prompt";
+      init.defaultBranch = "main";
       merge = {
         conflictstyle = "zdiff3";
         tool = "vimdiff";
       };
-      mergetool = {
-        prompt = false;
-      };
+      mergetool.prompt = false;
       push = {
         default = "simple";
         autoSetupRemote = true;
@@ -62,9 +40,7 @@
         enabled = true;
         autoupdate = true;
       };
-      tag = {
-        sort = "version:refname";
-      };
+      tag.sort = "version:refname";
     };
 
     ignores = [
