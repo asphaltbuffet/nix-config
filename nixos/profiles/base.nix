@@ -9,6 +9,7 @@
 
   imports = [
     inputs.home-manager.nixosModules.home-manager
+    ../common/tailscale.nix
   ];
 
   home-manager.useGlobalPkgs = true;
@@ -68,7 +69,7 @@
       "flakes"
     ];
     warn-dirty = false;
-    # auto-optimize-store = true;
+    auto-optimise-store = true;
   };
 
   programs.nh = {
