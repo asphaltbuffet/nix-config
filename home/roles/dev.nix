@@ -2,8 +2,8 @@
 { pkgs, lib, ... }:
 {
   imports = [
-    ../modules/delta.nix
-    ../modules/go.nix
+    ../modules/delta
+    ../modules/go
   ];
 
   home.packages = with pkgs; [

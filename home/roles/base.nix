@@ -4,9 +4,9 @@
   #### Core imports ####
   # Pull in your shared app modules so every user gets consistent configs
   imports = [
-    ../modules/git.nix
-    ../modules/zsh.nix
-  #   ../modules/firefox-user.nix
+    ../modules/git
+    ../modules/zsh
+  #   ../modules/firefox
   ];
 
   #### Home-Manager essentials ####

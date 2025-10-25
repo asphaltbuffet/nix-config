@@ -1,3 +1,4 @@
+# nixos/profiles/base.nix
 {
   inputs,
   config,
