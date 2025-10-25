@@ -41,14 +41,13 @@
     LC_TIME = "en_US.UTF-8";
   };
 
-  users.defaultUserShell = pkgs.zsh;
-
   security.sudo.extraConfig = ''
     %wheel ALL=(ALL) NOPASSWD: ALL
   '';
 
+  users.defaultUserShell = pkgs.zsh;
   programs.zsh.enable = true;
-
+  environment.pathsToLink = [ "/share/zsh" ]; # enable zsh completion for system packages
   environment.shells = with pkgs; [
     zsh
   ];
@@ -75,7 +74,7 @@
   programs.nh = {
     enable = true;
     clean.enable = true;
-    clean.extraArgs = "--keep-since 4d --keep 3";
+    clean.extraArgs = lib.mkDefault "--keep-since 4d --keep 3";
   };
 
   programs.vim = {
