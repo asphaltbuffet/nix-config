@@ -1,3 +1,4 @@
+# home/modules/zsh/default.nix
 { config, ... }:
 {
 
@@ -9,10 +10,30 @@
       VISUAL = "vim";
     };
 
+    defaultKeymap = "viins";
     enableCompletion = true;
-    autosuggestion.enable = true;
+    autocd = true;
+    autosuggestion = {
+      enable = true;
+      strategy = [ "match_prev_cmd" ];
+    };
     syntaxHighlighting.enable = true;
     dotDir = "${config.xdg.configHome}/zsh";
+
+    antidote = {
+      enable = true;
+
+      plugins = [
+        "mattmc3/zephyr path:plugins/completion"
+        "mdumitru/git-aliases"
+        "peterhurford/up.zsh"
+        "rummik/zsh-tailf"
+        "mattmc3/zman"
+        "agkozak/zsh-z"
+      ];
+
+      useFriendlyNames = true;
+    };
 
     shellAliases = {
       ll = "eza -l";
