@@ -7,6 +7,7 @@
     ../modules/fzf
     ../modules/git
     ../modules/tmux
+    ../modules/zoxide
     ../modules/zsh
   #   ../modules/firefox
   ];
