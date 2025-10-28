@@ -4,6 +4,7 @@
   #### Core imports ####
   # Pull in your shared app modules so every user gets consistent configs
   imports = [
+    ../modules/fzf
     ../modules/git
     ../modules/tmux
     ../modules/zsh
