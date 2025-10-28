@@ -112,6 +112,5 @@
     git
     curl
     wget
-    vim
   ];
 }

@@ -7,6 +7,7 @@
     ../modules/fzf
     ../modules/git
     ../modules/tmux
+    ../modules/vim
     ../modules/zoxide
     ../modules/zsh
   #   ../modules/firefox
@@ -34,7 +35,6 @@
     unzip
     zip
     just # handy task runner for all users
-    vim
     xh
   ];
 
