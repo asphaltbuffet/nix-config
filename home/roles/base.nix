@@ -4,6 +4,7 @@
   #### Core imports ####
   # Pull in your shared app modules so every user gets consistent configs
   imports = [
+    ../modules/eza
     ../modules/fzf
     ../modules/git
     ../modules/tmux
@@ -26,7 +27,6 @@
   home.packages = with pkgs; [
     # Everyday command-line utilities
     bat
-    eza
     fd
     fzf
     ripgrep
