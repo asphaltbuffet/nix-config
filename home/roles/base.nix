@@ -5,6 +5,7 @@
   # Pull in your shared app modules so every user gets consistent configs
   imports = [
     ../modules/git
+    ../modules/tmux
     ../modules/zsh
   #   ../modules/firefox
   ];
