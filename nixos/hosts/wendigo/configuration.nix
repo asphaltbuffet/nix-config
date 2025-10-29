@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ inputs, config, pkgs, ... }:
 
 {
   imports = [
@@ -9,7 +9,7 @@
     ../../profiles/base.nix
     # ../../profiles/dev.nix
     # ../../profiles/gaming.nix
-    # ../../profiles/laptop/t14.nix
+    ../../profiles/laptop/t14.nix
   ];
 
   networking.hostName = "wendigo"; # Define your hostname.

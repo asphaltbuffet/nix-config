@@ -58,7 +58,7 @@
           ];
         };
 
-      # discover alll host directories under nixos/hosts
+      # discover all host directories under nixos/hosts
       hostnames = builtins.attrNames (builtins.readDir ./nixos/hosts);
 
     in

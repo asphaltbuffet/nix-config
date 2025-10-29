@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ inputs, config, pkgs, ... }:
 
 {
   imports = [
@@ -7,9 +7,8 @@
     ../../common/users.nix
 
     ../../profiles/base.nix
-    # ../../profiles/dev.nix
-    # ../../profiles/gaming.nix
-    # ../../profiles/laptop/t14.nix
+    ../../profiles/gaming.nix
+    ../../profiles/laptop/t14.nix
   ];
 
   networking.hostName = "kushtaka"; # Define your hostname.
