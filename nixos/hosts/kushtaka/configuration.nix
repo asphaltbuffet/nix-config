@@ -5,10 +5,10 @@
     ./hardware-configuration.nix
 
     ../../common/users.nix
+    ../../profiles/laptop/t14.nix
 
     ../../profiles/base.nix
     ../../profiles/gaming.nix
-    ../../profiles/laptop/t14.nix
   ];
 
   networking.hostName = "kushtaka"; # Define your hostname.

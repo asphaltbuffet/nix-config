@@ -5,11 +5,10 @@
     ./hardware-configuration.nix
 
     ../../common/users.nix
+    ../../profiles/laptop/t14.nix
 
     ../../profiles/base.nix
-    # ../../profiles/dev.nix
-    # ../../profiles/gaming.nix
-    ../../profiles/laptop/t14.nix
+    ../../profiles/gaming.nix
   ];
 
   networking.hostName = "wendigo"; # Define your hostname.

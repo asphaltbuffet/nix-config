@@ -3,6 +3,7 @@
 {
   imports = [
     ../roles/base.nix
+    ../roles/player.nix
   ];
 
   home = {

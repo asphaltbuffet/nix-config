@@ -4,6 +4,7 @@
   imports = [
     ../roles/base.nix
     ../roles/dev.nix
+    ../roles/player.nix
   ];
 
   home.username = "grue";
