@@ -21,30 +21,26 @@
 
   #### nix-index (for “command-not-found” functionality) ####
   programs.nix-index.enable = true;
-  # programs.nix-index-database.comma.enable = true;
 
   #### Common CLI / UX tools ####
   home.packages = with pkgs; [
-    # Everyday command-line utilities
     bat
-    fd
-    fzf
-    ripgrep
-    wget
     curl
+    fd
+    just
+    ripgrep
     unzip
-    zip
-    just # handy task runner for all users
+    wget
     xh
+    zip
   ];
 
   #### Default environment setup ####
   home.sessionVariables = {
     EDITOR = lib.mkDefault "vim";
-    PAGER = lib.mkDefault "less";
     LANG = "en_US.UTF-8";
+    PAGER = lib.mkDefault "less";
   };
 
-  #### fzf defaults ####
   programs.fzf.enable = true;
 }
