@@ -11,7 +11,7 @@
     ../modules/vim
     ../modules/zoxide
     ../modules/zsh
-  #   ../modules/firefox
+    ../modules/firefox
   ];
 
   #### Home-Manager essentials ####

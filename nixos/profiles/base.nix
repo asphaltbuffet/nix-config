@@ -10,6 +10,7 @@
 
   imports = [
     inputs.home-manager.nixosModules.home-manager
+    ../common/firefox.nix
     ../common/tailscale.nix
   ];
 
