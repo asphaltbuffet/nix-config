@@ -7,6 +7,7 @@
     ../modules/eza
     ../modules/fzf
     ../modules/git
+    ../modules/starship
     ../modules/tmux
     ../modules/vim
     ../modules/zoxide
