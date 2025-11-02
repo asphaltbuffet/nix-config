@@ -3,6 +3,8 @@
 {
   imports = [
     ../roles/base.nix
+
+    ../roles/admin.nix
     ../roles/dev.nix
     ../roles/player.nix
   ];

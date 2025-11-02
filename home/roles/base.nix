@@ -41,6 +41,7 @@
     # GUI stuff
     discord
     signal-desktop
+    vlc
   ];
 
   #### Default environment setup ####
