@@ -1,7 +1,9 @@
+# home/modules/kitty/default.nix
 { pkgs, ... }:
 {
   programs.kitty = {
     enable = true;
+
     shellIntegration.enableZshIntegration = true;
     themeFile = "Monokai";
     # font.package = pkgs.fira;

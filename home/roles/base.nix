@@ -12,6 +12,10 @@
     ../modules/zoxide
     ../modules/zsh
     ../modules/firefox
+
+    # GUI stuff
+    ../modules/kitty
+    ../modules/mullvad
   ];
 
   #### Home-Manager essentials ####
@@ -33,6 +37,10 @@
     wget
     xh
     zip
+
+    # GUI stuff
+    discord
+    signal-desktop
   ];
 
   #### Default environment setup ####
