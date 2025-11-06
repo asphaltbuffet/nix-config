@@ -1,6 +1,5 @@
 # home/users/jsquats.nix
-{ pkgs, ... }:
-{
+{pkgs, ...}: {
   imports = [
     ../roles/base.nix
     ../roles/player.nix
@@ -15,5 +14,4 @@
     packages = with pkgs; [
     ];
   };
-
 }

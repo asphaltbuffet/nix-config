@@ -1,8 +1,7 @@
 # home/roles/player.nix
-{ pkgs, ... }:
-{
+{pkgs, ...}: {
   home.packages = with pkgs; [
-    mangohud      # FPS/metrics overlay
+    mangohud # FPS/metrics overlay
     prismlauncher
   ];
 }

@@ -1,7 +1,5 @@
 # home/modules/zsh/default.nix
-{ config, ... }:
-{
-
+{config, ...}: {
   programs.zsh = {
     enable = true;
 
@@ -15,7 +13,7 @@
     autocd = true;
     autosuggestion = {
       enable = true;
-      strategy = [ "match_prev_cmd" ];
+      strategy = ["match_prev_cmd"];
     };
     syntaxHighlighting.enable = true;
     dotDir = "${config.xdg.configHome}/zsh";
@@ -46,6 +44,5 @@
       gd = "git diff";
       glods = ''git log --graph --pretty="%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%ad) %C(bold blue)<%an>%Creset" --date=short'';
     };
-
   };
 }

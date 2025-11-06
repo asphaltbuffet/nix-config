@@ -1,7 +1,5 @@
 # /home/users/sukey.nix
-{ pkgs, ... }:
-{
-
+{pkgs, ...}: {
   imports = [
     ../roles/base.nix
   ];
@@ -16,5 +14,4 @@
       signal-desktop
     ];
   };
-
 }

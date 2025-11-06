@@ -6,8 +6,7 @@
   inputs,
   lib,
   ...
-}:
-{
+}: {
   #### Display server / desktop environment ####
   services.xserver.enable = true;
 

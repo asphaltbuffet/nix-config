@@ -1,14 +1,17 @@
-{ pkgs, lib, ... }:
 {
+  pkgs,
+  lib,
+  ...
+}: {
   programs.git = {
     enable = true;
     package = pkgs.gitAndTools.gitFull;
 
     settings = {
-			absorb = {
-				oneFixupPerCommit = true;
-				maxStack = 25;
-			};
+      absorb = {
+        oneFixupPerCommit = true;
+        maxStack = 25;
+      };
       alias = {
         co = "checkout";
         cb = "checkout -b";
@@ -56,6 +59,5 @@
 
     ignores = lib.splitString "\n" (builtins.readFile ./gitignore_common);
     attributes = lib.splitString "\n" (builtins.readFile ./gitattributes_common);
-
   };
 }

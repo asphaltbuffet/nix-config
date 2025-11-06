@@ -1,6 +1,9 @@
 # home/roles/dev.nix
-{ pkgs, lib, ... }:
 {
+  pkgs,
+  lib,
+  ...
+}: {
   imports = [
     ../modules/delta
     ../modules/go

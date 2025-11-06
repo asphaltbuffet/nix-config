@@ -1,5 +1,4 @@
-{ pkgs, ... }:
-{
+{pkgs, ...}: {
   users.users.grue = {
     isNormalUser = true;
     description = "grue";
@@ -13,7 +12,7 @@
   users.users.jsquats = {
     isNormalUser = true;
     description = "jasper";
-    extraGroups = [ "networkmanager" ];
+    extraGroups = ["networkmanager"];
     shell = pkgs.bash;
   };
 

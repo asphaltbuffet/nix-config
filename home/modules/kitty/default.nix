@@ -1,6 +1,5 @@
 # home/modules/kitty/default.nix
-{ pkgs, ... }:
-{
+{pkgs, ...}: {
   programs.kitty = {
     enable = true;
 

@@ -1,6 +1,10 @@
 # home/roles/base.nix
-{ pkgs, lib, config, ... }:
 {
+  pkgs,
+  lib,
+  config,
+  ...
+}: {
   #### Core imports ####
   # Pull in your shared app modules so every user gets consistent configs
   imports = [

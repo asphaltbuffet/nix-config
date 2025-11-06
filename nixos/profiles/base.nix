@@ -5,9 +5,7 @@
   pkgs,
   lib,
   ...
-}:
-{
-
+}: {
   imports = [
     inputs.home-manager.nixosModules.home-manager
     ../common/1password.nix
@@ -50,7 +48,7 @@
 
   users.defaultUserShell = pkgs.zsh;
   programs.zsh.enable = true;
-  environment.pathsToLink = [ "/share/zsh" ]; # enable zsh completion for system packages
+  environment.pathsToLink = ["/share/zsh"]; # enable zsh completion for system packages
   environment.shells = with pkgs; [
     zsh
   ];
@@ -83,7 +81,7 @@
   programs.vim = {
     enable = true;
     defaultEditor = true;
-    package = (pkgs.vim_configurable.override { }).customize {
+    package = (pkgs.vim_configurable.override {}).customize {
       name = "vim";
       # Install plugins for example for syntax highlighting of nix files
       vimrcConfig.packages.myplugins = with pkgs.vimPlugins; {
@@ -96,7 +94,7 @@
           vim-repeat
           vim-unimpaired
         ];
-        opt = [ ];
+        opt = [];
       };
       vimrcConfig.customRC = ''
         set gcr=a:blinkon0

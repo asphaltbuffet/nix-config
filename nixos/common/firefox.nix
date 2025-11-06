@@ -1,5 +1,8 @@
-{ config, pkgs, ... }:
-let
+{
+  config,
+  pkgs,
+  ...
+}: let
   lock-false = {
     Value = false;
     Status = "locked";
@@ -12,8 +15,7 @@ let
     Value = "";
     Status = "locked";
   };
-in
-{
+in {
   programs.firefox = {
     enable = true;
 
