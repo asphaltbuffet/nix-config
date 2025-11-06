@@ -54,6 +54,9 @@
               ;
           };
           modules = [
+            {
+              environment.systemPackages = [alejandra.defaultPackage.${system}];
+            }
             ./nixos/hosts/${hostname}/configuration.nix
           ];
         };
