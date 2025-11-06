@@ -14,6 +14,9 @@
 
     alejandra.url = "github:kamadorueda/alejandra/4.0.0";
     alejandra.inputs.nixpkgs.follows = "nixpkgs";
+
+    agenix.url = "github:ryantm/agenix";
+    agenix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = inputs @ {
@@ -21,6 +24,7 @@
     nixpkgs,
     nix-index-database,
     alejandra,
+    agenix,
     home-manager,
     nixos-hardware,
     systems,
@@ -45,12 +49,16 @@
             nixpkgs
             home-manager
             alejandra
+            agenix
             nixos-hardware
             ;
         };
         modules = [
           {
-            environment.systemPackages = [alejandra.defaultPackage.${system}];
+            environment.systemPackages = [
+              agenix.packages.${system}.default
+              alejandra.defaultPackage.${system}
+            ];
           }
           ./nixos/hosts/${hostname}/configuration.nix
         ];

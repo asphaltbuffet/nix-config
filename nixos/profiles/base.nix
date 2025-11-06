@@ -8,6 +8,7 @@
 }: {
   imports = [
     inputs.home-manager.nixosModules.home-manager
+    inputs.agenix.nixosModules.default
     ../common/1password.nix
     ../common/firefox.nix
     ../common/tailscale.nix
@@ -42,9 +43,7 @@
     LC_TIME = "en_US.UTF-8";
   };
 
-  security.sudo.extraConfig = ''
-    %wheel ALL=(ALL) NOPASSWD: ALL
-  '';
+  security.sudo.wheelNeedsPassword = false;
 
   users.defaultUserShell = pkgs.zsh;
   programs.zsh.enable = true;
