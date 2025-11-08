@@ -7,6 +7,10 @@
       "wheel"
     ];
     shell = pkgs.zsh;
+
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBCNN0FY6PqVhfejv10JDfq56G1DTR4RWNjPpt/LSNRN"
+    ];
   };
 
   users.users.jsquats = {

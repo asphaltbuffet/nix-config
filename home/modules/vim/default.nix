@@ -119,6 +119,9 @@
       noremap <C-k> <C-w>k
       noremap <C-l> <C-w>l
       noremap <C-h> <C-w>h
+
+      " nix formatting
+      noremap <Leader>af :%!alejandra -qq
     '';
   };
 }

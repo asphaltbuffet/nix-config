@@ -77,6 +77,12 @@
     clean.extraArgs = lib.mkDefault "--keep-since 4d --keep 3";
   };
 
+  # system.autoUpgrade.enable = true;
+  # system.autoUpgrade.dates = "*-*-* *:04:00";
+  # system.autoUpgrade.flake = "github:asphaltbuffet/nix-config#${config.networking.hostName}";
+  # system.autoUpgrade.flags = ["--refresh"];
+  # system.autoUpgrade.randomizedDelaySec = "5m";
+
   programs.vim = {
     enable = true;
     defaultEditor = true;
