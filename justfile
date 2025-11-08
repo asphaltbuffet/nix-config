@@ -14,6 +14,10 @@ update:
 build host=hostname:
     nh os build -H {{ host }} .
 
+# build with uncommitted changes
+dirty host=hostname:
+    sudo nixos-rebuild build --flake .#{{ host }}
+
 # rebuild and switch
 switch host=hostname:
     nh os switch -H {{ host }} .
