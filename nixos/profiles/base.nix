@@ -28,6 +28,19 @@
   networking.networkmanager.enable = true;
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
+  # Enable NFS for automounting
+  boot.supportedFilesystems = ["nfs"];
+
+  fileSystems."/mnt/nas" = {
+    device = "nas01.armadillo-toad.ts.net:/Volume1";
+    fsType = "nfs";
+    options = [
+      "x-systemd.automount"
+      "noauto"
+      "x-systemd.idle-timeout=600"
+    ];
+  };
+
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
 
@@ -114,8 +127,9 @@
   };
 
   environment.systemPackages = with pkgs; [
-    git
     curl
+    git
+    rclone
     wget
   ];
 }
