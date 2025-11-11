@@ -31,8 +31,8 @@
   # Enable NFS for automounting
   boot.supportedFilesystems = ["nfs"];
 
-  fileSystems."/mnt/nas/public" = {
-    device = "nas01.armadillo-toad.ts.net:/Volume1/public";
+  fileSystems."/mnt/nas" = {
+    device = "nas01.armadillo-toad.ts.net:/Volume1";
     fsType = "nfs";
     options = [
       "x-systemd.automount"
@@ -127,8 +127,9 @@
   };
 
   environment.systemPackages = with pkgs; [
-    git
     curl
+    git
+    rclone
     wget
   ];
 }
