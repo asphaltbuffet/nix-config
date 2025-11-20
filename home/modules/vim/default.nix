@@ -19,6 +19,7 @@
       vim-easy-align
       vim-fugitive
       vim-gitgutter
+      vim-go
       vim-indent-guides
       vim-lastplace
       vim-repeat
