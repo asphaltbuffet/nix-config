@@ -15,6 +15,7 @@
     jq
     presenterm
     taplo
+    go-task
     tig
     gum
     uv
