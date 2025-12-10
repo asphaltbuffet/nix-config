@@ -10,11 +10,13 @@
   ];
 
   home.packages = with pkgs; [
+    # go
     gccgo15
+
     git-absorb
     ijq
-    jj
     jq
+    jujutsu
     presenterm
     taplo
     go-task
