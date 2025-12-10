@@ -10,8 +10,10 @@
   ];
 
   home.packages = with pkgs; [
+    gccgo15
     git-absorb
     ijq
+    jj
     jq
     presenterm
     taplo

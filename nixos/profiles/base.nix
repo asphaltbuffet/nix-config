@@ -31,15 +31,10 @@
   # Enable NFS for automounting
   boot.supportedFilesystems = ["nfs"];
 
-  fileSystems."/mnt/nas" = {
-    device = "nas01.armadillo-toad.ts.net:/Volume1";
-    fsType = "nfs";
-    options = [
-      "x-systemd.automount"
-      "noauto"
-      "x-systemd.idle-timeout=600"
-    ];
-  };
+  fonts.packages = with pkgs; [
+    fira-code
+    roboto-mono
+  ];
 
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
@@ -74,6 +69,12 @@
   services.tailscale.enable = lib.mkDefault true;
   services.openssh.enable = lib.mkDefault true;
   services.printing.enable = lib.mkDefault true;
+
+  services.xserver.xkb = {
+    layout = "us";
+    options = "caps:swapescape";
+    variant = "";
+  };
 
   nix.settings = {
     experimental-features = [
@@ -131,5 +132,6 @@
     git
     rclone
     wget
+    wireguard-tools
   ];
 }
