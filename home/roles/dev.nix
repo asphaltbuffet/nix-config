@@ -6,7 +6,7 @@
 }: {
   imports = [
     ../modules/delta
-    ../modules/go
+    ../modules/mise
   ];
 
   home.packages = with pkgs; [
@@ -19,7 +19,6 @@
     ijq
     jq
     jujutsu
-    mise
     presenterm
     taplo
     tig
