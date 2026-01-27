@@ -24,5 +24,8 @@
     taplo
     tig
     uv
+
+    # nur
+    nur.repos.goreleaser.goreleaser-pro
   ];
 }
