@@ -14,14 +14,15 @@
     gccgo15
 
     git-absorb
+    go-task
+    gum
     ijq
     jq
     jujutsu
+    mise
     presenterm
     taplo
-    go-task
     tig
-    gum
     uv
   ];
 }
