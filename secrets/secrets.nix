@@ -11,4 +11,8 @@ in {
     publicKeys = users ++ systems;
     armor = true;
   };
+  "goreleaser.age" = {
+    publicKeys = users ++ systems;
+    armor = true;
+  };
 }
