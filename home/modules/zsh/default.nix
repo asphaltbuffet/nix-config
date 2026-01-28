@@ -24,7 +24,6 @@
       plugins = [
         "mattmc3/zephyr path:plugins/completion"
         "mdumitru/git-aliases"
-        "ohmyzsh/ohmyzsh path:plugins/mise"
         "peterhurford/up.zsh"
         "rummik/zsh-tailf"
         "mattmc3/zman"
