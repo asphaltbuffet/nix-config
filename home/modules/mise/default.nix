@@ -15,6 +15,7 @@
         experimental = true;
         task_output = "prefix";
       };
+
       tools = {
         go = "1.25";
       };
