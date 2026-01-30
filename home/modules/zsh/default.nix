@@ -22,6 +22,7 @@
       enable = true;
 
       plugins = [
+        "romkatv/powerlevel10k"
         "mattmc3/zephyr path:plugins/completion"
         "mdumitru/git-aliases"
         "peterhurford/up.zsh"
