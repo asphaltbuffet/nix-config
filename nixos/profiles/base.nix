@@ -60,6 +60,16 @@
     zsh
   ];
 
+  age.secrets.goreleaser = {
+    file = ../../secrets/goreleaser.age;
+    owner = "root";
+    group = "wheel";
+    mode = "0600";
+  };
+  environment.variables = {
+    GORELEASER_KEY = ''$(cat "${config.age.secrets.goreleaser.path}")'';
+  };
+
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 

@@ -6,7 +6,8 @@
 }: {
   imports = [
     ../modules/delta
-    ../modules/go
+    ../modules/mise
+    ../modules/jj
   ];
 
   home.packages = with pkgs; [
@@ -18,8 +19,6 @@
     gum
     ijq
     jq
-    jujutsu
-    mise
     presenterm
     taplo
     tig

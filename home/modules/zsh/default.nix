@@ -8,6 +8,13 @@
       VISUAL = "vim";
     };
 
+    initContent = ''
+      autoload -Uz promptinit && promptinit && prompt powerlevel10k
+
+      # source p10k config file managed by HomeManager
+      [[ ! -f $ZDOTDIR/.p10k.zsh ]] || source $ZDOTDIR/.p10k.zsh
+    '';
+
     defaultKeymap = "viins";
     enableCompletion = true;
     autocd = true;
@@ -22,10 +29,11 @@
       enable = true;
 
       plugins = [
+        "mafredri/zsh-async"
+        "romkatv/powerlevel10k kind:fpath"
+        "romkatv/zsh-bench kind:path"
         "mattmc3/zephyr path:plugins/completion"
         "mdumitru/git-aliases"
-        "peterhurford/up.zsh"
-        "rummik/zsh-tailf"
         "mattmc3/zman"
         "agkozak/zsh-z"
       ];
@@ -39,10 +47,8 @@
       lt = "eza -T";
 
       md = "mkdir -p";
-
-      gst = "git status";
-      gd = "git diff";
-      glods = ''git log --graph --pretty="%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%ad) %C(bold blue)<%an>%Creset" --date=short'';
     };
   };
+
+  home.file."${config.xdg.configHome}/zsh/.p10k.zsh".source = ./.p10k.zsh;
 }

@@ -17,6 +17,13 @@
     email = "30903912+asphaltbuffet@users.noreply.github.com";
   };
 
+  programs.jujutsu.settings = {
+    user = {
+      name = "Ben Lechlitner";
+      email = "30903912+asphaltbuffet@users.noreply.github.com";
+    };
+  };
+
   # Personal touches
   home.packages = with pkgs; [
     obsidian
