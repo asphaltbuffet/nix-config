@@ -12,6 +12,7 @@
       editorconfig-vim
       fzf-vim
       jq-vim
+      nerdtree
       papercolor-theme
       vim-airline
       vim-airline-themes
@@ -22,6 +23,8 @@
       vim-go
       vim-indent-guides
       vim-lastplace
+      vim-nerdtree-tabs
+      vim-nix
       vim-repeat
       vim-rhubarb # required by vim-fugitive
       vim-surround
@@ -122,7 +125,17 @@
       noremap <C-h> <C-w>h
 
       " nix formatting
-      noremap <Leader>af :%!alejandra -qq
+      noremap <silent> <Leader>af :%!alejandra -qq<CR>
+
+      "" NERDTree config
+      let g:NERDTreeChDirMode=2
+      let g:NERDTreeIgnore=['\~$']
+      let g:NERDTreeSortOrder=[]
+      let g:NERDTreeShowBookmarks=1
+      let g:NERDTreeWinSize=50
+      set wildignore+=*/tmp/*,*.swp
+      nnoremap <silent> <F2> :NERDTreeFind<CR>
+      nnoremap <silent> <F3> :NERDTreeToggle<CR>
     '';
   };
 }
