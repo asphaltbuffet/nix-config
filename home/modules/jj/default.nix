@@ -7,19 +7,17 @@
       ui = {
         editor = "${pkgs.vim}/bin/vim";
         default-command = ["status"];
+        diff-editor = ":builtin";
       };
 
-      fix = {
-        tools = {
-          alejandra = {
-            command = [
-              "${pkgs.alejandra}/bin/alejandra"
-              "--quiet"
-            ];
-            patterns = [
-              "glob:'**/*.nix'"
-            ];
-          };
+      aliases = {
+        tug = ["bookmark" "move" "--from" "heads(::@- & bookmarks())" "--to" "@-"];
+      };
+
+      fix.tools = {
+        alejandra = {
+          command = ["${pkgs.alejandra}/bin/alejandra" "--quiet"];
+          patterns = ["glob:'**/*.nix'"];
         };
       };
     };
