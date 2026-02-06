@@ -8,6 +8,7 @@
     ../modules/delta
     ../modules/mise
     ../modules/jj
+    ../modules/nvim
   ];
 
   home.packages = with pkgs; [

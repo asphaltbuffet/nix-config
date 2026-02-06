@@ -12,18 +12,19 @@
       editorconfig-vim
       fzf-vim
       jq-vim
+      nerdtree
       papercolor-theme
       vim-airline
       vim-airline-themes
       vim-commentary
       vim-easy-align
-      vim-fugitive
-      vim-gitgutter
       vim-go
       vim-indent-guides
       vim-lastplace
+      vim-nerdtree-tabs
+      vim-nix
+      vim-nix
       vim-repeat
-      vim-rhubarb # required by vim-fugitive
       vim-surround
       vim-unimpaired
     ];
@@ -67,10 +68,6 @@
       nnoremap n nzzzv
       nnoremap N Nzzzv
 
-      if exists("*fugitive#statusline")
-        set statusline+=%{fugitive#statusline()}
-      endif
-
       nnoremap <silent> <leader>sh :terminal<CR>
 
       "" Abbreviations
@@ -90,13 +87,6 @@
       " Split
       noremap <Leader>h :<C-u>split<CR>
       noremap <Leader>v :<C-u>vsplit<CR>
-
-      " Git
-      noremap <Leader>ga :Gwrite<CR>
-      noremap <Leader>gc :Git commit --verbose<CR>
-      noremap <Leader>gs :Git<CR>
-      noremap <Leader>gb :Git blame<CR>
-      noremap <Leader>gr :GRemove<CR>
 
       " fzf
       set wildmode=list:longest,list:full
@@ -122,7 +112,18 @@
       noremap <C-h> <C-w>h
 
       " nix formatting
-      noremap <Leader>af :%!alejandra -qq
+      noremap <silent> <Leader>af :%!alejandra -qq<CR>
+
+      "" NERDTree config
+      let g:NERDTreeChDirMode=2
+      let g:NERDTreeIgnore=['\~$']
+      let g:NERDTreeSortOrder=[]
+      let g:NERDTreeShowBookmarks=1
+      let g:NERDTreeWinSize=50
+      set wildignore+=*/tmp/*,*.swp
+      nnoremap <silent> <F2> :NERDTreeFind<CR>
+      nnoremap <silent> <F3> :NERDTreeToggle<CR>
+      noremap <silent> <Leader>af :%!alejandra -qq<CR>
     '';
   };
 }

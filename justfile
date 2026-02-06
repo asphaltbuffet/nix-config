@@ -10,21 +10,21 @@ default: help
 update:
     nix flake update
 
-# rebuild but do not make active
+# build new config
 build host=hostname:
     nh os build -H {{ host }} .
 
-# build with uncommitted changes
-dirty host=hostname:
-    sudo nixos-rebuild build --flake .#{{ host }}
-
-# rebuild and switch
+# build/activate new config + make boot default
 switch host=hostname:
     nh os switch -H {{ host }} .
 
 # update, rebuild and switch
 update-switch host=hostname:
     nh os switch -uH {{ host }} .
+
+# build/activate
+test host=hostname:
+    nh os test -H {{ host }} .
 
 # remove old build artifacts
 clean generations="3" since="5d":
