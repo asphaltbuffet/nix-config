@@ -7,6 +7,7 @@
     agenix = {
       url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.darwin.follows = "";
     };
 
     alejandra = {
@@ -79,9 +80,12 @@
             home-manager
             nixos-hardware
             goreleaser-nur
+            nur
             ;
         };
         modules = [
+          nur.modules.nixos.default
+          # nur.repos.charmbracelet.modules.crush
           ({config, ...}: {config = {nixpkgs.overlays = overlays;};})
           {
             environment.systemPackages = [

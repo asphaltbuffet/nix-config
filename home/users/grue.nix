@@ -1,8 +1,14 @@
 # home/users/grue.nix
-{pkgs, ...}: {
+{
+  pkgs,
+  config,
+  inputs,
+  ...
+}: {
   imports = [
-    ../roles/base.nix
+    inputs.agenix.homeManagerModules.default
 
+    ../roles/base.nix
     ../roles/admin.nix
     ../roles/dev.nix
     ../roles/player.nix
@@ -23,6 +29,14 @@
       email = "30903912+asphaltbuffet@users.noreply.github.com";
     };
   };
+
+  # Goreleaser Pro key for releases
+  age.secrets.goreleaser.file = ../../secrets/goreleaser.age;
+
+  # Set GORELEASER_KEY from decrypted secret at shell init
+  programs.zsh.initContent = ''
+    [[ -f "${config.age.secrets.goreleaser.path}" ]] && export GORELEASER_KEY="$(cat "${config.age.secrets.goreleaser.path}")"
+  '';
 
   # Personal touches
   home.packages = with pkgs; [

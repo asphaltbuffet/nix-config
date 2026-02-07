@@ -16,6 +16,7 @@
 
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
+  home-manager.extraSpecialArgs = {inherit inputs;};  # pass flake inputs to home-manager
 
   # Set your time zone.
   time.timeZone = "America/New_York";
@@ -60,16 +61,6 @@
     zsh
   ];
 
-  age.secrets.goreleaser = {
-    file = ../../secrets/goreleaser.age;
-    owner = "root";
-    group = "wheel";
-    mode = "0600";
-  };
-  environment.variables = {
-    GORELEASER_KEY = ''$(cat "${config.age.secrets.goreleaser.path}")'';
-  };
-
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
@@ -100,12 +91,6 @@
     clean.enable = true;
     clean.extraArgs = lib.mkDefault "--keep-since 4d --keep 3";
   };
-
-  # system.autoUpgrade.enable = true;
-  # system.autoUpgrade.dates = "*-*-* *:04:00";
-  # system.autoUpgrade.flake = "github:asphaltbuffet/nix-config#${config.networking.hostName}";
-  # system.autoUpgrade.flags = ["--refresh"];
-  # system.autoUpgrade.randomizedDelaySec = "5m";
 
   programs.vim = {
     enable = true;
