@@ -46,6 +46,26 @@
         "type": "github"
       }
     },
+    "charmbracelet-nur": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1770302584,
+        "narHash": "sha256-ls0ARIA9TqFaCIkQ9LNwyd1wnacaPQmwbj08GoowLqk=",
+        "owner": "charmbracelet",
+        "repo": "nur",
+        "rev": "d5005e4f9480de47a2e8dd89e13f5e84ea93e91c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "charmbracelet",
+        "repo": "nur",
+        "type": "github"
+      }
+    },
     "fenix": {
       "inputs": {
         "nixpkgs": [
@@ -271,6 +291,7 @@
       "inputs": {
         "agenix": "agenix",
         "alejandra": "alejandra",
+        "charmbracelet-nur": "charmbracelet-nur",
         "goreleaser-nur": "goreleaser-nur",
         "home-manager": "home-manager_2",
         "nix-index-database": "nix-index-database",

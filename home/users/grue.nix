@@ -30,12 +30,14 @@
     };
   };
 
-  # Goreleaser Pro key for releases
+  # Agenix secrets
   age.secrets.goreleaser.file = ../../secrets/goreleaser.age;
+  age.secrets.anthropic.file = ../../secrets/anthropic.age;
 
-  # Set GORELEASER_KEY from decrypted secret at shell init
+  # Set API keys from decrypted secrets at shell init
   programs.zsh.initContent = ''
     [[ -f "${config.age.secrets.goreleaser.path}" ]] && export GORELEASER_KEY="$(cat "${config.age.secrets.goreleaser.path}")"
+    [[ -f "${config.age.secrets.anthropic.path}" ]] && export ANTHROPIC_API_KEY="$(cat "${config.age.secrets.anthropic.path}")"
   '';
 
   # Personal touches

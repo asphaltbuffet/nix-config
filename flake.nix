@@ -32,6 +32,10 @@
     # NURs
     nur.url = "github:nix-community/NUR";
     goreleaser-nur.url = "github:goreleaser/nur";
+    charmbracelet-nur = {
+      url = "github:charmbracelet/nur";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs @ {
@@ -44,6 +48,7 @@
     nixos-hardware,
     nur,
     goreleaser-nur,
+    charmbracelet-nur,
     systems,
     ...
   }: let
@@ -80,12 +85,12 @@
             home-manager
             nixos-hardware
             goreleaser-nur
+            charmbracelet-nur
             nur
             ;
         };
         modules = [
           nur.modules.nixos.default
-          # nur.repos.charmbracelet.modules.crush
           ({config, ...}: {config = {nixpkgs.overlays = overlays;};})
           {
             environment.systemPackages = [
