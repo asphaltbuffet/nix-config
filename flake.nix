@@ -49,7 +49,6 @@
     nur,
     goreleaser-nur,
     charmbracelet-nur,
-    systems,
     ...
   }: let
     overlays = [
