@@ -16,7 +16,7 @@
 
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
-  home-manager.extraSpecialArgs = {inherit inputs;};  # pass flake inputs to home-manager
+  home-manager.extraSpecialArgs = {inherit inputs;}; # pass flake inputs to home-manager
 
   # Set your time zone.
   time.timeZone = "America/New_York";

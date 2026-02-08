@@ -57,7 +57,7 @@ diff host=hostname:
 # Format all nix files with alejandra
 [group('dev')]
 fmt:
-    alejandra {{ flake }}
+    alejandra -qq {{ flake }}
 
 # Check flake outputs for errors
 [group('dev')]
