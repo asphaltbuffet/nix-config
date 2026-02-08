@@ -15,4 +15,8 @@ in {
     publicKeys = users ++ systems;
     armor = true;
   };
+  "anthropic.age" = {
+    publicKeys = users ++ systems;
+    armor = true;
+  };
 }

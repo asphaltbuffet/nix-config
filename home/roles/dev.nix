@@ -5,9 +5,11 @@
   ...
 }: {
   imports = [
+    ../modules/claude
+    ../modules/crush
     ../modules/delta
-    ../modules/mise
     ../modules/jj
+    ../modules/mise
     ../modules/nvim
   ];
 
