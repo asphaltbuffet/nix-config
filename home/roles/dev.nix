@@ -1,13 +1,10 @@
 # home/roles/dev.nix
-{
-  pkgs,
-  lib,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [
     ../modules/claude
     ../modules/crush
     ../modules/delta
+    ../modules/elf
     ../modules/jj
     ../modules/mise
     ../modules/nvim
@@ -19,13 +16,14 @@
 
     git-absorb
     go-task
-    nixd
     gum
     ijq
     jq
+    nixd
     presenterm
     taplo
     tig
+    upx
     uv
 
     # nur
