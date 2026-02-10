@@ -19,6 +19,7 @@
 
     git-absorb
     go-task
+    nixd
     gum
     ijq
     jq
