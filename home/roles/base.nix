@@ -51,7 +51,7 @@
 
   #### Default environment setup ####
   home.sessionVariables = {
-    EDITOR = lib.mkDefault "vim";
+    EDITOR = lib.mkDefault "nvim";
     LANG = "en_US.UTF-8";
     PAGER = lib.mkDefault "less";
   };

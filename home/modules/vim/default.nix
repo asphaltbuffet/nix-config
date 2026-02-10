@@ -12,6 +12,6 @@
 
   programs.vim = {
     enable = true;
-    defaultEditor = true;
+    defaultEditor = false;
   };
 }

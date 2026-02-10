@@ -37,7 +37,7 @@
       init.defaultBranch = "main";
       merge = {
         conflictstyle = "zdiff3";
-        tool = "vimdiff";
+        tool = "nvimdiff";
       };
       mergetool.prompt = false;
       push = {
