@@ -5,7 +5,7 @@
 
     settings = {
       ui = {
-        editor = "${pkgs.vim}/bin/vim";
+        editor = "${pkgs.neovim}/bin/nvim";
         default-command = ["status"];
         diff-editor = ":builtin";
       };

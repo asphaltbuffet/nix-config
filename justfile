@@ -27,8 +27,7 @@ test host=hostname:
 
 # Update flake inputs and switch in one step
 [group('build')]
-update-switch host=hostname:
-    nix flake update {{ flake }}
+update-switch host=hostname: update
     nh os switch -H {{ host }} {{ flake }}
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -38,7 +37,7 @@ update-switch host=hostname:
 # Update flake.lock to latest versions
 [group('maintenance')]
 update:
-    nix flake update {{ flake }}
+    nix flake update
 
 # Remove old generations and garbage collect
 [group('maintenance')]
