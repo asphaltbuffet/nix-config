@@ -36,6 +36,11 @@
       url = "github:charmbracelet/nur";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    elf = {
+      url = "github:asphaltbuffet/elf";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs @ {
@@ -49,6 +54,7 @@
     nur,
     goreleaser-nur,
     charmbracelet-nur,
+    elf,
     ...
   }: let
     # Supported systems - add more as needed (e.g., "aarch64-linux" for ARM servers)
