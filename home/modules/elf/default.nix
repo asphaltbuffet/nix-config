@@ -9,7 +9,7 @@
 
   programs.elf = {
     enable = true;
-    package = inputs.elf.packages.${pkgs.system}.default;
+    package = inputs.elf.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
     settings = {
       language = "go";
