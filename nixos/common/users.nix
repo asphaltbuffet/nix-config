@@ -7,6 +7,7 @@
     isNormalUser = true;
     description = "grue";
     extraGroups = [
+      "docker"
       "networkmanager"
       "wheel"
     ];

@@ -75,6 +75,9 @@
     variant = "";
   };
 
+  # Enable Docker
+  virtualisation.docker.enable = true;
+
   nix.settings = {
     experimental-features = [
       "nix-command"
