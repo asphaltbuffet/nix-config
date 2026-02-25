@@ -3,11 +3,14 @@
   pkgs,
   lib,
   config,
+  inputs,
   ...
 }: {
   #### Core imports ####
   # Pull in your shared app modules so every user gets consistent configs
   imports = [
+    inputs.nix-index-database.hmModules.nix-index
+
     ../modules/eza
     ../modules/fzf
     ../modules/git
@@ -28,8 +31,10 @@
   xdg.enable = true;
   fonts.fontconfig.enable = true;
 
-  #### nix-index (for “command-not-found” functionality) ####
-  programs.nix-index.enable = true;
+  #### nix-index-database + comma ####
+  # Provides fast command-not-found via pre-built indexes
+  # comma lets you run any command temporarily: , cowsay hello
+  programs.nix-index-database.comma.enable = true;
 
   #### Common CLI / UX tools ####
   home.packages = with pkgs; [
