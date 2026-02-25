@@ -1,9 +1,6 @@
 # nixos/profiles/laptop.nix
 {
-  config,
   pkgs,
-  nixos-hardware,
-  inputs,
   lib,
   ...
 }: {

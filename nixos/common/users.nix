@@ -1,8 +1,4 @@
-{
-  pkgs,
-  agenix,
-  ...
-}: {
+{pkgs, ...}: {
   users.users.grue = {
     isNormalUser = true;
     description = "grue";

@@ -2,14 +2,13 @@
 {
   pkgs,
   lib,
-  config,
   inputs,
   ...
 }: {
   #### Core imports ####
   # Pull in your shared app modules so every user gets consistent configs
   imports = [
-    inputs.nix-index-database.hmModules.nix-index
+    inputs.nix-index-database.homeModules.nix-index
 
     ../modules/eza
     ../modules/fzf

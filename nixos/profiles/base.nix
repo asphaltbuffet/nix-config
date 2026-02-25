@@ -1,7 +1,6 @@
 # nixos/profiles/base.nix
 {
   inputs,
-  config,
   pkgs,
   lib,
   ...
