@@ -125,6 +125,7 @@
   environment.systemPackages = with pkgs; [
     curl
     git
+    nix-ld
     rclone
     wget
     wireguard-tools
