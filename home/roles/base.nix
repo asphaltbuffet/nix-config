@@ -42,6 +42,7 @@
     fd
     just
     ripgrep
+    sd
     unzip
     wget
     xh

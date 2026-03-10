@@ -119,6 +119,8 @@
           pkgs.deadnix # find unused nix code
           agenix.packages.${system}.default # secrets management
           pkgs.just # command runner
+          pkgs.python3 # required by hookify claude plugin
+          pkgs.nodejs # provides npx for MCP servers (e.g. context7)
         ];
         shellHook = ''
           echo "nix-config dev shell"
@@ -126,6 +128,7 @@
           echo "  alejandra / statix / deadnix - format, lint, dead-code"
           echo "  agenix  - secrets management"
           echo "  just    - run: just <build|switch|test|fmt|check>"
+          echo "  npx     - node package runner (for MCP servers)"
         '';
       };
     });

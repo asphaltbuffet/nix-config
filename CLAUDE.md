@@ -44,6 +44,14 @@ This is a NixOS + home-manager flake for two hosts (wendigo, kushtaka). The conf
 
 **Flake** (`flake.nix`): `mkHost` builds a NixOS system by composing `nixos/hosts/<name>/configuration.nix` with NUR overlays and system packages. All flake inputs are passed to modules via `specialArgs`.
 
+## Preferred CLI Tools
+
+When running shell commands, prefer these modern alternatives:
+- `fd` instead of `find`
+- `rg` instead of `grep`
+- `sd` instead of `sed` (for in-place substitution)
+- `jq` instead of Python scripts for JSON processing
+
 ## Key Conventions
 
 - **Formatter**: alejandra (enforced in `nix flake check`). Always run `just fmt` before committing.
