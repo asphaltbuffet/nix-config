@@ -75,7 +75,7 @@ inputs:
 # Edit an encrypted secret (e.g., just secret-edit goreleaser)
 [group('secrets')]
 secret-edit name:
-    agenix -e {{ flake }}/secrets/{{ name }}.age
+    cd {{ flake }}/secrets && agenix -e {{ name }}.age
 
 # Re-encrypt all secrets after adding new keys
 [group('secrets')]
