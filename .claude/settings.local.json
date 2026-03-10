@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(just build:*)",
+      "Bash(jj status:*)",
+      "Bash(jj log:*)",
+      "Bash(just help:*)",
+      "Bash(jj show:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Skill(nixos-config)",
+      "Skill(claude-md-management:revise-claude-md)"
+    ]
+  },
+  "outputStyle": "Explanatory"
+}

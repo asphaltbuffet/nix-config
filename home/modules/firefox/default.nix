@@ -9,7 +9,8 @@
           "widget.use-xdg-desktop-portal.file-picker" = 1;
           "browser.aboutConfig.showWarning" = false;
           "browser.compactmode.show" = true;
-          "browser.cache.disk.enable" = false; # Be kind to hard drive
+          "browser.cache.disk.enable" = true;
+          "browser.cache.disk.capacity" = 524288; # 512 MB in KB — fine for NVMe SSD
 
           # Firefox 75+ remembers the last workspace it was opened on as part of its session management.
           # This is annoying, because I can have a blank workspace, click Firefox from the launcher, and

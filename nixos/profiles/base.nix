@@ -64,6 +64,25 @@
   # List services that you want to enable:
   services.envfs.enable = true;
   services.fwupd.enable = true;
+
+  # Refresh fwupd metadata weekly; only on AC power to avoid draining battery.
+  # Persistent=true ensures it runs on next boot if the scheduled time was missed.
+  systemd.timers.fwupd-refresh = {
+    wantedBy = ["timers.target"];
+    timerConfig = {
+      OnCalendar = "weekly";
+      Persistent = true;
+      RandomizedDelaySec = "2h";
+      ConditionACPower = true;
+    };
+  };
+  systemd.services.fwupd-refresh = {
+    description = "Refresh fwupd metadata";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.fwupd}/bin/fwupdmgr refresh --force";
+    };
+  };
   services.tailscale.enable = lib.mkDefault true;
   services.openssh.enable = lib.mkDefault true;
   services.printing.enable = lib.mkDefault true;
