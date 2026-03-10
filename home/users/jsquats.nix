@@ -12,6 +12,7 @@
     shell.enableZshIntegration = true;
 
     packages = with pkgs; [
+      signal-desktop
     ];
   };
 }

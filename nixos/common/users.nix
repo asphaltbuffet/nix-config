@@ -1,12 +1,9 @@
-{
-  pkgs,
-  agenix,
-  ...
-}: {
+{pkgs, ...}: {
   users.users.grue = {
     isNormalUser = true;
     description = "grue";
     extraGroups = [
+      "docker"
       "networkmanager"
       "wheel"
     ];

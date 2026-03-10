@@ -9,6 +9,11 @@
     font.name = "Fira Code";
     font.size = 14;
 
+    keybindings = {
+      "ctrl+shift+t" = "new_tab_with_cwd";
+      "ctrl+shift+enter" = "new_window_with_cwd";
+    };
+
     settings = {
       # fonts
       disable_ligatures = "cursor";

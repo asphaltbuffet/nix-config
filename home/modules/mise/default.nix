@@ -1,8 +1,4 @@
-{
-  pkgs,
-  lib,
-  ...
-}: {
+{...}: {
   programs.mise = {
     enable = true;
 
@@ -13,10 +9,6 @@
         color_theme = "charm";
         idiomatic_version_file_enable_tools = ["python"];
         experimental = true;
-      };
-
-      tools = {
-        go = "1.25";
       };
     };
   };

@@ -44,6 +44,14 @@ This is a NixOS + home-manager flake for two hosts (wendigo, kushtaka). The conf
 
 **Flake** (`flake.nix`): `mkHost` builds a NixOS system by composing `nixos/hosts/<name>/configuration.nix` with NUR overlays and system packages. All flake inputs are passed to modules via `specialArgs`.
 
+## Preferred CLI Tools
+
+When running shell commands, prefer these modern alternatives:
+- `fd` instead of `find`
+- `rg` instead of `grep`
+- `sd` instead of `sed` (for in-place substitution)
+- `jq` instead of Python scripts for JSON processing
+
 ## Key Conventions
 
 - **Formatter**: alejandra (enforced in `nix flake check`). Always run `just fmt` before committing.
@@ -55,3 +63,7 @@ This is a NixOS + home-manager flake for two hosts (wendigo, kushtaka). The conf
 - **Adding a host**: Create `nixos/hosts/<name>/` with `configuration.nix` and `hardware-configuration.nix`. It will be auto-discovered.
 - **Adding a user**: Create `home/users/<name>.nix`, add user definition and home-manager mapping in `nixos/common/users.nix`.
 - **NUR packages**: Accessed via `pkgs.nur.repos.<owner>.<pkg>` after overlay in flake.nix.
+- **New files + Nix flake**: The flake copies sources via `self`, so new files must be tracked before `just build` can see them. Use `jj file track <path>` (never `git add`).
+- **KDE Plasma + TLP**: `services.desktopManager.plasma6.enable` implicitly enables `power-profiles-daemon`. Use `lib.mkForce false` to disable it before enabling TLP (they are mutually exclusive).
+- **logind config**: Use `services.logind.settings.Login` (attrset), not the removed `services.logind.extraConfig` (string).
+- **GC already automated**: `programs.nh.clean.enable = true` in `base.nix` creates a systemd GC timer — no need to add a custom `nix-gc` timer.

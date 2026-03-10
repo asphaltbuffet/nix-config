@@ -1,0 +1,16 @@
+{
+  "name": "nixd-lsp",
+  "description": "Nix language server (nixd) for Claude Code",
+  "version": "1.0.0",
+  "lspServers": {
+    "nix": {
+      "command": "nixd",
+      "args": [],
+      "extensionToLanguage": {
+        ".nix": "nix"
+      },
+      "restartOnCrash": true,
+      "maxRestarts": 3
+    }
+  }
+}

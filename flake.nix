@@ -29,18 +29,13 @@
       url = "github:NixOS/nixos-hardware/master";
     };
 
-    # NURs
-    nur.url = "github:nix-community/NUR";
-    goreleaser-nur.url = "github:goreleaser/nur";
     charmbracelet-nur = {
       url = "github:charmbracelet/nur";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    elf = {
-      url = "github:asphaltbuffet/elf";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # NURs
+    nur.url = "github:nix-community/NUR";
   };
 
   outputs = inputs @ {
@@ -49,12 +44,8 @@
     agenix,
     alejandra,
     home-manager,
-    nix-index-database,
     nixos-hardware,
     nur,
-    goreleaser-nur,
-    charmbracelet-nur,
-    elf,
     ...
   }: let
     # Supported systems - add more as needed (e.g., "aarch64-linux" for ARM servers)
@@ -67,7 +58,6 @@
           nurpkgs = prev;
           pkgs = prev;
           repoOverrides = {
-            goreleaser = import goreleaser-nur {pkgs = prev;};
           };
         };
       })
@@ -88,17 +78,14 @@
             inputs
             nixpkgs
             agenix
-            alejandra
             home-manager
             nixos-hardware
-            goreleaser-nur
-            charmbracelet-nur
             nur
             ;
         };
         modules = [
           nur.modules.nixos.default
-          ({config, ...}: {config = {nixpkgs.overlays = overlays;};})
+          ({...}: {config = {nixpkgs.overlays = overlays;};})
           {
             environment.systemPackages = [
               agenix.packages.${system}.default
@@ -123,46 +110,25 @@
     # Development shell for working on this config
     devShells = forAllSystems (system: let
       pkgs = mkPkgs system;
-      nixVim = pkgs.neovim.override {
-        configure = {
-          customRC = ''
-            set number relativenumber
-            set expandtab tabstop=2 shiftwidth=2
-            lua << EOF
-            vim.g.mapleader = ','
-            -- nil LSP setup
-            vim.lsp.enable('nil_ls')
-            vim.keymap.set('n', 'gd', vim.lsp.buf.definition)
-            vim.keymap.set('n', 'K', vim.lsp.buf.hover)
-            vim.keymap.set('n', '<leader>f', function() vim.lsp.buf.format() end)
-            EOF
-          '';
-          packages.nix = with pkgs.vimPlugins; {
-            start = [
-              vim-nix # nix syntax highlighting
-              nvim-lspconfig # LSP configurations
-              plenary-nvim # required by many plugins
-              telescope-nvim # fuzzy finder
-            ];
-          };
-        };
-      };
     in {
       default = pkgs.mkShell {
         packages = [
-          nixVim # neovim configured for nix development
-          pkgs.nil # nix LSP server
+          pkgs.nixd # nix LSP (understands flake option types)
           pkgs.alejandra # nix formatter
           pkgs.statix # nix linter
-          agenix.packages.${system}.default
-          pkgs.just
+          pkgs.deadnix # find unused nix code
+          agenix.packages.${system}.default # secrets management
+          pkgs.just # command runner
+          pkgs.python3 # required by hookify claude plugin
+          pkgs.nodejs # provides npx for MCP servers (e.g. context7)
         ];
         shellHook = ''
           echo "nix-config dev shell"
-          echo "  nvim   - neovim with nix LSP"
-          echo "  nil    - nix language server"
-          echo "  statix - nix linter"
-          echo "  just   - command runner"
+          echo "  nixd    - nix language server"
+          echo "  alejandra / statix / deadnix - format, lint, dead-code"
+          echo "  agenix  - secrets management"
+          echo "  just    - run: just <build|switch|test|fmt|check>"
+          echo "  npx     - node package runner (for MCP servers)"
         '';
       };
     });
