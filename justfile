@@ -105,3 +105,12 @@ generation:
 [group('info')]
 help:
     @just --list --unsorted
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Benchmarking
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Create benchmark
+[group('benchmarking')]
+benchmark:
+    nix run {{ flake }}#benchmark

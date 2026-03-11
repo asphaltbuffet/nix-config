@@ -6,6 +6,7 @@
     sessionVariables = {
       EDITOR = "vim";
       VISUAL = "vim";
+      DIRENV_LOG_FORMAT = ""; # silence direnv loading/export messages
     };
 
     initContent = ''
