@@ -2,11 +2,7 @@
 # Power management for ThinkPad T14 Gen 1 laptops.
 # TLP and power-profiles-daemon are mutually exclusive; KDE Plasma enables PPD
 # by default, so we explicitly disable it here.
-{
-  pkgs,
-  lib,
-  ...
-}: {
+{lib, ...}: {
   services.power-profiles-daemon.enable = lib.mkForce false;
 
   services.tlp = {
@@ -14,17 +10,17 @@
     settings = {
       # CPU scaling governor and energy/performance policy
       CPU_SCALING_GOVERNOR_ON_AC = "performance";
-      CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
+      CPU_SCALING_GOVERNOR_ON_BAT = "schedutil";
       CPU_ENERGY_PERF_POLICY_ON_AC = "balance_performance";
-      CPU_ENERGY_PERF_POLICY_ON_BAT = "power";
+      CPU_ENERGY_PERF_POLICY_ON_BAT = "balance_power";
 
-      # Turbo boost: on when plugged in, off on battery
+      # Turbo boost: always on; EPP/governor manage the power/perf tradeoff
       CPU_BOOST_ON_AC = 1;
-      CPU_BOOST_ON_BAT = 0;
+      CPU_BOOST_ON_BAT = 1;
 
       # Platform profiles (Intel Mode 2 power management)
       PLATFORM_PROFILE_ON_AC = "balanced";
-      PLATFORM_PROFILE_ON_BAT = "low-power";
+      PLATFORM_PROFILE_ON_BAT = "balanced";
 
       # NVMe power saving
       PCIE_ASPM_ON_AC = "default";
@@ -51,6 +47,6 @@
     HandleLidSwitchExternalPower = "suspend";
     HandlePowerKey = "suspend";
     IdleAction = "suspend";
-    IdleActionSec = "30min";
+    IdleActionSec = "300";
   };
 }
