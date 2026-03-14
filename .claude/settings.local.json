@@ -10,7 +10,8 @@
       "Skill(nixos-config)",
       "Skill(claude-md-management:revise-claude-md)",
       "mcp__context7__query-docs",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(just fmt:*)"
     ]
   },
   "outputStyle": "Explanatory"

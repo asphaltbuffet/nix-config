@@ -15,6 +15,12 @@ default: help
 build host=hostname:
     nh os build -H {{ host }} {{ flake }}
 
+# Build the installer ISO (flash with: dd if=result/iso/*.iso of=/dev/sdX bs=4M)
+[group('build')]
+iso:
+    nix build {{ flake }}#installer
+    @echo "ISO: $(ls -1 result/iso/*.iso 2>/dev/null || echo 'build failed')"
+
 # Build and activate configuration (makes it boot default)
 [group('build')]
 switch host=hostname:
@@ -105,3 +111,12 @@ generation:
 [group('info')]
 help:
     @just --list --unsorted
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Benchmarking
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Create benchmark
+[group('benchmarking')]
+benchmark:
+    nix run {{ flake }}#benchmark
