@@ -96,6 +96,19 @@
         ];
       };
 
+    mkInstaller = system:
+      (nixpkgs.lib.nixosSystem {
+        inherit system;
+        specialArgs = {
+          inherit self inputs nixpkgs agenix;
+        };
+        modules = [
+          "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+          {environment.systemPackages = [agenix.packages.${system}.default];}
+          ./nixos/installer/configuration.nix
+        ];
+      }).config.system.build.isoImage;
+
     # discover all host directories under nixos/hosts
     hostnames = builtins.attrNames (builtins.readDir ./nixos/hosts);
   in {
@@ -106,6 +119,10 @@
       })
       hostnames
     );
+
+    packages = forAllSystems (system: {
+      installer = mkInstaller system;
+    });
 
     # Development shell for working on this config
     devShells = forAllSystems (system: let
