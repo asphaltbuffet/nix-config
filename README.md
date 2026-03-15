@@ -68,13 +68,13 @@ NixOS setup.
 
 ```bash
 just iso
-# ISO will be at result/iso/nixos-installer.iso
+# ISO will be at result/iso/*.iso
 ```
 
 Flash it to a USB drive:
 
 ```bash
-dd if=result/iso/nixos-installer.iso of=/dev/sdX bs=4M status=progress
+dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress
 ```
 
 ### Boot and Bootstrap
@@ -205,18 +205,54 @@ just secret-rekey
 
 ## Development
 
-Enter the dev shell for nix tooling:
+Enter the dev shell for nix tooling (includes everything needed to build,
+format, lint, manage secrets, and version-control the config):
 
 ```bash
 nix develop
 ```
 
-The dev shell includes:
-- `nvim` - Neovim configured for nix (LSP, formatting)
-- `nil` - Nix language server
-- `alejandra` - Nix formatter
-- `statix` - Nix linter
-- `agenix` - Secret management
+| Tool | Purpose |
+|------|---------|
+| `just` | Command runner — `just help` lists all recipes |
+| `nh` | Nix helper used by `just build/switch/test` |
+| `jj` | Jujutsu version control (`jj log`, `jj commit`, `jj git push`) |
+| `nixd` | Nix language server (LSP for editors) |
+| `alejandra` | Nix formatter — run `just fmt` before committing |
+| `statix` | Nix linter |
+| `deadnix` | Detects unused Nix bindings |
+| `agenix` | Secret management — used by `just secret-*` recipes |
+
+> **Note**: `jj` and `nh` are also needed on a blank machine (e.g. after first
+> install) to run `just switch`. Both are in the dev shell so `nix develop`
+> is sufficient without any pre-existing system configuration.
+
+### Testing the Installer ISO in a VM
+
+Before flashing to USB, you can validate the bootstrap process in a local QEMU VM:
+
+```bash
+just iso    # build the ISO first
+just vm     # boot it — serial console in your terminal
+```
+
+The VM:
+- Attaches a 20 GB scratch disk (`vm-disk.qcow2`) as the install target
+- Forwards SSH to `localhost:2222` — log in with `ssh -p 2222 nixos@localhost`
+- Boots from the ISO (disk is blank, like a real machine)
+
+Inside the VM the install disk is `/dev/vda` (virtio), not `/dev/nvme0n1` —
+substitute accordingly when partitioning.
+
+To `scp` artifacts from the VM back to this host, use port 2222:
+
+```bash
+scp -P 2222 nixos@localhost:/home/nixos/bootstrap-<hostname>/ssh_host_ed25519_key.pub \
+    nixos/hosts/<hostname>/ssh_host_ed25519_key.pub
+```
+
+Delete `vm-disk.qcow2` to start fresh on the next run. Run multiple VMs with
+different disk names: `just vm disk=vm2.qcow2`.
 
 ## Roles
 

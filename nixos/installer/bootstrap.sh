@@ -58,19 +58,31 @@ check_or_guide_mount() {
     return
   fi
 
+  # Detect the most likely target disk: first non-removable, non-loop disk
+  # excluding CD-ROM (sr*). NVMe uses p1/p2 suffixes; sda/vda use 1/2 directly.
+  local disk part_suffix
+  disk=$(lsblk -dnpo NAME,TYPE,RM | awk '$2=="disk" && $3=="0" {print $1}' | grep -v '^/dev/sr' | head -1)
+  if [[ -z "$disk" ]]; then
+    disk="/dev/sda"  # fallback
+  fi
+  if [[ "$disk" == *nvme* ]]; then
+    part_suffix="p"
+  else
+    part_suffix=""
+  fi
+
   echo ""
   echo "  /mnt is not mounted. Disk partitioning is required before bootstrapping."
   echo ""
-  echo "  Example for a single NVMe disk (adjust device name as needed):"
+  echo "  Detected disk: $disk  (verify with: lsblk)"
   echo ""
-  echo "    lsblk                              # identify your disk"
-  echo ""
-  echo "    parted /dev/nvme0n1 -- mklabel gpt"
-  echo "    parted /dev/nvme0n1 -- mkpart root ext4 512MB 100%"
-  echo "    parted /dev/nvme0n1 -- mkpart ESP fat32 1MB 512MB"
-  echo "    parted /dev/nvme0n1 -- set 2 esp on"
-  echo "    mkfs.ext4 -L nixos /dev/nvme0n1p1"
-  echo "    mkfs.fat -F 32 -n boot /dev/nvme0n1p2"
+  echo "    parted ${disk} -- mklabel gpt"
+  echo "    parted ${disk} -- mkpart root ext4 512MB -8GB"
+  echo "    parted ${disk} -- mkpart swap linux-swap -8GB 100%"
+  echo "    parted ${disk} -- mkpart ESP fat32 1MB 512MB"
+  echo "    parted ${disk} -- set 3 esp on"
+  echo "    mkfs.ext4 -L nixos ${disk}${part_suffix}1"
+  echo "    mkfs.fat -F 32 -n boot ${disk}${part_suffix}2"
   echo "    mount /dev/disk/by-label/nixos /mnt"
   echo "    mkdir -p /mnt/boot"
   echo "    mount /dev/disk/by-label/boot /mnt/boot"
@@ -200,12 +212,11 @@ write_host_files() {
     ./hardware-configuration.nix
     ../../common/users.nix
     ../../profiles/base.nix
+    ../../profiles/laptop
     # Uncomment for ThinkPad T14:
     # ../../profiles/laptop/t14.nix
     # Uncomment for Microsoft Surface (configures WiFi, touch, pen):
     # inputs.nixos-hardware.nixosModules.microsoft-surface-common
-    # Uncomment for gaming:
-    # ../../profiles/gaming.nix
   ];
 
   networking.hostName = "${HOSTNAME}";
@@ -222,12 +233,11 @@ CONF
     ./hardware-configuration.nix
     ../../common/users.nix
     ../../profiles/base.nix
+    ../../profiles/laptop
     # Uncomment for ThinkPad T14:
     # ../../profiles/laptop/t14.nix
     # Uncomment for Microsoft Surface (configures WiFi, touch, pen):
     # inputs.nixos-hardware.nixosModules.microsoft-surface-common
-    # Uncomment for gaming:
-    # ../../profiles/gaming.nix
   ];
 
   networking.hostName = "${HOSTNAME}";
@@ -281,7 +291,7 @@ secrets.nix, then rekey on an existing machine so the installed system can
 decrypt secrets on first boot.
 
 ==========================================
-  NEXT STEPS — paste this on wendigo or kushtaka
+  NEXT STEPS — use this on existing host that can edit secrets
 ==========================================
 
   cd ~/nix-config   # or wherever your checkout is
@@ -297,14 +307,14 @@ ${scp_block}
   # You can also review/edit nixos/hosts/${HOSTNAME}/configuration.nix now.
   \$EDITOR secrets/secrets.nix
 
-  # Rekey on THIS machine (wendigo/kushtaka) — uses your existing SSH key
+  # Rekey on THIS machine — uses your existing SSH key
   just secret-rekey
 
   # Track and commit (jj — do NOT use git add)
   jj file track nixos/hosts/${HOSTNAME}/configuration.nix
   jj file track nixos/hosts/${HOSTNAME}/hardware-configuration.nix
   jj commit -m 'feat: add host ${HOSTNAME}'
-  jj git push
+  jj git push -c @-
 
 ==========================================
   BACK ON THIS LIVE ISO — after the push completes
@@ -324,8 +334,10 @@ ${scp_block}
   reboot
 
 ==========================================
+  MISC NOTES
+==========================================
 
-Surface notes:
+Surface:
   - Secure Boot must be disabled to boot this ISO.
   - Surface Pro 3/4 may need a USB-A adapter for USB boot.
   - If WiFi/touch/pen doesn't work post-install, add the nixos-hardware

@@ -22,8 +22,9 @@ iso:
     @echo "ISO: $(ls -1 result/iso/*.iso 2>/dev/null || echo 'build failed')"
 
 # Boot the installer ISO in a QEMU VM for testing (creates a 20GB scratch disk)
-# SSH in with: ssh -p 2222 nixos@localhost
-# Run nixos-bootstrap, then on this host: scp -P 2222 nixos@localhost:/home/nixos/...
+# SSH in with: ssh -p 2222 nixos@localhost  (password: nixos)
+# scp from VM:  scp -P 2222 nixos@localhost:/home/nixos/... ./...
+# Exit QEMU:   Ctrl+A then X  (or run 'poweroff' inside the VM)
 [group('build')]
 vm disk="vm-disk.qcow2":
     #!/usr/bin/env bash
@@ -35,11 +36,12 @@ vm disk="vm-disk.qcow2":
     fi
     if [[ ! -f "{{ disk }}" ]]; then
         echo "Creating scratch disk: {{ disk }} (20G)"
-        nix run nixpkgs#qemu -- img create -f qcow2 "{{ disk }}" 20G
+        nix shell nixpkgs#qemu_test --command qemu-img create -f qcow2 "{{ disk }}" 20G
     fi
-    echo "Booting $iso — SSH available at localhost:2222 (nixos/nixos)"
+    echo "Booting $iso — SSH available at localhost:2222 (password: nixos)"
     echo "To remove the scratch disk afterwards: rm {{ disk }}"
-    nix run nixpkgs#qemu -- system-x86_64 \
+    echo "Exit: Ctrl+A then X"
+    nix shell nixpkgs#qemu_test --command qemu-system-x86_64 \
         -m 4096 \
         -smp 2 \
         -enable-kvm \
@@ -47,8 +49,7 @@ vm disk="vm-disk.qcow2":
         -drive file="{{ disk }}",format=qcow2 \
         -boot order=d \
         -nic user,model=virtio,hostfwd=tcp::2222-:22 \
-        -display none \
-        -serial mon:stdio
+        -nographic
 
 # Build and activate configuration (makes it boot default)
 [group('build')]

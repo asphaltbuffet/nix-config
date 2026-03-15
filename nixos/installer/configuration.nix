@@ -11,7 +11,7 @@
       coreutils # mountpoint, mkdir, chmod, cp, cat, cut, tee
       openssh # ssh-keygen, scp
       nixos-install-tools # nixos-generate-config, nixos-install
-      util-linux # mount helpers used by mountpoint
+      util-linux # mountpoint, lsblk
       less # pager for instructions
       git # clone the repo if network available
       curl # network availability probe
