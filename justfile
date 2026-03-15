@@ -21,6 +21,35 @@ iso:
     nix build {{ flake }}#installer
     @echo "ISO: $(ls -1 result/iso/*.iso 2>/dev/null || echo 'build failed')"
 
+# Boot the installer ISO in a QEMU VM for testing (creates a 20GB scratch disk)
+# SSH in with: ssh -p 2222 nixos@localhost
+# Run nixos-bootstrap, then on this host: scp -P 2222 nixos@localhost:/home/nixos/...
+[group('build')]
+vm disk="vm-disk.qcow2":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    iso=$(ls -1 result/iso/*.iso 2>/dev/null | head -1)
+    if [[ -z "$iso" ]]; then
+        echo "No ISO found — run 'just iso' first"
+        exit 1
+    fi
+    if [[ ! -f "{{ disk }}" ]]; then
+        echo "Creating scratch disk: {{ disk }} (20G)"
+        nix run nixpkgs#qemu -- img create -f qcow2 "{{ disk }}" 20G
+    fi
+    echo "Booting $iso — SSH available at localhost:2222 (nixos/nixos)"
+    echo "To remove the scratch disk afterwards: rm {{ disk }}"
+    nix run nixpkgs#qemu -- system-x86_64 \
+        -m 4096 \
+        -smp 2 \
+        -enable-kvm \
+        -cdrom "$iso" \
+        -drive file="{{ disk }}",format=qcow2 \
+        -boot order=d \
+        -nic user,model=virtio,hostfwd=tcp::2222-:22 \
+        -display none \
+        -serial mon:stdio
+
 # Build and activate configuration (makes it boot default)
 [group('build')]
 switch host=hostname:
