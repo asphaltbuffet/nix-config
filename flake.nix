@@ -135,7 +135,9 @@
           pkgs.statix # nix linter
           pkgs.deadnix # find unused nix code
           agenix.packages.${system}.default # secrets management
-          pkgs.just # command runner
+          pkgs.just # command runner (justfile recipes)
+          pkgs.nh # nix helper (build/switch/test wrappers)
+          pkgs.jujutsu # version control (jj)
           pkgs.phoronix-test-suite # benchmarking
           pkgs.p7zip # benchmark dependency
           pkgs.python3 # required by hookify claude plugin
@@ -149,11 +151,13 @@
         ];
         shellHook = ''
           echo "nix-config dev shell"
-          echo "  nixd    - nix language server"
+          echo "  nixd       - nix language server"
           echo "  alejandra / statix / deadnix - format, lint, dead-code"
-          echo "  agenix  - secrets management"
-          echo "  just    - run: just <build|switch|test|fmt|check>"
-          echo "  npx     - node package runner (for MCP servers)"
+          echo "  agenix     - secrets management"
+          echo "  just       - run: just <build|switch|test|fmt|check>"
+          echo "  nh         - nix helper (used by just recipes)"
+          echo "  jj         - jujutsu version control"
+          echo "  npx        - node package runner (for MCP servers)"
         '';
       };
     });

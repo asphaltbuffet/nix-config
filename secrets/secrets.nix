@@ -7,8 +7,13 @@ let
 
   wendigo = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDyrkGOX0lDcdIO5ehmjTzRhW9UEJwXRnFYAYbsFHz76 root@wendigo";
   kushtaka = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKfVXEd5gyLbgYnmmi9yrGL8zQcU2v8iXioIlSsCzZ57";
+  snallygaster = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFe7wihS5yWkQCZhkJI2YNFj+p6M1wLos+s+GBaCNTJG root@snallygaster";
 
-  systems = [wendigo kushtaka];
+  systems = [
+    wendigo
+    kushtaka
+    snallygaster
+  ];
 in {
   "tailscale.age" = {
     publicKeys = users ++ systems;
