@@ -1,6 +1,12 @@
 {pkgs, ...}: {
+  users.groups.grue.gid = 2001;
+  users.groups.jsquats.gid = 2003;
+  users.groups.sukey.gid = 2004;
+
   users.users.grue = {
     isNormalUser = true;
+    uid = 2001;
+    group = "grue";
     description = "grue";
     extraGroups = [
       "docker"
@@ -16,6 +22,8 @@
 
   users.users.jsquats = {
     isNormalUser = true;
+    uid = 2003;
+    group = "jsquats";
     description = "jasper";
     extraGroups = ["networkmanager"];
     shell = pkgs.bash;
@@ -23,6 +31,8 @@
 
   users.users.sukey = {
     isNormalUser = true;
+    uid = 2004;
+    group = "sukey";
     description = "sukey";
     extraGroups = ["networkmanager"];
     shell = pkgs.zsh;

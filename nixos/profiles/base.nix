@@ -10,6 +10,7 @@
     inputs.agenix.nixosModules.default
     ../common/1password.nix
     ../common/firefox.nix
+    ../common/nas.nix
     ../common/tailscale.nix
   ];
 
