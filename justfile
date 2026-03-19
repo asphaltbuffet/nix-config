@@ -105,25 +105,6 @@ inputs:
     nix flake metadata {{ flake }}
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Secrets (agenix)
-# ─────────────────────────────────────────────────────────────────────────────
-
-# Edit an encrypted secret (e.g., just secret-edit goreleaser)
-[group('secrets')]
-secret-edit name:
-    cd {{ flake }}/secrets && agenix -e {{ name }}.age
-
-# Re-encrypt all secrets after adding new keys
-[group('secrets')]
-secret-rekey:
-    cd {{ flake }}/secrets && agenix -r
-
-# List all available secrets
-[group('secrets')]
-secret-list:
-    @ls -1 {{ flake }}/secrets/*.age 2>/dev/null | xargs -I{} basename {} .age
-
-# ─────────────────────────────────────────────────────────────────────────────
 # SSH Key Management
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -168,14 +149,10 @@ ssh-rotate:
     echo "Step 2: Update home/modules/ssh/default.nix:"
     echo "  Replace signingKeyPub with the new public key string."
     echo ""
-    echo "Step 3: Update secrets/secrets.nix:"
-    echo "  Replace the grue public key entry."
-    echo ""
-    echo "Step 4: Update nixos/common/users.nix:"
+    echo "Step 3: Update nixos/common/users.nix:"
     echo "  Replace openssh.authorizedKeys.keys entry for grue."
     echo ""
-    echo "Step 5: just secret-rekey"
-    echo "Step 6: just switch (on all hosts)"
+    echo "Step 4: just switch (on all hosts)"
     echo "Step 7: Update GitHub SSH keys (auth + signing)."
     echo "Step 8: Update authorized_keys on any external servers."
     echo ""
@@ -230,7 +207,7 @@ ssh-add-host hostname pubkey:
     @echo ""
     @echo "2. Add '{{ hostname }}' to the systems = [...] list."
     @echo ""
-    @echo "3. Run: just secret-rekey && just switch"
+    @echo "3. Run: just switch"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Info

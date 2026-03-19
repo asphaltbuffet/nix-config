@@ -4,12 +4,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    agenix = {
-      url = "github:ryantm/agenix";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.darwin.follows = "";
-    };
-
     alejandra = {
       url = "github:kamadorueda/alejandra/4.0.0";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -41,7 +35,6 @@
   outputs = inputs @ {
     self,
     nixpkgs,
-    agenix,
     alejandra,
     home-manager,
     nixos-hardware,
@@ -77,7 +70,6 @@
             self
             inputs
             nixpkgs
-            agenix
             home-manager
             nixos-hardware
             nur
@@ -88,7 +80,6 @@
           ({...}: {config = {nixpkgs.overlays = overlays;};})
           {
             environment.systemPackages = [
-              agenix.packages.${system}.default
               alejandra.defaultPackage.${system}
             ];
           }
@@ -100,11 +91,10 @@
       (nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = {
-          inherit self inputs nixpkgs agenix;
+          inherit self inputs nixpkgs;
         };
         modules = [
           "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
-          {environment.systemPackages = [agenix.packages.${system}.default];}
           ./nixos/installer/configuration.nix
         ];
       }).config.system.build.isoImage;
@@ -134,7 +124,6 @@
           pkgs.alejandra # nix formatter
           pkgs.statix # nix linter
           pkgs.deadnix # find unused nix code
-          agenix.packages.${system}.default # secrets management
           pkgs.just # command runner (justfile recipes)
           pkgs.nh # nix helper (build/switch/test wrappers)
           pkgs.jujutsu # version control (jj)
@@ -153,7 +142,6 @@
           echo "nix-config dev shell"
           echo "  nixd       - nix language server"
           echo "  alejandra / statix / deadnix - format, lint, dead-code"
-          echo "  agenix     - secrets management"
           echo "  just       - run: just <build|switch|test|fmt|check>"
           echo "  nh         - nix helper (used by just recipes)"
           echo "  jj         - jujutsu version control"
