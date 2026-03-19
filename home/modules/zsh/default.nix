@@ -14,6 +14,11 @@
 
       # source p10k config file managed by HomeManager
       [[ ! -f $ZDOTDIR/.p10k.zsh ]] || source $ZDOTDIR/.p10k.zsh
+
+      # Inject 1Password secrets if op is available and signed in
+      if command -v op &>/dev/null; then
+        eval "$(op inject --in-file ${./secrets.env} 2>/dev/null)" || true
+      fi
     '';
 
     defaultKeymap = "viins";
