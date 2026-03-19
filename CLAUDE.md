@@ -67,3 +67,7 @@ When running shell commands, prefer these modern alternatives:
 - **KDE Plasma + TLP**: `services.desktopManager.plasma6.enable` implicitly enables `power-profiles-daemon`. Use `lib.mkForce false` to disable it before enabling TLP (they are mutually exclusive).
 - **logind config**: Use `services.logind.settings.Login` (attrset), not the removed `services.logind.extraConfig` (string).
 - **GC already automated**: `programs.nh.clean.enable = true` in `base.nix` creates a systemd GC timer — no need to add a custom `nix-gc` timer.
+- **SSH module**: `home/modules/ssh/default.nix` configures 1Password SSH agent via `programs.ssh.matchBlocks."*"` (not `extraConfig`). Set `enableDefaultConfig = false` to suppress the deprecated default Host * block warning. Use `programs.git.signing` (typed options) not raw `settings` keys for git signing.
+- **`programs.ssh.extraConfig` + assertion**: Setting `extraConfig` to a non-empty string requires `matchBlocks."*"` to exist, or home-manager throws an assertion. Always use `matchBlocks."*"` for default host config instead.
+- **Parallel subagents + jj**: Do NOT dispatch multiple subagents in parallel when they need to commit — jj has a single mutable working copy (`@`) and parallel agents conflict. Execute sequentially.
+- **`just ssh-verify`**: Uses `|| true` to absorb `ssh -T git@github.com`'s exit code 1 (GitHub always returns 1 for non-shell SSH). Without this, `set -euo pipefail` causes false failures.

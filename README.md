@@ -181,6 +181,26 @@ reboot
 2. Add user definition to `nixos/common/users.nix`
 3. Add `home-manager.users.<username>` mapping
 
+## SSH Key Management
+
+SSH keys are managed via [1Password SSH agent](https://developer.1password.com/docs/ssh/) — private key material never touches disk.
+
+| Layer | Tool | Where key lives |
+|-------|------|-----------------|
+| Interactive SSH auth | 1Password SSH agent | 1P vault only |
+| Git/jj commit signing | 1Password SSH agent | 1P vault only |
+| agenix decryption | Host system key | `/etc/ssh/ssh_host_ed25519_key` |
+
+```bash
+just ssh-verify       # Check agent, GitHub auth, and signing config
+just ssh-agent-check  # Verify 1Password agent is running
+just ssh-pubkey       # Print public key (for adding to servers)
+just ssh-rotate       # Guided key rotation workflow
+just ssh-add-host <hostname> "<pubkey>"  # Instructions for adding a new host key
+```
+
+See [`docs/security/ssh-key-management.md`](docs/security/ssh-key-management.md) for the full runbook and [`docs/security/new-host-onboarding.md`](docs/security/new-host-onboarding.md) for platform-specific setup (NixOS, Windows, Linux).
+
 ## Secrets Management
 
 Secrets are managed with [agenix](https://github.com/ryantm/agenix).

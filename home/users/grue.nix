@@ -12,6 +12,8 @@
     ../roles/admin.nix
     ../roles/dev.nix
     ../roles/player.nix
+
+    ../modules/ssh
   ];
 
   home.username = "grue";
@@ -33,7 +35,6 @@
   # Agenix secrets
   age.secrets.goreleaser.file = ../../secrets/goreleaser.age;
   age.secrets.anthropic.file = ../../secrets/anthropic.age;
-
   # Set API keys from decrypted secrets at shell init
   programs.zsh.initContent = ''
     [[ -f "${config.age.secrets.goreleaser.path}" ]] && export GORELEASER_KEY="$(cat "${config.age.secrets.goreleaser.path}")"

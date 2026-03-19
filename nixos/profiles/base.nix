@@ -10,6 +10,7 @@
     inputs.agenix.nixosModules.default
     ../common/1password.nix
     ../common/firefox.nix
+    ../common/nas.nix
     ../common/tailscale.nix
   ];
 
@@ -84,7 +85,22 @@
     };
   };
   services.tailscale.enable = lib.mkDefault true;
-  services.openssh.enable = lib.mkDefault true;
+  services.openssh = {
+    enable = lib.mkDefault true;
+    settings = {
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+      PermitRootLogin = "no";
+    };
+    # Restrict to ed25519 only — removes weaker RSA/ECDSA/DSA host keys.
+    # NixOS generates this key automatically on first boot.
+    hostKeys = [
+      {
+        path = "/etc/ssh/ssh_host_ed25519_key";
+        type = "ed25519";
+      }
+    ];
+  };
   services.printing.enable = lib.mkDefault true;
 
   services.xserver.xkb = {

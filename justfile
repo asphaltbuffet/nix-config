@@ -124,6 +124,115 @@ secret-list:
     @ls -1 {{ flake }}/secrets/*.age 2>/dev/null | xargs -I{} basename {} .age
 
 # ─────────────────────────────────────────────────────────────────────────────
+# SSH Key Management
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Show the current SSH public key from 1Password (for adding to servers/GitHub)
+[group('ssh')]
+ssh-pubkey:
+    @op item get "grue-main" --fields label="public key" 2>/dev/null || \
+        echo "Error: 1Password CLI not authenticated. Run: op signin"
+
+# Verify 1Password SSH agent is running and keys are available
+[group('ssh')]
+ssh-agent-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    socket="$HOME/.1password/agent.sock"
+    if [[ -S "$socket" ]]; then
+        echo "✓ 1Password SSH agent socket exists"
+        if SSH_AUTH_SOCK="$socket" ssh-add -l &>/dev/null; then
+            echo "✓ Agent is responding with keys"
+        else
+            echo "✗ Agent socket exists but no keys returned"
+            echo "  Is 1Password unlocked? Is SSH agent enabled in Settings → Developer?"
+            exit 1
+        fi
+    else
+        echo "✗ Agent socket not found at $socket"
+        echo "  Start 1Password and enable SSH agent in Settings → Developer"
+        exit 1
+    fi
+
+# Guided SSH key rotation workflow
+[group('ssh')]
+ssh-rotate:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "=== SSH Key Rotation Guide ==="
+    echo ""
+    echo "Step 1: Generate a new SSH key in 1Password:"
+    echo "  New Item → SSH Key → name: grue-main-$(date +%Y%m) → Ed25519 → Generate"
+    echo "  Copy the public key."
+    echo ""
+    echo "Step 2: Update home/modules/ssh/default.nix:"
+    echo "  Replace signingKeyPub with the new public key string."
+    echo ""
+    echo "Step 3: Update secrets/secrets.nix:"
+    echo "  Replace the grue public key entry."
+    echo ""
+    echo "Step 4: Update nixos/common/users.nix:"
+    echo "  Replace openssh.authorizedKeys.keys entry for grue."
+    echo ""
+    echo "Step 5: just secret-rekey"
+    echo "Step 6: just switch (on all hosts)"
+    echo "Step 7: Update GitHub SSH keys (auth + signing)."
+    echo "Step 8: Update authorized_keys on any external servers."
+    echo ""
+    echo "Verify with: just ssh-verify"
+
+# Verify SSH + signing setup end-to-end
+[group('ssh')]
+ssh-verify:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "=== SSH Setup Verification ==="
+    echo ""
+
+    socket="$HOME/.1password/agent.sock"
+
+    # Agent check
+    if [[ -S "$socket" ]] && SSH_AUTH_SOCK="$socket" ssh-add -l &>/dev/null; then
+        echo "  1Password agent  ✓"
+    else
+        echo "  1Password agent  ✗  (not responding)"
+    fi
+
+    # GitHub auth
+    # Note: `ssh -T git@github.com` always exits 1 (GitHub rejects shell access).
+    # Capture output separately so pipefail doesn't treat the ssh exit code as failure.
+    gh_output=$(SSH_AUTH_SOCK="$socket" ssh -T git@github.com 2>&1 || true)
+    if echo "$gh_output" | grep -q "successfully authenticated"; then
+        echo "  GitHub SSH auth  ✓"
+    else
+        echo "  GitHub SSH auth  ✗  (debug: SSH_AUTH_SOCK=$socket ssh -T git@github.com)"
+    fi
+
+    # Git signing config — use 'git config' (no --global) to read effective merged value.
+    # This avoids a legacy ~/.gitconfig from shadowing home-manager's config.
+    if git config gpg.format 2>/dev/null | grep -q "ssh"; then
+        echo "  Git signing      ✓"
+    else
+        echo "  Git signing      ✗  (check home/modules/ssh/default.nix)"
+    fi
+
+    echo ""
+    echo "Done."
+
+# Print instructions for adding a new host's public key to secrets.nix
+# Usage: just ssh-add-host <hostname> <pubkey>
+# Example: just ssh-add-host myserver "ssh-ed25519 AAAA..."
+# NOTE: This recipe is advisory — it prints instructions but does not edit files.
+[group('ssh')]
+ssh-add-host hostname pubkey:
+    @echo "1. Add to secrets/secrets.nix in the 'let' block:"
+    @echo "     {{ hostname }} = \"{{ pubkey }}\";"
+    @echo ""
+    @echo "2. Add '{{ hostname }}' to the systems = [...] list."
+    @echo ""
+    @echo "3. Run: just secret-rekey && just switch"
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Info
 # ─────────────────────────────────────────────────────────────────────────────
 

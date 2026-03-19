@@ -53,7 +53,7 @@
     forAllSystems = nixpkgs.lib.genAttrs systems;
 
     overlays = [
-      (final: prev: {
+      (_final: prev: {
         nur = import nur {
           nurpkgs = prev;
           pkgs = prev;
