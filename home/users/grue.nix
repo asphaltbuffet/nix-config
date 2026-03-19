@@ -12,6 +12,8 @@
     ../roles/admin.nix
     ../roles/dev.nix
     ../roles/player.nix
+
+    ../modules/ssh
   ];
 
   home.username = "grue";
