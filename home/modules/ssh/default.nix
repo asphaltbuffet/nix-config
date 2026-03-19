@@ -15,6 +15,9 @@ in {
   # SSH client configuration
   programs.ssh = {
     enable = true;
+    # We manage matchBlocks."*" ourselves; opt out of the deprecated default
+    # Host * block that home-manager injects automatically.
+    enableDefaultConfig = false;
   };
 
   # Route all SSH auth through 1Password agent.

@@ -189,29 +189,31 @@ ssh-verify:
     echo "=== SSH Setup Verification ==="
     echo ""
 
-    # Agent check
     socket="$HOME/.1password/agent.sock"
+
+    # Agent check
     if [[ -S "$socket" ]] && SSH_AUTH_SOCK="$socket" ssh-add -l &>/dev/null; then
-        echo "✓ 1Password SSH agent: OK"
+        echo "  1Password agent  ✓"
     else
-        echo "✗ 1Password SSH agent: NOT RESPONDING"
+        echo "  1Password agent  ✗  (not responding)"
     fi
 
     # GitHub auth
-    echo -n "  GitHub SSH auth: "
-    if SSH_AUTH_SOCK="$socket" ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
-        echo "✓ OK"
+    # Note: `ssh -T git@github.com` always exits 1 (GitHub rejects shell access).
+    # Capture output separately so pipefail doesn't treat the ssh exit code as failure.
+    gh_output=$(SSH_AUTH_SOCK="$socket" ssh -T git@github.com 2>&1 || true)
+    if echo "$gh_output" | grep -q "successfully authenticated"; then
+        echo "  GitHub SSH auth  ✓"
     else
-        echo "✗ FAILED (debug: SSH_AUTH_SOCK=$socket ssh -T git@github.com)"
+        echo "  GitHub SSH auth  ✗  (debug: SSH_AUTH_SOCK=$socket ssh -T git@github.com)"
     fi
 
     # Git signing config — use 'git config' (no --global) to read effective merged value.
     # This avoids a legacy ~/.gitconfig from shadowing home-manager's config.
-    echo -n "  Git signing: "
     if git config gpg.format 2>/dev/null | grep -q "ssh"; then
-        echo "✓ SSH signing configured"
+        echo "  Git signing      ✓"
     else
-        echo "✗ Not configured (check home/modules/ssh/default.nix)"
+        echo "  Git signing      ✗  (check home/modules/ssh/default.nix)"
     fi
 
     echo ""
