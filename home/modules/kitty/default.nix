@@ -15,6 +15,8 @@
     };
 
     settings = {
+      window_padding_width = "0 0 0 8"; # top right bottom left
+
       # fonts
       disable_ligatures = "cursor";
       scrollbar = "scrolled-and-hovered";
