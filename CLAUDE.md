@@ -17,22 +17,19 @@ just update             # Update flake.lock inputs
 just update-switch      # Update inputs and switch in one step
 ```
 
-Secrets management (agenix):
 ```bash
-just secret-list        # List available secrets
-just secret-edit <name> # Edit an encrypted secret
-just secret-rekey       # Re-encrypt after adding keys
+nix run .#benchmark     # Run phoronix benchmark suite (compress, ram, fio, blake2, openssl)
 ```
 
-Dev shell: `nix develop` provides nil (Nix LSP), alejandra, statix, and agenix.
+Dev shell: `nix develop` provides nixd (Nix LSP), alejandra, statix, deadnix, and just.
 
 ## Architecture
 
-This is a NixOS + home-manager flake for two hosts (wendigo, kushtaka). The config is layered:
+This is a NixOS + home-manager flake for three hosts (wendigo, kushtaka, snallygaster). The config is layered:
 
 **System side** (`nixos/`):
 - `hosts/<name>/configuration.nix` — Per-host entry point. Hosts are **auto-discovered** from directory names in `nixos/hosts/`.
-- `profiles/` — Shared system profiles (base.nix, gaming.nix, laptop/). `base.nix` imports home-manager, agenix, and all common modules.
+- `profiles/` — Shared system profiles (base.nix, server.nix, gaming.nix, laptop/). `base.nix` imports home-manager and all common modules. `server.nix` is the headless overlay for home-lab nodes (disables GUI/desktop services). See **Host type matrix** below.
 - `common/` — Reusable NixOS modules (users.nix, tailscale.nix, firefox.nix, 1password.nix).
 
 **User side** (`home/`):
@@ -43,6 +40,8 @@ This is a NixOS + home-manager flake for two hosts (wendigo, kushtaka). The conf
 **Binding layer**: `nixos/common/users.nix` defines system users AND maps `home-manager.users.<name>` to `home/users/<name>.nix`.
 
 **Flake** (`flake.nix`): `mkHost` builds a NixOS system by composing `nixos/hosts/<name>/configuration.nix` with NUR overlays and system packages. All flake inputs are passed to modules via `specialArgs`.
+- `shell.nix` — Dev shell definition (imported by `flake.nix`; also usable as a legacy `nix-shell`)
+- `apps/benchmark.nix` — Phoronix benchmark app (imported by `flake.nix`)
 
 ## Preferred CLI Tools
 
@@ -57,7 +56,7 @@ When running shell commands, prefer these modern alternatives:
 - **Formatter**: alejandra (enforced in `nix flake check`). Always run `just fmt` before committing.
 - **Linter**: statix (available in dev shell).
 - **VCS**: jujutsu (jj) colocated with git. Main branch is `main`.
-- **Secrets**: agenix. Keys defined in `secrets/secrets.nix`, encrypted files in `secrets/*.age`.
+- **Secrets**: Managed externally via 1Password (`op inject` in zsh). No agenix in this repo.
 - **Editor**: Neovim is the primary editor (`home/modules/nvim/`). Lua-based config with Nix-managed plugins, LSP (gopls, nixd, pyright, lua_ls), and carbonfox theme. The legacy vim module (`home/modules/vim/`) is still present but `defaultEditor` is disabled.
 - **Module pattern**: Home-manager tool configs live in `home/modules/<tool>/default.nix`. Import them from roles, not directly from user files.
 - **Adding a host**: Create `nixos/hosts/<name>/` with `configuration.nix` and `hardware-configuration.nix`. It will be auto-discovered.
@@ -71,3 +70,24 @@ When running shell commands, prefer these modern alternatives:
 - **`programs.ssh.extraConfig` + assertion**: Setting `extraConfig` to a non-empty string requires `matchBlocks."*"` to exist, or home-manager throws an assertion. Always use `matchBlocks."*"` for default host config instead.
 - **Parallel subagents + jj**: Do NOT dispatch multiple subagents in parallel when they need to commit — jj has a single mutable working copy (`@`) and parallel agents conflict. Execute sequentially.
 - **`just ssh-verify`**: Uses `|| true` to absorb `ssh -T git@github.com`'s exit code 1 (GitHub always returns 1 for non-shell SSH). Without this, `set -euo pipefail` causes false failures.
+
+## Host Type Matrix
+
+| Profile combination | Use case |
+|---|---|
+| `base.nix` + `server.nix` | Headless home-lab server (no GUI, hardened SSH) |
+| `base.nix` + `laptop/` | Laptop or desktop with KDE Plasma 6 |
+| `base.nix` + `laptop/` + `gaming.nix` | Gaming desktop |
+| `base.nix` + `laptop/` + `laptop/t14.nix` | Lenovo ThinkPad T14 |
+| `base.nix` + `laptop/` + `laptop/x1carbon.nix` | Lenovo ThinkPad X1 Carbon |
+
+`server.nix` and `laptop/` are mutually exclusive — never import both.
+
+## Workflow Skills
+
+Use these slash commands for guided workflows:
+
+- `/add-host` — Add a new NixOS host (prompts for host type, provides templates)
+- `/add-module` — Add a new home-manager module and wire it into a role
+- `/deploy` — Safe deployment workflow: fmt → build → diff → test/switch → verify
+- `/nix-build-check` — Build and optionally activate config for any host

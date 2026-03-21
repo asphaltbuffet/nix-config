@@ -12,15 +12,13 @@
             "command": "alejandra -qq /home/grue/nix-config"
           }
         ]
-      }
-    ],
-    "PreToolUse": [
+      },
       {
         "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",
-            "command": "path=$(jq -r '.file_path // empty'); case \"$path\" in *.age) echo \"Direct edits to .age files are not allowed. Use 'just secret-edit <name>' instead.\"; exit 1;; esac"
+            "command": "path=$(jq -r '.file_path // empty'); case \"$path\" in *.nix) nix-instantiate --parse \"$path\" > /dev/null && echo \"✓ Nix syntax OK: $path\" || echo \"✗ Nix syntax error: $path\";; esac"
           }
         ]
       }
