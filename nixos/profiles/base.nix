@@ -7,7 +7,6 @@
 }: {
   imports = [
     inputs.home-manager.nixosModules.home-manager
-    inputs.agenix.nixosModules.default
     ../common/1password.nix
     ../common/firefox.nix
     ../common/nas.nix

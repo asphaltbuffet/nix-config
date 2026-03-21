@@ -17,10 +17,11 @@ You are a specialized reviewer for this NixOS + home-manager flake repository. W
 ### NixOS Modules
 - Shared system config belongs in `nixos/common/` and must be imported from `nixos/profiles/`, not directly from hosts
 - Per-host overrides belong in `nixos/hosts/<name>/configuration.nix`
+- Known hosts: wendigo, kushtaka, snallygaster (auto-discovered from `nixos/hosts/` directory names)
 
 ### General Rules
 - No absolute paths like `/home/grue` — use `config.home.homeDirectory` or `config.users.users.<name>.home`
-- Secrets must reference `../../secrets/<name>.age` via `age.secrets.<name>.file`, not inline values
+- Secrets must never be inlined in Nix files. All secrets come from `op inject` (zsh env) or the 1Password SSH agent. No `.age` files exist — do not reference `age.secrets`.
 - No trailing commas in attrsets or lists (alejandra enforces this, but catch it early)
 - `lib.mkDefault` should be used in shared profiles for values hosts might want to override
 

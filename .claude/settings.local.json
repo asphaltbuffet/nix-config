@@ -2,16 +2,22 @@
   "permissions": {
     "allow": [
       "Bash(just build:*)",
+      "Bash(just diff:*)",
+      "Bash(just test:*)",
+      "Bash(just hosts:*)",
+      "Bash(just generation:*)",
+      "Bash(just fmt:*)",
+      "Bash(just help:*)",
       "Bash(jj status:*)",
       "Bash(jj log:*)",
-      "Bash(just help:*)",
       "Bash(jj show:*)",
+      "Bash(tailscale status:*)",
+      "Bash(nix-instantiate --parse:*)",
       "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
       "Skill(nixos-config)",
       "Skill(claude-md-management:revise-claude-md)",
-      "mcp__context7__query-docs",
-      "WebFetch(domain:github.com)",
-      "Bash(just fmt:*)"
+      "mcp__context7__query-docs"
     ]
   },
   "outputStyle": "Explanatory"
