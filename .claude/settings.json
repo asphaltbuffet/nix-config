@@ -9,16 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "alejandra -qq /home/grue/nix-config"
-          }
-        ]
-      },
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "path=$(jq -r '.file_path // empty'); case \"$path\" in *.nix) nix-instantiate --parse \"$path\" > /dev/null && echo \"✓ Nix syntax OK: $path\" || echo \"✗ Nix syntax error: $path\";; esac"
+            "command": "path=$(jq -r '.tool_input.file_path // empty'); case \"$path\" in *.nix) nix-instantiate --parse \"$path\" > /dev/null 2>&1 || { echo \"Nix syntax error in $path\" >&2; exit 2; };; esac"
           }
         ]
       }

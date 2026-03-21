@@ -10,9 +10,6 @@
     configPath = "${config.xdg.configHome}/starship/starship.toml";
 
     settings = {
-      # Blank line between prompts (matches p10k lean "sparse" style)
-      add_newline = true;
-
       # Left prompt: dir → jj (or git fallbacks) → newline → prompt char
       # ''${ is Nix's escape for a literal ${ inside ''...'' strings
       format = ''$all''${custom.jj}''${custom.git_branch}''${custom.git_commit}$line_break$character'';
