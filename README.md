@@ -223,6 +223,54 @@ just secret-edit <name>
 just secret-rekey
 ```
 
+## Auto-Deploy
+
+Hosts that opt in receive automatic NixOS updates via
+[nixos-autodeploy](https://github.com/hlsb-fulda/nixos-autodeploy).
+
+**How it works:**
+
+1. On every push to `main`, CI builds all host configurations and pushes closures to
+   the [`nix-config-grue` Cachix cache](https://app.cachix.org/cache/nix-config-grue).
+2. Each built store path is published to GitHub Pages at:
+   `https://asphaltbuffet.github.io/nix-config/hosts/<hostname>/store-path`
+3. A systemd timer on each opted-in host fetches its URL and applies the new
+   config (on next boot, by default).
+
+**Opting a host in:**
+
+Add to the host's `configuration.nix`:
+```nix
+system.autoDeploy.enable = true;
+```
+
+**Pausing auto-deploy for a host:**
+
+There are two complementary mechanisms:
+
+| Mechanism | Scope | How |
+|-----------|-------|-----|
+| CI skip file | Stops *publishing* new builds (host stays at last deployed version) | `just autodeploy-skip <hostname>` then track+commit the file |
+| Built-in divergence detection | Suspends *applying* updates after a manual `nixos-rebuild` | Automatic — `nixos-autodeploy` detects the divergence |
+
+```bash
+# Pause publishing for a host (stops CI from updating the store-path URL)
+just autodeploy-skip wendigo
+jj file track .autodeploy-skip/wendigo
+jj commit -m "chore: pause auto-deploy for wendigo"
+
+# Resume
+just autodeploy-resume wendigo
+jj commit -m "chore: resume auto-deploy for wendigo"
+
+# Check what store path is currently published for a host
+just autodeploy-status wendigo
+```
+
+**Disabling permanently:**
+
+Remove `system.autoDeploy.enable = true` from the host config (or set it to `false`).
+
 ## Development
 
 Enter the dev shell for nix tooling (includes everything needed to build,

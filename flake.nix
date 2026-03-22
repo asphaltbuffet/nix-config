@@ -30,6 +30,11 @@
 
     # NURs
     nur.url = "github:nix-community/NUR";
+
+    nixos-autodeploy = {
+      url = "github:hlsb-fulda/nixos-autodeploy";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs @ {

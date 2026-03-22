@@ -17,7 +17,8 @@
       "WebFetch(domain:github.com)",
       "Skill(nixos-config)",
       "Skill(claude-md-management:revise-claude-md)",
-      "mcp__context7__query-docs"
+      "mcp__context7__query-docs",
+      "Bash(nix flake:*)"
     ]
   },
   "outputStyle": "Explanatory"
