@@ -119,6 +119,8 @@
     ];
     warn-dirty = false;
     auto-optimise-store = true;
+    extra-substituters = ["https://nix-config-grue.cachix.org"];
+    extra-trusted-public-keys = ["nix-config-grue.cachix.org-1:9VBdph98gMqkzdSO5mCh3ReESB3IbvyQ08jzT1fB1Q8="];
   };
 
   programs.nh = {
