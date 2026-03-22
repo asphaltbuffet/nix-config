@@ -117,7 +117,7 @@
       status = {
         disabled = false;
         symbol = " ";
-        map_symbol = "true";
+        map_symbol = true;
         not_executable_symbol = " ";
         not_found_symbol = " ";
         sigint_symbol = "󰗖 ";
