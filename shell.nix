@@ -7,7 +7,9 @@ pkgs.mkShell {
     pkgs.deadnix # find unused nix code
     pkgs.just # command runner (justfile recipes)
     pkgs.nh # nix helper (build/switch/test wrappers)
+    pkgs.cachix # personal nix cache
     pkgs.jujutsu # version control (jj)
+    pkgs.gh # github cli
     pkgs.phoronix-test-suite # benchmarking
     pkgs.p7zip # benchmark dependency
     pkgs.python3 # required by hookify claude plugin
