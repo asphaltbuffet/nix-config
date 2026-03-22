@@ -15,31 +15,34 @@ just vm     # test it in QEMU (optional)
 ```
 The installer generates `/etc/ssh/ssh_host_ed25519_key` automatically.
 
-**2. Get the new host's public key** (run on the new machine):
+**2. Add the host to this repo** (run on an existing managed machine):
 ```bash
-cat /etc/ssh/ssh_host_ed25519_key.pub
+# The nixos-bootstrap script prints the exact scp commands to run.
+# After copying the host files:
+jj file track nixos/hosts/<hostname>/configuration.nix
+jj file track nixos/hosts/<hostname>/hardware-configuration.nix
+jj commit -m "feat: add host <hostname>"
+jj git push -c @-
 ```
 
-**3. Add the host to this repo** (run on an existing managed machine):
+**3. Install and first boot:**
 ```bash
-just ssh-add-host <hostname> "<pubkey from step 2>"
-# Follow the printed instructions to edit secrets/secrets.nix
-just secret-rekey
-jj commit -m "feat: add <hostname> to agenix recipients"
+# On the live ISO, after the push completes:
+nixos-install --flake github:asphaltbuffet/nix-config#<hostname>
+reboot
 ```
 
-**4. Deploy to the new host:**
+On first boot, authenticate Tailscale (one-time — state persists across reboots):
 ```bash
-just switch <hostname>
+sudo tailscale up --auth-key <your-auth-key>
 ```
-agenix decrypts secrets using the host's system key (no user key needed).
 
-**5. Install 1Password and enable SSH agent:**
+**4. Install 1Password and enable SSH agent:**
 - Download from https://1password.com/downloads/linux/
 - Sign in → Settings → Developer → Enable SSH Agent
 - Your `grue-main` key appears automatically (synced from vault)
 
-**6. Verify:**
+**5. Verify:**
 ```bash
 just ssh-verify
 ```

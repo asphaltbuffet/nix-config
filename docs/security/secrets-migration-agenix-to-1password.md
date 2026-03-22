@@ -1,5 +1,7 @@
 # Secrets Migration: agenix → 1Password
 
+> **Status: Complete** — Migration finished 2026-03-22. All three hosts (wendigo, kushtaka, snallygaster) verified working.
+
 ## Background
 
 This config previously used [agenix](https://github.com/ryantm/agenix) to manage three secrets:
@@ -38,8 +40,8 @@ eval "$(op inject --in-file ~/.config/op/secrets.env 2>/dev/null)" || true
 The template file `~/.config/op/secrets.env` (managed by home-manager) contains:
 
 ```
-export GORELEASER_KEY="op://Personal/GoReleaser/credential"
-export ANTHROPIC_API_KEY="op://Personal/Anthropic/credential"
+export GORELEASER_KEY="op://Private/GoReleaser/credential"
+export ANTHROPIC_API_KEY="op://Private/Anthropic/credential"
 ```
 
 If 1Password is locked, `op inject` fails silently (stderr suppressed, `|| true` prevents shell startup failure). The env vars are simply unset until the user unlocks 1Password and opens a new shell.

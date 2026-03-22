@@ -12,7 +12,8 @@ NixOS and home-manager configuration for personal systems.
 ├── nixos/
 │   ├── hosts/                # Per-host configurations
 │   │   ├── wendigo/          # ThinkPad T14 #1
-│   │   └── kushtaka/         # ThinkPad T14 #2
+│   │   ├── kushtaka/         # ThinkPad T14 #2
+│   │   └── snallygaster/     # ThinkPad X1 Carbon
 │   ├── profiles/             # Shared system profiles
 │   │   ├── base.nix          # All systems
 │   │   ├── gaming.nix        # Steam, gamemode
@@ -38,9 +39,7 @@ NixOS and home-manager configuration for personal systems.
 │       ├── git/
 │       └── ...
 │
-└── secrets/                  # Agenix encrypted secrets
-    ├── secrets.nix           # Secret definitions and keys
-    └── *.age                 # Encrypted secret files
+└── docs/                     # Documentation and research notes
 ```
 
 ## Quick Start
@@ -92,7 +91,7 @@ The helper will:
 - Prompt for a hostname
 - Generate `/mnt/etc/nixos/hardware-configuration.nix`
 - Pre-generate the host SSH key at `/mnt/etc/ssh/ssh_host_ed25519_key`
-  (so the public key is known before secrets are re-encrypted)
+  (needed for SSH access to the installed system)
 - Save all artifacts to `/home/nixos/bootstrap-<hostname>/`
 - Display step-by-step instructions in a scrollable pager (`q` to exit)
 - Save instructions to `/home/nixos/bootstrap-<hostname>/INSTRUCTIONS.txt`
@@ -118,11 +117,9 @@ mount /dev/disk/by-label/boot /mnt/boot
 
 `nixos-bootstrap` automates most of this. When network is available it clones
 the repo and writes the host files directly. You then SSH into an **existing
-machine** (wendigo/kushtaka) to pull those files, rekey secrets, commit, and
-push — because rekeying requires a private key that's already authorized (see
-[Secrets Management](#secrets-management) below for why).
+machine** to pull those files, commit, and push.
 
-**On wendigo or kushtaka** (the exact commands are printed by `nixos-bootstrap`):
+**On any existing host** (the exact commands are printed by `nixos-bootstrap`):
 
 ```bash
 cd ~/nix-config
@@ -133,13 +130,6 @@ scp nixos@<live-ip>:/home/nixos/nix-config/nixos/hosts/<hostname>/hardware-confi
     nixos/hosts/<hostname>/hardware-configuration.nix
 scp nixos@<live-ip>:/home/nixos/nix-config/nixos/hosts/<hostname>/configuration.nix \
     nixos/hosts/<hostname>/configuration.nix
-
-# Edit secrets/secrets.nix: add the new host pubkey and include it in systems[]
-# (pubkey is printed by nixos-bootstrap and saved to /home/nixos/bootstrap-<hostname>/)
-$EDITOR secrets/secrets.nix
-
-# Rekey on THIS machine — decrypts with your existing key, re-encrypts for new host
-just secret-rekey
 
 # Track and commit (jj — do NOT use git add)
 jj file track nixos/hosts/<hostname>/configuration.nix
@@ -155,9 +145,13 @@ nixos-install --flake github:asphaltbuffet/nix-config#<hostname>
 reboot
 ```
 
-> **Important**: Do not wipe `/mnt/etc/ssh/` before running `nixos-install`.
-> The pre-generated host key must survive to the installed system so agenix
-> can decrypt secrets on first boot.
+After first boot, authenticate Tailscale interactively:
+
+```bash
+sudo tailscale up --auth-key <key>
+```
+
+Then sign in to 1Password — API keys will be available in new shells immediately.
 
 ### Surface-Specific Notes
 
@@ -189,7 +183,7 @@ SSH keys are managed via [1Password SSH agent](https://developer.1password.com/d
 |-------|------|-----------------|
 | Interactive SSH auth | 1Password SSH agent | 1P vault only |
 | Git/jj commit signing | 1Password SSH agent | 1P vault only |
-| agenix decryption | Host system key | `/etc/ssh/ssh_host_ed25519_key` |
+| API key injection | 1Password CLI (`op inject`) | 1P vault only |
 
 ```bash
 just ssh-verify       # Check agent, GitHub auth, and signing config
@@ -203,25 +197,27 @@ See [`docs/security/ssh-key-management.md`](docs/security/ssh-key-management.md)
 
 ## Secrets Management
 
-Secrets are managed with [agenix](https://github.com/ryantm/agenix).
+Secrets are managed via [1Password](https://1password.com) using the `op inject`
+CLI pattern — no encrypted files in the repo, no host key ceremony when adding
+new machines.
 
-Each secret is encrypted to a list of public keys (user SSH keys + host SSH
-keys). When you add a new host, you add its public key to `secrets/secrets.nix`
-and run `just secret-rekey` **on an existing trusted machine** — agenix decrypts
-each secret using your current SSH identity and re-encrypts it so the new host
-can also decrypt it after installation. The new machine cannot perform rekeying
-itself because it isn't yet an authorized decryptor.
+User-session secrets (API keys) are injected into zsh at login via:
 
 ```bash
-# List secrets
-just secret-list
-
-# Edit a secret
-just secret-edit <name>
-
-# Re-encrypt after adding keys
-just secret-rekey
+eval "$(op inject --in-file ~/.config/op/secrets.env 2>/dev/null)" || true
 ```
+
+The template (`home/modules/zsh/secrets.env`) contains `op://` references —
+inert without an authenticated 1Password session. If 1Password is locked, the
+shell opens normally and env vars are simply unset until you unlock and open a
+new shell.
+
+Tailscale authentication state persists in `/var/lib/tailscale/` — no auth key
+is stored in the config. On a fresh install, run `sudo tailscale up --auth-key
+<key>` once interactively; subsequent reboots reconnect automatically.
+
+See [`docs/security/secrets-migration-agenix-to-1password.md`](docs/security/secrets-migration-agenix-to-1password.md)
+for the full rationale and migration notes.
 
 ## Auto-Deploy
 
@@ -274,7 +270,7 @@ Remove `system.autoDeploy.enable = true` from the host config (or set it to `fal
 ## Development
 
 Enter the dev shell for nix tooling (includes everything needed to build,
-format, lint, manage secrets, and version-control the config):
+format, lint, and version-control the config):
 
 ```bash
 nix develop
@@ -289,7 +285,6 @@ nix develop
 | `alejandra` | Nix formatter — run `just fmt` before committing |
 | `statix` | Nix linter |
 | `deadnix` | Detects unused Nix bindings |
-| `agenix` | Secret management — used by `just secret-*` recipes |
 
 > **Note**: `jj` and `nh` are also needed on a blank machine (e.g. after first
 > install) to run `just switch`. Both are in the dev shell so `nix develop`
