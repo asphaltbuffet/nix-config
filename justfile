@@ -268,6 +268,6 @@ autodeploy-resume host:
 # Usage: just autodeploy-status wendigo
 [group('autodeploy')]
 autodeploy-status host=hostname:
-    @curl -sf "https://asphaltbuffet.github.io/nix-config/hosts/{{ host }}/store-path" \
+    @curl -sfL "https://asphaltbuffet.github.io/nix-config/hosts/{{ host }}/store-path" \
         && echo "" \
         || echo "No store path published yet for {{ host }}"
