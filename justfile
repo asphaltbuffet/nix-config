@@ -236,3 +236,38 @@ help:
 [group('benchmarking')]
 benchmark:
     nix run {{ flake }}#benchmark
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Auto-Deploy
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Pause CI store-path publishing for a host (build still runs, Cachix still updated)
+# Usage: just autodeploy-skip wendigo
+[group('autodeploy')]
+autodeploy-skip host:
+    @if [ -f ".autodeploy-skip/{{ host }}" ]; then \
+        echo "{{ host }} is already skipped"; \
+    else \
+        touch ".autodeploy-skip/{{ host }}" && \
+        jj file track ".autodeploy-skip/{{ host }}" && \
+        echo "Created .autodeploy-skip/{{ host }} — commit to activate"; \
+    fi
+
+# Resume CI store-path publishing for a host
+# Usage: just autodeploy-resume wendigo
+[group('autodeploy')]
+autodeploy-resume host:
+    @if [ ! -f ".autodeploy-skip/{{ host }}" ]; then \
+        echo "{{ host }} is not currently skipped"; \
+    else \
+        rm ".autodeploy-skip/{{ host }}" && \
+        echo "Removed .autodeploy-skip/{{ host }} — commit to resume auto-deploy"; \
+    fi
+
+# Show the current published store path for a host (requires curl)
+# Usage: just autodeploy-status wendigo
+[group('autodeploy')]
+autodeploy-status host=hostname:
+    @curl -sf "https://asphaltbuffet.github.io/nix-config/hosts/{{ host }}/store-path" \
+        && echo "" \
+        || echo "No store path published yet for {{ host }}"
