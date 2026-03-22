@@ -55,7 +55,7 @@ When running shell commands, prefer these modern alternatives:
 
 - **Formatter**: alejandra (enforced in `nix flake check`). Always run `just fmt` before committing.
 - **Linter**: statix (available in dev shell).
-- **VCS**: jujutsu (jj) colocated with git. Main branch is `main`.
+- **VCS**: jujutsu (jj) colocated with git. Main branch is `main`. For isolated workspaces use `jj workspace add <path> --name <name>` (not `git worktree add`); no `.gitignore` entry needed.
 - **Secrets**: Managed externally via 1Password (`op inject` in zsh). No agenix in this repo.
 - **Editor**: Neovim is the primary editor (`home/modules/nvim/`). Lua-based config with Nix-managed plugins, LSP (gopls, nixd, pyright, lua_ls), and carbonfox theme. The legacy vim module (`home/modules/vim/`) is still present but `defaultEditor` is disabled.
 - **Module pattern**: Home-manager tool configs live in `home/modules/<tool>/default.nix`. Import them from roles, not directly from user files.
@@ -70,6 +70,8 @@ When running shell commands, prefer these modern alternatives:
 - **`programs.ssh.extraConfig` + assertion**: Setting `extraConfig` to a non-empty string requires `matchBlocks."*"` to exist, or home-manager throws an assertion. Always use `matchBlocks."*"` for default host config instead.
 - **Parallel subagents + jj**: Do NOT dispatch multiple subagents in parallel when they need to commit — jj has a single mutable working copy (`@`) and parallel agents conflict. Execute sequentially.
 - **`just ssh-verify`**: Uses `|| true` to absorb `ssh -T git@github.com`'s exit code 1 (GitHub always returns 1 for non-shell SSH). Without this, `set -euo pipefail` causes false failures.
+- **nix.settings binary caches**: Use `extra-substituters` / `extra-trusted-public-keys` to append a cache without replacing the default `cache.nixos.org`. Bare `substituters` / `trusted-public-keys` are replacement lists.
+- **Auto-deploy**: `nixos-autodeploy` is active (see `nixos/common/autodeploy.nix`). Hosts opt in with `system.autoDeploy.enable = true`. Store paths are published to GitHub Pages; verify with `just autodeploy-status <host>`. switchMode defaults to `"boot"` (applies on next reboot, not immediately).
 
 ## Host Type Matrix
 
