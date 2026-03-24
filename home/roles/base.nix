@@ -21,6 +21,7 @@
     ../modules/firefox
 
     # GUI stuff
+    ../modules/1password
     ../modules/kitty
     ../modules/mullvad
   ];
