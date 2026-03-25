@@ -10,8 +10,6 @@ permissions: {}
 jobs:
   build:
     uses: ./.github/workflows/build-hosts.yml
-    permissions:
-      contents: read
     with:
       publish-pages: true
     secrets:

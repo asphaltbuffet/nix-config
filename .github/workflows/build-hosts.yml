@@ -62,6 +62,8 @@ jobs:
           ref: ${{ inputs.ref }}
 
       - uses: DeterminateSystems/determinate-nix-action@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       # cachix-action installs a Nix post-build hook that automatically pushes
       # all newly built store paths to the cache — no manual `cachix push` needed.
