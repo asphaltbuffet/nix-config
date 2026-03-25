@@ -1,0 +1,21 @@
+name: "pr check"
+# Runs on every PR targeting main to verify all hosts build successfully.
+# Required status checks are sourced from this workflow's build jobs.
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-hosts.yml
+    with:
+      publish-pages: false
+    secrets:
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      CACHIX_SIGNING_KEY: ${{ secrets.CACHIX_SIGNING_KEY }}

@@ -5,95 +5,13 @@ on:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
-  build:
-    name: "build ${{ matrix.host }}"
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        host: [wendigo, kushtaka, snallygaster]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: DeterminateSystems/determinate-nix-action@v3
-
-      # cachix-action installs a Nix post-build hook that automatically pushes
-      # all newly built store paths to the cache — no manual `cachix push` needed.
-      - name: Install Cachix
-        uses: cachix/cachix-action@v15
-        with:
-          name: nix-config-grue
-          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-          signingKey: ${{ secrets.CACHIX_SIGNING_KEY }}
-
-      - name: Build ${{ matrix.host }}
-        id: build
-        run: |
-          # --print-out-paths emits the store path on stdout; capture it directly.
-          # cachix-action's post-build hook pushes the path to the cache automatically.
-          store_path=$(nix build \
-            .#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel \
-            --no-link \
-            --print-out-paths)
-          echo "store_path=${store_path}" >> "$GITHUB_OUTPUT"
-
-      - name: Write store path artifact
-        run: |
-          if [ -f ".autodeploy-skip/${{ matrix.host }}" ]; then
-            echo "⏭ ${{ matrix.host }} is in .autodeploy-skip — skipping store-path publish"
-            exit 0
-          fi
-          mkdir -p "pages-artifact/hosts/${{ matrix.host }}"
-          echo -n "${{ steps.build.outputs.store_path }}" \
-            > "pages-artifact/hosts/${{ matrix.host }}/store-path"
-
-      - name: Upload pages fragment
-        uses: actions/upload-artifact@v4
-        with:
-          name: pages-${{ matrix.host }}
-          path: pages-artifact/
-          if-no-files-found: ignore
-
-  publish:
-    name: "publish to GitHub Pages"
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
-
-    steps:
-      - name: Download all pages fragments
-        uses: actions/download-artifact@v4
-        with:
-          pattern: pages-*
-          merge-multiple: true
-          path: pages-artifact/
-
-      # Ensure the artifact directory is never empty — upload-pages-artifact fails
-      # on an empty directory. This handles the edge case where all hosts are skipped.
-      - name: Ensure non-empty artifact
-        run: |
-          if [ -z "$(ls -A pages-artifact/ 2>/dev/null)" ]; then
-            mkdir -p pages-artifact
-            echo "All hosts skipped — no store paths updated." > pages-artifact/index.html
-          fi
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: pages-artifact/
-
-      - name: Deploy to GitHub Pages
-        id: deploy
-        uses: actions/deploy-pages@v4
+  build-and-publish:
+    uses: ./.github/workflows/build-hosts.yml
+    with:
+      publish-pages: true
+    secrets:
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      CACHIX_SIGNING_KEY: ${{ secrets.CACHIX_SIGNING_KEY }}

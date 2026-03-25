@@ -5,12 +5,12 @@
 #   1. Checks /mnt is mounted (with guided setup if not)
 #   2. Prompts for hostname
 #   3. Generates hardware-configuration.nix
-#   4. Pre-generates the host SSH keypair (pubkey needed before rekeying)
+#   4. Pre-generates the host SSH keypair (for SSH access to the installed system)
 #   5. Clones the nix-config repo if network is available
 #   6. Writes hardware-configuration.nix and a template configuration.nix
 #      directly into the cloned repo
 #   7. Prints a single command block to paste on an existing machine (wendigo/kushtaka)
-#      to edit secrets.nix, rekey, commit, and push
+#      to commit and push
 #   8. Waits for confirmation, then runs nixos-install
 #
 # All required tools are injected via runtimeInputs in configuration.nix —
@@ -279,36 +279,15 @@ build_instructions() {
 
   cat <<INSTRUCTIONS
 ==========================================
-  KEY CONCEPT: why rekeying needs an existing machine
-==========================================
-
-agenix encrypts each secret to a list of public keys. Re-encrypting (rekeying)
-requires DECRYPTING the current secrets first — which needs a private key that
-is already authorized (your user SSH key or an existing host key). The new
-host's private key is only on /mnt/etc/ssh/ and is not yet trusted, so rekeying
-CANNOT be done from the new machine. You add the new host's public key to
-secrets.nix, then rekey on an existing machine so the installed system can
-decrypt secrets on first boot.
-
-==========================================
-  NEXT STEPS — use this on existing host that can edit secrets
+  NEXT STEPS — use this on existing host
 ==========================================
 
   cd ~/nix-config   # or wherever your checkout is
 
 ${scp_block}
 
-  # Edit secrets/secrets.nix to add the new host — pubkey is in:
-  #   nixos/hosts/${HOSTNAME}/ssh_host_ed25519_key.pub
-  # Add a binding before the systems list:
-  #   ${HOSTNAME} = "<contents of ssh_host_ed25519_key.pub>";
-  # Then add \${${HOSTNAME}} to the systems list.
-  #
-  # You can also review/edit nixos/hosts/${HOSTNAME}/configuration.nix now.
-  \$EDITOR secrets/secrets.nix
-
-  # Rekey on THIS machine — uses your existing SSH key
-  just secret-rekey
+  # Review/edit the host configuration if needed
+  \$EDITOR nixos/hosts/${HOSTNAME}/configuration.nix
 
   # Track and commit (jj — do NOT use git add)
   jj file track nixos/hosts/${HOSTNAME}/configuration.nix
@@ -326,12 +305,21 @@ ${scp_block}
   # Install
   nixos-install --flake ${FLAKE_REPO}#${HOSTNAME}
 
-  IMPORTANT: Do NOT wipe /mnt/etc/ssh/ before running nixos-install.
-  The pre-generated host key must survive to the installed system so
-  agenix can decrypt secrets on first boot.
-
   # Reboot
   reboot
+
+==========================================
+  POST-INSTALL (first boot)
+==========================================
+
+  # Authenticate Tailscale (one-time — state persists across reboots thereafter)
+  sudo tailscale up --auth-key <your-auth-key>
+
+  # Sign in to 1Password
+  op signin
+
+  # API keys (GORELEASER_KEY, ANTHROPIC_API_KEY) inject automatically
+  # in new shells once 1Password is unlocked.
 
 ==========================================
   MISC NOTES

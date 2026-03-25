@@ -5,6 +5,7 @@
     ../modules/crush
     ../modules/delta
     ../modules/direnv
+    ../modules/gh
     ../modules/jj
     ../modules/mise
     ../modules/nvim

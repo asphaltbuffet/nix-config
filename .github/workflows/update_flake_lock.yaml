@@ -1,21 +1,94 @@
 name: "update flake lock"
 # https://forrestjacobs.com/keeping-nixos-systems-up-to-date-with-github-actions/
+#
+# Flow: update lock → build all hosts → open PR only on success.
+# Merging the PR triggers autodeploy.yml, which rebuilds and publishes store paths.
 
 on:
   workflow_dispatch: # allows manual triggering
   schedule:
     - cron: '0 4 * * 0' # runs weekly on Sunday at 04:00
 
+permissions: {}
+
 jobs:
-  nix-flake-update:
+  update:
+    name: "update flake.lock"
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-      id-token: write
-      issues: write
-      pull-requests: write
-    runs-on: ubuntu-latest
+    outputs:
+      branch: ${{ steps.push.outputs.branch }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: DeterminateSystems/determinate-nix-action@v3
-      - id: update
-        uses: DeterminateSystems/update-flake-lock@v28
+
+      - name: Update flake.lock
+        run: nix flake update
+
+      - name: Push update branch
+        id: push
+        run: |
+          branch="flake-lock-update-$(date +%Y%m%d)"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add flake.lock
+          if git diff --cached --quiet; then
+            echo "No changes to flake.lock — nothing to do." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git commit -m "chore: update flake.lock"
+          # --force-with-lease safely overwrites a same-day branch from a prior run
+          # without clobbering unrelated upstream changes.
+          git push origin "$branch" --force-with-lease
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: update
+    if: needs.update.outputs.branch != ''
+    uses: ./.github/workflows/build-hosts.yml
+    with:
+      ref: ${{ needs.update.outputs.branch }}
+      publish-pages: false
+    secrets:
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      CACHIX_SIGNING_KEY: ${{ secrets.CACHIX_SIGNING_KEY }}
+
+  open-pr:
+    name: "open pull request"
+    needs: [update, build]
+    if: needs.update.outputs.branch != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create pull request
+        id: pr
+        env:
+          # Must use a PAT here — PRs opened with GITHUB_TOKEN do not trigger
+          # workflow runs, so status checks never fire and branch protection
+          # rules can never be satisfied. A PAT makes the PR appear user-initiated.
+          GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
+          BRANCH: ${{ needs.update.outputs.branch }}
+        run: |
+          pr_number=$(gh pr create \
+            --title "chore: update flake.lock" \
+            --body "Automated weekly update of \`flake.lock\` inputs.
+
+          All hosts built successfully against this lock file.
+          Merging will trigger \`autodeploy.yml\`, which publishes store paths for pickup by \`nixos-autodeploy\`." \
+            --head "$BRANCH" \
+            --base main \
+            --json number \
+            --jq '.number')
+          echo "number=$pr_number" >> "$GITHUB_OUTPUT"
+
+      - name: Enable auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
+        run: gh pr merge "${{ steps.pr.outputs.number }}" --auto --rebase

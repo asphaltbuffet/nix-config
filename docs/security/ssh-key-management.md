@@ -8,7 +8,7 @@ This repo uses a hybrid SSH key model:
 |-------|------|-----------------|
 | Interactive SSH auth | 1Password SSH agent | 1P vault only |
 | Git/jj commit signing | 1Password SSH agent | 1P vault only |
-| agenix decryption | Host system key | `/etc/ssh/ssh_host_ed25519_key` |
+| API key injection | 1Password CLI (`op inject`) | 1P vault only |
 
 Private key material for user identity **never exists as a file on disk**.
 The 1Password agent signs operations without exposing key material.
@@ -43,24 +43,16 @@ Follow the guided steps. The old key stays valid until you remove it from server
 just ssh-verify
 ```
 
-## Adding a New NixOS Host to agenix
+## Adding a New NixOS Host
 
-```bash
-# 1. On the new host, get its system SSH public key:
-cat /etc/ssh/ssh_host_ed25519_key.pub
-
-# 2. In this repo, follow the guided instructions:
-just ssh-add-host <hostname> "<pubkey from step 1>"
-
-# 3. Re-encrypt and deploy:
-just secret-rekey
-just switch
-```
+Use the ISO bootstrap process — run `nixos-bootstrap` on the live installer,
+then follow the printed instructions. See
+[`docs/security/new-host-onboarding.md`](new-host-onboarding.md) for the
+full walkthrough.
 
 ## Security Notes
 
 - Only ed25519 keys are used (RSA and ECDSA host keys are disabled in `nixos/profiles/base.nix`)
 - Password authentication is disabled on all hosts (SSH keys only)
 - Root login is disabled
-- All secrets are encrypted to both user keys AND host keys, so secrets remain
-  accessible via the host key even during user key rotation
+
