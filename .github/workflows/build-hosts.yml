@@ -40,9 +40,9 @@ jobs:
       - name: Discover hosts
         id: discover
         run: |
-          # Use a glob instead of ls to avoid parsing ls output.
-          # printf produces one basename per line; jq wraps them into a JSON array.
-          hosts=$(printf '%s\n' nixos/hosts/*/ | xargs -I{} basename {} | jq -Rnc '[inputs]')
+          # basename -a strips paths from all glob matches in one call;
+          # jq wraps the newline-delimited names into a JSON array.
+          hosts=$(basename -a nixos/hosts/*/ | jq -Rnc '[inputs]')
           echo "hosts=$hosts" >> "$GITHUB_OUTPUT"
 
   build:
