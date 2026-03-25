@@ -49,6 +49,8 @@ jobs:
     needs: update
     if: needs.update.outputs.branch != ''
     uses: ./.github/workflows/build-hosts.yml
+    permissions:
+      contents: read
     with:
       ref: ${{ needs.update.outputs.branch }}
       publish-pages: false

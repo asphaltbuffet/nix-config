@@ -1,6 +1,7 @@
 name: "build hosts"
-# Reusable workflow: build all NixOS hosts and optionally publish store paths to GitHub Pages.
-# Called by autodeploy.yml (publish-pages: true) and update_flake_lock.yaml (publish-pages: false).
+# Reusable workflow: build all NixOS hosts and push store paths to Cachix.
+# Called by autodeploy.yml, pr-check.yml, and update_flake_lock.yaml.
+# Store path artifacts are uploaded when publish-pages: true, for the caller to deploy.
 
 on:
   workflow_call:
@@ -11,7 +12,7 @@ on:
         required: false
         default: ""
       publish-pages:
-        description: "Publish store paths to GitHub Pages for nixos-autodeploy pickup"
+        description: "Upload store path artifacts for GitHub Pages publishing"
         type: boolean
         required: false
         default: false
@@ -106,43 +107,3 @@ jobs:
           name: pages-${{ matrix.host }}
           path: pages-artifact/
           if-no-files-found: ignore
-
-  publish:
-    name: "publish to GitHub Pages"
-    needs: [generate-matrix, build]
-    if: inputs.publish-pages
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
-
-    steps:
-      - name: Download all pages fragments
-        uses: actions/download-artifact@v4
-        with:
-          pattern: pages-*
-          merge-multiple: true
-          path: pages-artifact/
-
-      # Ensure the artifact directory is never empty — upload-pages-artifact fails
-      # on an empty directory. This handles the edge case where all hosts are skipped.
-      - name: Ensure non-empty artifact
-        run: |
-          shopt -s nullglob
-          files=(pages-artifact/*)
-          if [ ${#files[@]} -eq 0 ]; then
-            mkdir -p pages-artifact
-            echo "All hosts skipped — no store paths updated." > pages-artifact/index.html
-          fi
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: pages-artifact/
-
-      - name: Deploy to GitHub Pages
-        id: deploy
-        uses: actions/deploy-pages@v4

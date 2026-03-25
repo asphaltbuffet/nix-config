@@ -8,10 +8,51 @@ on:
 permissions: {}
 
 jobs:
-  build-and-publish:
+  build:
     uses: ./.github/workflows/build-hosts.yml
+    permissions:
+      contents: read
     with:
       publish-pages: true
     secrets:
       CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
       CACHIX_SIGNING_KEY: ${{ secrets.CACHIX_SIGNING_KEY }}
+
+  publish:
+    name: "publish to GitHub Pages"
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - name: Download all pages fragments
+        uses: actions/download-artifact@v4
+        with:
+          pattern: pages-*
+          merge-multiple: true
+          path: pages-artifact/
+
+      # Ensure the artifact directory is never empty — upload-pages-artifact fails
+      # on an empty directory. This handles the edge case where all hosts are skipped.
+      - name: Ensure non-empty artifact
+        run: |
+          shopt -s nullglob
+          files=(pages-artifact/*)
+          if [ ${#files[@]} -eq 0 ]; then
+            mkdir -p pages-artifact
+            echo "All hosts skipped — no store paths updated." > pages-artifact/index.html
+          fi
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages-artifact/
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
