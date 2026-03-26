@@ -7,7 +7,11 @@ name: "update flake lock"
 on:
   workflow_dispatch: # allows manual triggering
   schedule:
-    - cron: '0 4 * * 0' # runs weekly on Sunday at 04:00
+    # Every 3 days at 08:00 UTC (04:00 EDT / ~05:00 EST).
+    # Scheduled for early morning ET so hosts are unlikely to be active
+    # when autodeploy picks up the change. GitHub Actions has no timezone
+    # support; the ~1hr DST drift is acceptable.
+    - cron: '0 8 */3 * *'
 
 permissions:
   contents: read
@@ -55,13 +59,99 @@ jobs:
     with:
       ref: ${{ needs.update.outputs.branch }}
       publish-pages: false
+      upload-store-path-for-diff: true
     secrets:
       CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
       CACHIX_SIGNING_KEY: ${{ secrets.CACHIX_SIGNING_KEY }}
 
+  diff:
+    name: "generate package diff"
+    needs: [update, build]
+    if: needs.update.outputs.branch != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        # Intentionally checks out main (no ref: override) — we need to build the
+        # main branch closure as the baseline for nix store diff-closures.
+        # The update branch's store paths arrive via downloaded artifacts.
+
+      - uses: DeterminateSystems/determinate-nix-action@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: cachix/cachix-action@v15
+        with:
+          name: nix-config-grue
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          signingKey: ${{ secrets.CACHIX_SIGNING_KEY }}
+
+      - name: Download new store paths
+        uses: actions/download-artifact@v4
+        with:
+          pattern: new-store-path-*
+          merge-multiple: true
+          path: /tmp/new-store-paths/
+
+      - name: Build main branch closures and diff
+        run: |
+          mkdir -p /tmp/diffs
+          touch /tmp/diffs/raw-all.txt
+
+          for host in wendigo kushtaka snallygaster; do
+            new_path=$(cat "/tmp/new-store-paths/new-store-path-${host}" 2>/dev/null || true)
+            if [ -z "$new_path" ]; then
+              echo "Skipping $host — no new store path artifact found"
+              continue
+            fi
+
+            # Build main branch for this host (expected Cachix cache hit)
+            main_path=$(nix build \
+              ".#nixosConfigurations.${host}.config.system.build.toplevel" \
+              --no-link \
+              --print-out-paths)
+
+            # Diff old (main) vs new (updated branch)
+            nix store diff-closures "$main_path" "$new_path" \
+              >> /tmp/diffs/raw-all.txt 2>/dev/null || true
+          done
+
+          # Deduplicate across hosts (same nixpkgs input → same changes on all hosts)
+          sort -u /tmp/diffs/raw-all.txt > /tmp/diffs/deduped.txt
+
+          # Count categories
+          # diff-closures format: "pkg: ε → new" (added), "pkg: old → ε" (removed), "pkg: old → new" (changed)
+          added=$(grep -c ' ε → ' /tmp/diffs/deduped.txt 2>/dev/null || echo 0)
+          removed=$(grep -c ' → ε' /tmp/diffs/deduped.txt 2>/dev/null || echo 0)
+          total=$(wc -l < /tmp/diffs/deduped.txt)
+          changed=$((total - added - removed))
+
+          # Write PR body fragment
+          {
+            echo "## Package changes"
+            echo ""
+            echo "**Added: ${added} | Removed: ${removed} | Changed: ${changed}**"
+            echo ""
+            echo "<details>"
+            echo "<summary>Full diff</summary>"
+            echo ""
+            echo '```'
+            cat /tmp/diffs/deduped.txt
+            echo '```'
+            echo ""
+            echo "</details>"
+          } > /tmp/pr-body-diff.md
+
+      - name: Upload PR body diff fragment
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-body
+          path: /tmp/pr-body-diff.md
+
   open-pr:
     name: "open pull request"
-    needs: [update, build]
+    needs: [update, build, diff]
     if: needs.update.outputs.branch != ''
     runs-on: ubuntu-latest
     permissions:
@@ -70,7 +160,28 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Create pull request
+      - name: Download PR body diff fragment
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-body
+          path: /tmp/pr-body/
+
+      - name: Assemble PR body
+        run: |
+          {
+            echo "Automated update of \`flake.lock\` inputs."
+            echo ""
+            echo "All hosts built successfully against this lock file."
+            echo "Merging will trigger \`autodeploy.yaml\`, which publishes store paths for pickup by \`nixos-autodeploy\`."
+          } > /tmp/full-pr-body.md
+
+          # Append diff fragment if present
+          if [ -f /tmp/pr-body/pr-body-diff.md ]; then
+            echo "" >> /tmp/full-pr-body.md
+            cat /tmp/pr-body/pr-body-diff.md >> /tmp/full-pr-body.md
+          fi
+
+      - name: Create or update pull request
         id: pr
         env:
           # Must use a PAT here — PRs opened with GITHUB_TOKEN do not trigger
@@ -79,17 +190,27 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
           BRANCH: ${{ needs.update.outputs.branch }}
         run: |
-          # gh pr create prints the PR URL on stdout; capture it directly.
-          # gh pr merge accepts a URL, so no number parsing needed.
-          pr_url=$(gh pr create \
-            --title "chore: update flake.lock" \
-            --body "Automated weekly update of \`flake.lock\` inputs.
+          body=$(cat /tmp/full-pr-body.md)
 
-          All hosts built successfully against this lock file.
-          Merging will trigger \`autodeploy.yaml\`, which publishes store paths for pickup by \`nixos-autodeploy\`." \
+          # Check for an existing PR on this branch (same-day re-run guard)
+          existing_url=$(gh pr list \
             --head "$BRANCH" \
-            --base main)
-          echo "url=$pr_url" >> "$GITHUB_OUTPUT"
+            --base main \
+            --json url \
+            --jq '.[0].url' 2>/dev/null || true)
+
+          if [ -n "$existing_url" ]; then
+            echo "PR already exists: $existing_url — updating body"
+            gh pr edit "$existing_url" --body "$body"
+            echo "url=$existing_url" >> "$GITHUB_OUTPUT"
+          else
+            pr_url=$(gh pr create \
+              --title "chore: update flake.lock" \
+              --body "$body" \
+              --head "$BRANCH" \
+              --base main)
+            echo "url=$pr_url" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Enable auto-merge
         env:

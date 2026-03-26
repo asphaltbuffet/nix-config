@@ -16,6 +16,11 @@ on:
         type: boolean
         required: false
         default: false
+      upload-store-path-for-diff:
+        description: "Upload per-host store path artifacts for the diff job"
+        type: boolean
+        required: false
+        default: false
     secrets:
       CACHIX_AUTH_TOKEN:
         required: true
@@ -87,6 +92,21 @@ jobs:
             --no-link \
             --print-out-paths)
           echo "store_path=${store_path}" >> "$GITHUB_OUTPUT"
+
+      - name: Write new store path for diff job
+        if: inputs.upload-store-path-for-diff
+        env:
+          HOST: ${{ matrix.host }}
+          STORE_PATH: ${{ steps.build.outputs.store_path }}
+        run: |
+          printf '%s' "${STORE_PATH}" > "/tmp/new-store-path-${HOST}"
+
+      - name: Upload new store path for diff job
+        if: inputs.upload-store-path-for-diff
+        uses: actions/upload-artifact@v4
+        with:
+          name: new-store-path-${{ matrix.host }}
+          path: /tmp/new-store-path-${{ matrix.host }}
 
       - name: Write store path artifact
         if: inputs.publish-pages
