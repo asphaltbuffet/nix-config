@@ -5,6 +5,7 @@
   inputs,
   config,
   lib,
+  pkgs,
   ...
 }: {
   imports = [inputs.nixos-autodeploy.nixosModules.default];
