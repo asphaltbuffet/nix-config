@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write # ceiling for Magic Nix Cache OIDC in build-hosts.yaml
 
 jobs:
   update:
