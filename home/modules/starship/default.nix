@@ -12,7 +12,7 @@
     settings = {
       # Left prompt: dir → jj (or git fallbacks) → newline → prompt char
       # ''${ is Nix's escape for a literal ${ inside ''...'' strings
-      format = ''$all''${custom.jj}''${custom.git_branch}''${custom.git_commit}$line_break$character'';
+      format = ''$env_var$all''${custom.jj}''${custom.git_branch}''${custom.git_commit}$line_break$character'';
 
       # Right prompt (line 1): exit code → duration → direnv
       right_format = lib.concatStrings [
@@ -33,6 +33,13 @@
       directory = {
         truncation_symbol = " /";
         read_only = " 󰉐 ";
+      };
+
+      env_var.NIXOS_REBOOT_PENDING = {
+        variable = "NIXOS_REBOOT_PENDING";
+        symbol = "󰐥 ";
+        style = "bold red";
+        format = "[$symbol]($style)";
       };
 
       hostname = {

@@ -14,6 +14,17 @@
       if command -v op &>/dev/null; then
         eval "$(op inject --in-file ${./secrets.env} 2>/dev/null)" || true
       fi
+
+      # Set NIXOS_REBOOT_PENDING if a NixOS update is staged but awaiting reboot.
+      # Used by the starship prompt and the login message below.
+      if [[ "$(readlink /run/booted-system)" != "$(readlink /run/current-system)" ]]; then
+        export NIXOS_REBOOT_PENDING=1
+      fi
+
+      # Notify on login if a reboot is pending
+      if [[ -o login ]] && [[ -n "$NIXOS_REBOOT_PENDING" ]]; then
+        echo "⚠ NixOS update staged — reboot to apply."
+      fi
     '';
 
     defaultKeymap = "viins";
