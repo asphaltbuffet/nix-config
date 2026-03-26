@@ -1,4 +1,9 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(jj log:*)"
+    ]
+  },
   "enabledPlugins": {
     "nixd-lsp": true
   },
