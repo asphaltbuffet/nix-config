@@ -79,19 +79,19 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
           BRANCH: ${{ needs.update.outputs.branch }}
         run: |
-          pr_number=$(gh pr create \
+          # gh pr create prints the PR URL on stdout; capture it directly.
+          # gh pr merge accepts a URL, so no number parsing needed.
+          pr_url=$(gh pr create \
             --title "chore: update flake.lock" \
             --body "Automated weekly update of \`flake.lock\` inputs.
 
           All hosts built successfully against this lock file.
           Merging will trigger \`autodeploy.yml\`, which publishes store paths for pickup by \`nixos-autodeploy\`." \
             --head "$BRANCH" \
-            --base main \
-            --json number \
-            --jq '.number')
-          echo "number=$pr_number" >> "$GITHUB_OUTPUT"
+            --base main)
+          echo "url=$pr_url" >> "$GITHUB_OUTPUT"
 
       - name: Enable auto-merge
         env:
           GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
-        run: gh pr merge "${{ steps.pr.outputs.number }}" --auto --rebase
+        run: gh pr merge "${{ steps.pr.outputs.url }}" --auto --rebase
