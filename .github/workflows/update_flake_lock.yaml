@@ -7,7 +7,11 @@ name: "update flake lock"
 on:
   workflow_dispatch: # allows manual triggering
   schedule:
-    - cron: '0 4 * * 0' # runs weekly on Sunday at 04:00
+    # Every 3 days at 08:00 UTC (04:00 EDT / ~05:00 EST).
+    # Scheduled for early morning ET so hosts are unlikely to be active
+    # when autodeploy picks up the change. GitHub Actions has no timezone
+    # support; the ~1hr DST drift is acceptable.
+    - cron: '0 8 */3 * *'
 
 permissions:
   contents: read

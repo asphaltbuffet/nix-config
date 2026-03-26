@@ -18,7 +18,8 @@
       "Skill(nixos-config)",
       "Skill(claude-md-management:revise-claude-md)",
       "mcp__context7__query-docs",
-      "Bash(nix flake:*)"
+      "Bash(nix flake:*)",
+      "Bash(jj new:*)"
     ]
   },
   "outputStyle": "Explanatory"
