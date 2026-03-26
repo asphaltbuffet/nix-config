@@ -56,7 +56,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write # required for Magic Nix Cache OIDC authentication
     strategy:
       fail-fast: false
       matrix:
@@ -67,9 +66,20 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
 
-      - uses: DeterminateSystems/determinate-nix-action@v3
+      - uses: cachix/install-nix-action@v31
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Cache the Nix store in GitHub Actions cache keyed on flake.lock.
+      # Primary key hits restore the full store; on miss the closest prefix match
+      # is used as a warm starting point. gc-max-store-size keeps the cache under
+      # GitHub's 10 GB per-repo limit.
+      - name: Restore Nix store cache
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-${{ runner.os }}-${{ matrix.host }}-${{ hashFiles('flake.lock') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-${{ matrix.host }}-
+          gc-max-store-size: 2000000000
 
       # cachix-action installs a Nix post-build hook that automatically pushes
       # all newly built store paths to the cache — no manual `cachix push` needed.
