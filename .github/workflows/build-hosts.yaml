@@ -1,6 +1,6 @@
 name: "build hosts"
 # Reusable workflow: build all NixOS hosts and push store paths to Cachix.
-# Called by autodeploy.yml, pr-check.yml, and update_flake_lock.yaml.
+# Called by autodeploy.yaml, pr-check.yaml, and update_flake_lock.yaml.
 # Store path artifacts are uploaded when publish-pages: true, for the caller to deploy.
 
 on:
@@ -33,7 +33,7 @@ jobs:
     outputs:
       hosts: ${{ steps.discover.outputs.hosts }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.ref }}
 
@@ -57,7 +57,7 @@ jobs:
         host: ${{ fromJSON(needs.generate-matrix.outputs.hosts) }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.ref }}
 

@@ -4,21 +4,21 @@
 root = true
 
 [*]
-end_of_line = lf
-insert_final_newline = true
-trim_trailing_whitespace = true
 charset = utf-8
-
-[*.nix]
-indent_style = space
+end_of_line = lf
 indent_size = 2
-
-[*.{hpp,cc,hh,c,h,sh,pl,xs}]
 indent_style = space
-indent_size = 4
+insert_final_newline = true
+max_line_length = 120
+trim_trailing_whitespace = true
 
-[*.{diff,patch}]
-trim_trailing_whitespace = false
+[justfile]
+indent_size = 4
+indent_style = tab
+
+[*.{yml,yaml}]
+max_line_length = 100
 
 [*.{md,markdown}]
+max_line_length = 80
 trim_trailing_whitespace = false

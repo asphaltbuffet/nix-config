@@ -1,4 +1,4 @@
-{...}: {
+{pkgs, ...}: {
   programs.claude-code = {
     enable = true;
 
@@ -22,29 +22,7 @@
 
     settings = {
       # ── Plugins ──────────────────────────────────────────────────────────
-      enabledPlugins = {
-        "gopls-lsp@claude-plugins-official" = true;
-        "feature-dev@claude-plugins-official" = false;
-        "cli-demo-generator@daymade-skills" = true;
-        "skill-creator@daymade-skills" = true;
-        "claude-md-management@claude-plugins-official" = true;
-        "explanatory-output-style@claude-plugins-official" = true;
-        "superpowers@claude-plugins-official" = true;
-        "claude-md-progressive-disclosurer@daymade-skills" = true;
-        "claude-skills-troubleshooting@daymade-skills" = true;
-        "deep-research@daymade-skills" = true;
-        "skill-reviewer@daymade-skills" = true;
-        "skills-search@daymade-skills" = false;
-        "context7@claude-plugins-official" = true;
-        "code-review@claude-plugins-official" = true;
-        "code-simplifier@claude-plugins-official" = true;
-        "claude-code-setup@claude-plugins-official" = true;
-        "hookify@claude-plugins-official" = true;
-        "atomic-agents@claude-plugins-official" = true;
-        "docs-cleaner@daymade-skills" = true;
-        "mermaid-tools@daymade-skills" = true;
-        "statusline-generator@daymade-skills" = true;
-      };
+      enabledPlugins = import ./plugins.nix;
 
       # ── Behaviour ─────────────────────────────────────────────────────────
       alwaysThinkingEnabled = false;
@@ -57,41 +35,19 @@
       # or confirmed interactively.
       permissions = {
         defaultMode = "default";
-        allow = [
-          # jj read-only subcommands
-          "Bash(jj status*)"
-          "Bash(jj log*)"
-          "Bash(jj diff*)"
-          "Bash(jj show*)"
-          "Bash(jj describe --no-edit*)"
-          # file search / content search
-          "Bash(fd *)"
-          "Bash(rg *)"
-          # nix inspection (no building or switching)
-          "Bash(nix flake show*)"
-          "Bash(nix flake check*)"
-          "Bash(nix eval *)"
-          # just read-only recipes
-          "Bash(just build*)"
-          "Bash(just check*)"
-          "Bash(just fmt*)"
-          "Bash(just diff*)"
-          "Bash(just hosts*)"
-        ];
-        # git is explicitly denied — use jj instead
-        deny = [
-          "Bash(git commit*)"
-          "Bash(git push*)"
-          "Bash(git reset*)"
-          "Bash(git checkout*)"
-        ];
+        allow = import ./permissions_allow.nix;
+        deny = import ./permissions_deny.nix;
       };
 
+      # ── Status line ───────────────────────────────────────────────────────
+      statusLine = import ./statusline.nix pkgs;
+
       # ── MCP servers ───────────────────────────────────────────────────────
-      # The API key is never stored in settings.json. Instead, CONTEXT7_API_KEY
-      # is injected into the shell environment via op inject (secrets.env), and
-      # Claude Code passes this env block to the MCP child process — so the key
-      # stays out of the world-readable Nix store entirely.
+      # CONTEXT7_API_KEY is resolved by `op inject` in zsh at shell startup
+      # (home/modules/zsh/secrets.env) before Claude Code launches, so it is
+      # already in the environment when the MCP child process is spawned.
+      # "$VAR" interpolation in MCP env blocks is the standard Claude Code
+      # pattern; shell command substitution ($(…)) is not supported there.
       mcpServers = {
         context7 = {
           command = "npx";
