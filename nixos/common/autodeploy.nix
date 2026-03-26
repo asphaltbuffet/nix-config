@@ -12,7 +12,7 @@
   system.autoDeploy = {
     # URL is constructed automatically from the hostname.
     # CI publishes store paths at this location via GitHub Pages.
-    url = lib.mkDefault "https://asphaltbuffet.github.io/nix-config/hosts/${config.networking.hostName}/store-path";
+    url = lib.mkDefault "https://asphaltbuffet.com/nix-config/hosts/${config.networking.hostName}/store-path";
 
     # "boot" applies the new config on next reboot — safer for laptops than
     # "switch" (which activates immediately, potentially mid-session).
