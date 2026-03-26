@@ -47,8 +47,10 @@ jobs:
             exit 0
           fi
           git commit -m "chore: update flake.lock"
-          # --force-with-lease safely overwrites a same-day branch from a prior run
-          # without clobbering unrelated upstream changes.
+          # Fetch the branch first so --force-with-lease has a tracking ref to compare
+          # against. Without this, a fresh runner has no knowledge of the remote branch
+          # and --force-with-lease refuses the push with "stale info" on same-day re-runs.
+          git fetch origin "$branch" || true
           git push origin "$branch" --force-with-lease
           echo "branch=$branch" >> "$GITHUB_OUTPUT"
 
