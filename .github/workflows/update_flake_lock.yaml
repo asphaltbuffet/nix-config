@@ -59,9 +59,95 @@ jobs:
     with:
       ref: ${{ needs.update.outputs.branch }}
       publish-pages: false
+      upload-store-path-for-diff: true
     secrets:
       CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
       CACHIX_SIGNING_KEY: ${{ secrets.CACHIX_SIGNING_KEY }}
+
+  diff:
+    name: "generate package diff"
+    needs: [update, build]
+    if: needs.update.outputs.branch != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        # Intentionally checks out main (no ref: override) — we need to build the
+        # main branch closure as the baseline for nix store diff-closures.
+        # The update branch's store paths arrive via downloaded artifacts.
+
+      - uses: DeterminateSystems/determinate-nix-action@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: cachix/cachix-action@v15
+        with:
+          name: nix-config-grue
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          signingKey: ${{ secrets.CACHIX_SIGNING_KEY }}
+
+      - name: Download new store paths
+        uses: actions/download-artifact@v4
+        with:
+          pattern: new-store-path-*
+          merge-multiple: true
+          path: /tmp/new-store-paths/
+
+      - name: Build main branch closures and diff
+        run: |
+          mkdir -p /tmp/diffs
+          touch /tmp/diffs/raw-all.txt
+
+          for host in wendigo kushtaka snallygaster; do
+            new_path=$(cat "/tmp/new-store-paths/new-store-path-${host}" 2>/dev/null || true)
+            if [ -z "$new_path" ]; then
+              echo "Skipping $host — no new store path artifact found"
+              continue
+            fi
+
+            # Build main branch for this host (expected Cachix cache hit)
+            main_path=$(nix build \
+              ".#nixosConfigurations.${host}.config.system.build.toplevel" \
+              --no-link \
+              --print-out-paths)
+
+            # Diff old (main) vs new (updated branch)
+            nix store diff-closures "$main_path" "$new_path" \
+              >> /tmp/diffs/raw-all.txt 2>/dev/null || true
+          done
+
+          # Deduplicate across hosts (same nixpkgs input → same changes on all hosts)
+          sort -u /tmp/diffs/raw-all.txt > /tmp/diffs/deduped.txt
+
+          # Count categories
+          # diff-closures format: "pkg: ε → new" (added), "pkg: old → ε" (removed), "pkg: old → new" (changed)
+          added=$(grep -c ' ε → ' /tmp/diffs/deduped.txt 2>/dev/null || echo 0)
+          removed=$(grep -c ' → ε' /tmp/diffs/deduped.txt 2>/dev/null || echo 0)
+          total=$(wc -l < /tmp/diffs/deduped.txt)
+          changed=$((total - added - removed))
+
+          # Write PR body fragment
+          {
+            echo "## Package changes"
+            echo ""
+            echo "**Added: ${added} | Removed: ${removed} | Changed: ${changed}**"
+            echo ""
+            echo "<details>"
+            echo "<summary>Full diff</summary>"
+            echo ""
+            echo '```'
+            cat /tmp/diffs/deduped.txt
+            echo '```'
+            echo ""
+            echo "</details>"
+          } > /tmp/pr-body-diff.md
+
+      - name: Upload PR body diff fragment
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-body
+          path: /tmp/pr-body-diff.md
 
   open-pr:
     name: "open pull request"
