@@ -33,7 +33,7 @@ jobs:
     outputs:
       hosts: ${{ steps.discover.outputs.hosts }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.ref }}
 
@@ -57,7 +57,7 @@ jobs:
         host: ${{ fromJSON(needs.generate-matrix.outputs.hosts) }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.ref }}
 
