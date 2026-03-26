@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    uses: ./.github/workflows/build-hosts.yml
+    uses: ./.github/workflows/build-hosts.yaml
     with:
       publish-pages: false
     secrets:

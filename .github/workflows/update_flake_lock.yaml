@@ -2,7 +2,7 @@ name: "update flake lock"
 # https://forrestjacobs.com/keeping-nixos-systems-up-to-date-with-github-actions/
 #
 # Flow: update lock → build all hosts → open PR only on success.
-# Merging the PR triggers autodeploy.yml, which rebuilds and publishes store paths.
+# Merging the PR triggers autodeploy.yaml, which rebuilds and publishes store paths.
 
 on:
   workflow_dispatch: # allows manual triggering
@@ -51,7 +51,7 @@ jobs:
   build:
     needs: update
     if: needs.update.outputs.branch != ''
-    uses: ./.github/workflows/build-hosts.yml
+    uses: ./.github/workflows/build-hosts.yaml
     with:
       ref: ${{ needs.update.outputs.branch }}
       publish-pages: false
@@ -86,7 +86,7 @@ jobs:
             --body "Automated weekly update of \`flake.lock\` inputs.
 
           All hosts built successfully against this lock file.
-          Merging will trigger \`autodeploy.yml\`, which publishes store paths for pickup by \`nixos-autodeploy\`." \
+          Merging will trigger \`autodeploy.yaml\`, which publishes store paths for pickup by \`nixos-autodeploy\`." \
             --head "$BRANCH" \
             --base main)
           echo "url=$pr_url" >> "$GITHUB_OUTPUT"

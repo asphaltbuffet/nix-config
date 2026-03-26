@@ -59,7 +59,7 @@ When running shell commands, prefer these modern alternatives:
 - **Secrets**: Managed externally via 1Password (`op inject` in zsh). No agenix in this repo.
 - **Editor**: Neovim is the primary editor (`home/modules/nvim/`). Lua-based config with Nix-managed plugins, LSP (gopls, nixd, pyright, lua_ls), and carbonfox theme. The legacy vim module (`home/modules/vim/`) is still present but `defaultEditor` is disabled.
 - **Module pattern**: Home-manager tool configs live in `home/modules/<tool>/default.nix`. Import them from roles, not directly from user files.
-- **Adding a host**: Create `nixos/hosts/<name>/` with `configuration.nix` and `hardware-configuration.nix`. It will be auto-discovered by both the flake and CI (`.github/workflows/build-hosts.yml` discovers hosts from `nixos/hosts/` at runtime).
+- **Adding a host**: Create `nixos/hosts/<name>/` with `configuration.nix` and `hardware-configuration.nix`. It will be auto-discovered by both the flake and CI (`.github/workflows/build-hosts.yaml` discovers hosts from `nixos/hosts/` at runtime).
 - **Adding a user**: Create `home/users/<name>.nix`, add user definition and home-manager mapping in `nixos/common/users.nix`.
 - **NUR packages**: Accessed via `pkgs.nur.repos.<owner>.<pkg>` after overlay in flake.nix.
 - **New files + Nix flake**: The flake copies sources via `self`, so new files must be tracked before `just build` can see them. Use `jj file track <path>` (never `git add`).
@@ -72,7 +72,7 @@ When running shell commands, prefer these modern alternatives:
 - **`just ssh-verify`**: Uses `|| true` to absorb `ssh -T git@github.com`'s exit code 1 (GitHub always returns 1 for non-shell SSH). Without this, `set -euo pipefail` causes false failures.
 - **nix.settings binary caches**: Use `extra-substituters` / `extra-trusted-public-keys` to append a cache without replacing the default `cache.nixos.org`. Bare `substituters` / `trusted-public-keys` are replacement lists.
 - **Auto-deploy**: `nixos-autodeploy` is active (see `nixos/common/autodeploy.nix`). Hosts opt in with `system.autoDeploy.enable = true`. Store paths are published to GitHub Pages; verify with `just autodeploy-status <host>`. switchMode defaults to `"boot"` (applies on next reboot, not immediately).
-- **GitHub Actions `permissions:` and reusable workflows**: The workflow-level `permissions:` block in a *calling* workflow sets a hard ceiling on the token — it is NOT overridden by the called workflow's job-level declarations. `permissions: {}` in the caller zeroes all permissions, causing `startup_failure` even if the reusable workflow declares `contents: read` on its jobs. Callers of `build-hosts.yml` must have at least `permissions: contents: read` at the workflow level. Contrast: `permissions:` on a `workflow_call` job (not the workflow itself) IS silently ignored — only the called workflow's own declarations govern at the job level.
+- **GitHub Actions `permissions:` and reusable workflows**: The workflow-level `permissions:` block in a *calling* workflow sets a hard ceiling on the token — it is NOT overridden by the called workflow's job-level declarations. `permissions: {}` in the caller zeroes all permissions, causing `startup_failure` even if the reusable workflow declares `contents: read` on its jobs. Callers of `build-hosts.yaml` must have at least `permissions: contents: read` at the workflow level. Contrast: `permissions:` on a `workflow_call` job (not the workflow itself) IS silently ignored — only the called workflow's own declarations govern at the job level.
 
 ## Host Type Matrix
 
