@@ -151,7 +151,7 @@ jobs:
 
   open-pr:
     name: "open pull request"
-    needs: [update, build]
+    needs: [update, build, diff]
     if: needs.update.outputs.branch != ''
     runs-on: ubuntu-latest
     permissions:
@@ -160,7 +160,28 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Create pull request
+      - name: Download PR body diff fragment
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-body
+          path: /tmp/pr-body/
+
+      - name: Assemble PR body
+        run: |
+          {
+            echo "Automated update of \`flake.lock\` inputs."
+            echo ""
+            echo "All hosts built successfully against this lock file."
+            echo "Merging will trigger \`autodeploy.yaml\`, which publishes store paths for pickup by \`nixos-autodeploy\`."
+          } > /tmp/full-pr-body.md
+
+          # Append diff fragment if present
+          if [ -f /tmp/pr-body/pr-body-diff.md ]; then
+            echo "" >> /tmp/full-pr-body.md
+            cat /tmp/pr-body/pr-body-diff.md >> /tmp/full-pr-body.md
+          fi
+
+      - name: Create or update pull request
         id: pr
         env:
           # Must use a PAT here — PRs opened with GITHUB_TOKEN do not trigger
@@ -169,17 +190,27 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
           BRANCH: ${{ needs.update.outputs.branch }}
         run: |
-          # gh pr create prints the PR URL on stdout; capture it directly.
-          # gh pr merge accepts a URL, so no number parsing needed.
-          pr_url=$(gh pr create \
-            --title "chore: update flake.lock" \
-            --body "Automated weekly update of \`flake.lock\` inputs.
+          body=$(cat /tmp/full-pr-body.md)
 
-          All hosts built successfully against this lock file.
-          Merging will trigger \`autodeploy.yaml\`, which publishes store paths for pickup by \`nixos-autodeploy\`." \
+          # Check for an existing PR on this branch (same-day re-run guard)
+          existing_url=$(gh pr list \
             --head "$BRANCH" \
-            --base main)
-          echo "url=$pr_url" >> "$GITHUB_OUTPUT"
+            --base main \
+            --json url \
+            --jq '.[0].url' 2>/dev/null || true)
+
+          if [ -n "$existing_url" ]; then
+            echo "PR already exists: $existing_url — updating body"
+            gh pr edit "$existing_url" --body "$body"
+            echo "url=$existing_url" >> "$GITHUB_OUTPUT"
+          else
+            pr_url=$(gh pr create \
+              --title "chore: update flake.lock" \
+              --body "$body" \
+              --head "$BRANCH" \
+              --base main)
+            echo "url=$pr_url" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Enable auto-merge
         env:
