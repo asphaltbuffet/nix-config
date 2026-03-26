@@ -72,6 +72,7 @@ When running shell commands, prefer these modern alternatives:
 - **`just ssh-verify`**: Uses `|| true` to absorb `ssh -T git@github.com`'s exit code 1 (GitHub always returns 1 for non-shell SSH). Without this, `set -euo pipefail` causes false failures.
 - **nix.settings binary caches**: Use `extra-substituters` / `extra-trusted-public-keys` to append a cache without replacing the default `cache.nixos.org`. Bare `substituters` / `trusted-public-keys` are replacement lists.
 - **Auto-deploy**: `nixos-autodeploy` is active (see `nixos/common/autodeploy.nix`). Hosts opt in with `system.autoDeploy.enable = true`. Store paths are published to GitHub Pages; verify with `just autodeploy-status <host>`. switchMode defaults to `"boot"` (applies on next reboot, not immediately).
+- **GitHub Actions `permissions:` and reusable workflows**: The workflow-level `permissions:` block in a *calling* workflow sets a hard ceiling on the token — it is NOT overridden by the called workflow's job-level declarations. `permissions: {}` in the caller zeroes all permissions, causing `startup_failure` even if the reusable workflow declares `contents: read` on its jobs. Callers of `build-hosts.yml` must have at least `permissions: contents: read` at the workflow level. Contrast: `permissions:` on a `workflow_call` job (not the workflow itself) IS silently ignored — only the called workflow's own declarations govern at the job level.
 
 ## Host Type Matrix
 
