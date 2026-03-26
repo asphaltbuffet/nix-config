@@ -15,6 +15,7 @@
     gum
     ijq
     jq
+    yq
     presenterm
   ];
 }
