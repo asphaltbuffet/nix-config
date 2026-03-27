@@ -12,6 +12,8 @@ in {
     ../roles/player.nix
 
     ../modules/ssh
+    ../modules/protonmail
+    ../modules/pop
   ];
 
   home.username = "grue";
@@ -25,6 +27,5 @@ in {
   # Personal touches
   home.packages = with pkgs; [
     obsidian
-    signal-desktop
   ];
 }

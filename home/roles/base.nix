@@ -19,6 +19,7 @@
     ../modules/zoxide
     ../modules/zsh
     ../modules/firefox
+    ../modules/wishlist
 
     # GUI stuff
     ../modules/1password

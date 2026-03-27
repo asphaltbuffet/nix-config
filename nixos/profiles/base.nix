@@ -162,7 +162,14 @@
 
   programs.nix-ld.enable = true;
 
+  # Grant the active console user access to the PC speaker evdev node without
+  # adding them to the broad `input` group (which would expose all input devices).
+  services.udev.extraRules = ''
+    SUBSYSTEM=="input", ATTRS{name}=="PC Speaker", TAG+="uaccess"
+  '';
+
   environment.systemPackages = with pkgs; [
+    beep
     curl
     git
     rclone

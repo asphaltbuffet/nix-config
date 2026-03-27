@@ -30,6 +30,18 @@ in {
     serverAliveCountMax = 3;
   };
 
+  # Tailscale hosts — surfaced to wishlist via ~/.ssh/config.
+  # MagicDNS domain: armadillo-toad.ts.net
+  programs.ssh.matchBlocks."wendigo" = {
+    hostname = "wendigo.armadillo-toad.ts.net";
+  };
+  programs.ssh.matchBlocks."kushtaka" = {
+    hostname = "kushtaka.armadillo-toad.ts.net";
+  };
+  programs.ssh.matchBlocks."snallygaster" = {
+    hostname = "snallygaster.armadillo-toad.ts.net";
+  };
+
   # Git SSH commit signing.
   # Using programs.git.signing (typed home-manager options) rather than
   # raw settings keys — the typed API is validated by home-manager and

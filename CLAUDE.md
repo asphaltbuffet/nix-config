@@ -11,10 +11,12 @@ just build              # Build config without activating (current host)
 just build <host>       # Build for a specific host
 just switch             # Build and activate (makes it boot default)
 just test               # Build and activate without making it boot default
+just diff               # Build and diff closure against /run/current-system (uses nvd)
+just lint               # Check formatting (alejandra), linting (statix), dead code (deadnix)
+just fix                # Apply formatting and linting fixes
 just fmt                # Format all .nix files with alejandra
 just check              # Run nix flake check (includes formatting check)
 just update             # Update flake.lock inputs
-just update-switch      # Update inputs and switch in one step
 ```
 
 ```bash
@@ -73,6 +75,7 @@ When running shell commands, prefer these modern alternatives:
 - **nix.settings binary caches**: Use `extra-substituters` / `extra-trusted-public-keys` to append a cache without replacing the default `cache.nixos.org`. Bare `substituters` / `trusted-public-keys` are replacement lists.
 - **Auto-deploy**: `nixos-autodeploy` is active (see `nixos/common/autodeploy.nix`). Hosts opt in with `system.autoDeploy.enable = true`. Store paths are published to GitHub Pages; verify with `just autodeploy-status <host>`. switchMode defaults to `"smart"` (applies immediately for non-kernel updates; kernel updates wait for reboot).
 - **GitHub Actions `permissions:` and reusable workflows**: The workflow-level `permissions:` block in a *calling* workflow is a hard ceiling — any permission not listed there is implicitly `none`, and the called workflow's jobs cannot exceed it. Whenever you add or change a permission in a job inside `build-hosts.yaml`, audit ALL callers (`autodeploy.yaml`, `pr-check.yaml`, `update_flake_lock.yaml`) and ensure that permission is present at their workflow level too. Omitting it produces a "nested job is requesting X, but is only allowed none" validation error. Contrast: `permissions:` on a `workflow_call` *job* block (not the workflow itself) IS silently ignored — only the called workflow's own job-level declarations govern.
+- **Shell `#` quoting**: Any argument containing `#` (e.g. `nix run "nixpkgs#nvd"`) must be double-quoted in zsh — unquoted `#` starts a comment. This applies in Bash tool calls too.
 - **YAML validation**: Use `yq -e '.' file.yaml` to validate YAML syntax. Never use `python3 -c "import yaml..."` — python3 is not reliably on PATH.
 - **`git push --force-with-lease` on CI**: Fresh runners have no tracking refs. Run `git fetch origin "$branch" || true` before pushing to establish the tracking ref, or `--force-with-lease` rejects same-day re-runs with "stale info".
 - **GitHub Actions matrix outputs**: Matrix job outputs cannot be consumed by downstream jobs directly. Pass per-matrix-leg data via artifact upload/download (e.g., `upload-artifact` per host, `download-artifact` with `pattern:` + `merge-multiple: true` downstream).

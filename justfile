@@ -15,16 +15,13 @@ default: help
 build host=hostname:
     nh os build -H {{ host }} {{ flake }}
 
-# Build the installer ISO (flash with: dd if=result/iso/*.iso of=/dev/sdX bs=4M)
+# Build the installer ISO
 [group('build')]
 iso:
     nix build {{ flake }}#installer
     @echo "ISO: $(ls -1 result/iso/*.iso 2>/dev/null || echo 'build failed')"
 
-# Boot the installer ISO in a QEMU VM for testing (creates a 20GB scratch disk)
-# SSH in with: ssh -p 2222 nixos@localhost  (password: nixos)
-# scp from VM:  scp -P 2222 nixos@localhost:/home/nixos/... ./...
-# Exit QEMU:   Ctrl+A then X  (or run 'poweroff' inside the VM)
+# Boot the installer ISO in QEMU (SSH: ssh -p 2222 nixos@localhost, exit: Ctrl+A X)
 [group('build')]
 vm disk="vm-disk.qcow2":
     #!/usr/bin/env bash
@@ -61,11 +58,6 @@ switch host=hostname:
 test host=hostname:
     nh os test -H {{ host }} {{ flake }}
 
-# Update flake inputs and switch in one step
-[group('build')]
-update-switch host=hostname: update
-    nh os switch -H {{ host }} {{ flake }}
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Maintenance
 # ─────────────────────────────────────────────────────────────────────────────
@@ -80,10 +72,11 @@ update:
 clean generations="3" since="5d":
     nh clean all --keep {{ generations }} -K {{ since }} -a
 
-# Show what changed between current and new config
+# Build and diff closure against current system (does not activate)
 [group('maintenance')]
 diff host=hostname:
     nh os build -H {{ host }} {{ flake }}
+    nvd diff /run/current-system result
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Development
@@ -93,6 +86,20 @@ diff host=hostname:
 [group('dev')]
 fmt:
     alejandra -qq {{ flake }}
+
+# Check nix formatting, lint (statix), and dead code (deadnix) without modifying files
+[group('dev')]
+lint:
+    alejandra --check -qq {{ flake }}
+    statix check {{ flake }}
+    deadnix {{ flake }}
+
+# Apply formatting and linting fixes
+[group('dev')]
+fix:
+    alejandra -qq {{ flake }}
+    statix fix {{ flake }}
+    deadnix --edit {{ flake }}
 
 # Check flake outputs for errors
 [group('dev')]
@@ -108,13 +115,13 @@ inputs:
 # SSH Key Management
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Show the current SSH public key from 1Password (for adding to servers/GitHub)
+# Print the SSH public key from 1Password
 [group('ssh')]
 ssh-pubkey:
     @op item get "grue-main" --fields label="public key" 2>/dev/null || \
         echo "Error: 1Password CLI not authenticated. Run: op signin"
 
-# Verify 1Password SSH agent is running and keys are available
+# Check 1Password SSH agent is running and has keys loaded
 [group('ssh')]
 ssh-agent-check:
     #!/usr/bin/env bash
@@ -135,7 +142,7 @@ ssh-agent-check:
         exit 1
     fi
 
-# Guided SSH key rotation workflow
+# Print step-by-step SSH key rotation instructions
 [group('ssh')]
 ssh-rotate:
     #!/usr/bin/env bash
@@ -153,8 +160,8 @@ ssh-rotate:
     echo "  Replace openssh.authorizedKeys.keys entry for grue."
     echo ""
     echo "Step 4: just switch (on all hosts)"
-    echo "Step 7: Update GitHub SSH keys (auth + signing)."
-    echo "Step 8: Update authorized_keys on any external servers."
+    echo "Step 5: Update GitHub SSH keys (auth + signing)."
+    echo "Step 6: Update authorized_keys on any external servers."
     echo ""
     echo "Verify with: just ssh-verify"
 
@@ -196,10 +203,7 @@ ssh-verify:
     echo ""
     echo "Done."
 
-# Print instructions for adding a new host's public key to secrets.nix
-# Usage: just ssh-add-host <hostname> <pubkey>
-# Example: just ssh-add-host myserver "ssh-ed25519 AAAA..."
-# NOTE: This recipe is advisory — it prints instructions but does not edit files.
+# Print instructions for adding a host's SSH public key to secrets.nix
 [group('ssh')]
 ssh-add-host hostname pubkey:
     @echo "1. Add to secrets/secrets.nix in the 'let' block:"
@@ -216,7 +220,7 @@ ssh-add-host hostname pubkey:
 # List available hosts
 [group('info')]
 hosts:
-    @ls -1 {{ flake }}/nixos/hosts/
+    @basename -a {{ flake }}/nixos/hosts/*/
 
 # Show current system generation info
 [group('info')]
@@ -229,32 +233,20 @@ help:
     @just --list --unsorted
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Benchmarking
-# ─────────────────────────────────────────────────────────────────────────────
-
-# Create benchmark
-[group('benchmarking')]
-benchmark:
-    nix run {{ flake }}#benchmark
-
-# ─────────────────────────────────────────────────────────────────────────────
 # Auto-Deploy
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Pause CI store-path publishing for a host (build still runs, Cachix still updated)
-# Usage: just autodeploy-skip wendigo
 [group('autodeploy')]
 autodeploy-skip host:
     @if [ -f ".autodeploy-skip/{{ host }}" ]; then \
         echo "{{ host }} is already skipped"; \
     else \
         touch ".autodeploy-skip/{{ host }}" && \
-        jj file track ".autodeploy-skip/{{ host }}" && \
         echo "Created .autodeploy-skip/{{ host }} — commit to activate"; \
     fi
 
 # Resume CI store-path publishing for a host
-# Usage: just autodeploy-resume wendigo
 [group('autodeploy')]
 autodeploy-resume host:
     @if [ ! -f ".autodeploy-skip/{{ host }}" ]; then \
@@ -264,10 +256,46 @@ autodeploy-resume host:
         echo "Removed .autodeploy-skip/{{ host }} — commit to resume auto-deploy"; \
     fi
 
-# Show the current published store path for a host (requires curl)
-# Usage: just autodeploy-status wendigo
+# Show the published store path for a host
 [group('autodeploy')]
 autodeploy-status host=hostname:
     @curl -sfL "https://asphaltbuffet.github.io/nix-config/hosts/{{ host }}/store-path" \
         && echo "" \
         || echo "No store path published yet for {{ host }}"
+
+[no-exit-message]
+[private]
+_op-check:
+    #!/usr/bin/env bash
+    if ! op whoami &>/dev/null; then
+        echo "✗ 1Password is not signed in. Unlock 1Password and try again."
+        exit 1
+    fi
+
+# Write the 1Password service account token to /etc/op/ (run once on first boot)
+[group('autodeploy')]
+[no-exit-message]
+autodeploy-provision-token: _op-check
+    #!/usr/bin/env bash
+    set -euo pipefail
+    token_file="/etc/op/1password-service-account-token"
+
+    token=$(op read "op://Private/nixos_service_account/credential" 2>/dev/null) || {
+        echo "✗ Failed to read op://Private/nixos_service_account/credential"
+        exit 1
+    }
+
+    if [[ -z "$token" ]]; then
+        echo "✗ Credential is empty. Check op://Private/nixos_service_account/credential."
+        exit 1
+    fi
+
+    sudo install -m 600 -o root -g root /dev/null "$token_file"
+    echo "OP_SERVICE_ACCOUNT_TOKEN=$token" | sudo tee "$token_file" > /dev/null
+
+    if [[ ! -s "$token_file" ]]; then
+        echo "✗ Token file is empty after write — something went wrong."
+        exit 1
+    fi
+
+    echo "✓ Token written to $token_file"

@@ -10,8 +10,6 @@
     stateVersion = "25.05";
     shell.enableZshIntegration = true;
 
-    packages = with pkgs; [
-      signal-desktop
-    ];
+    packages = [];
   };
 }
