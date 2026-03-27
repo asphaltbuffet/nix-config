@@ -48,11 +48,17 @@ NixOS and home-manager configuration for personal systems.
 # Build without activating
 just build
 
+# Preview what would change (build + closure diff vs current system)
+just diff
+
 # Build and switch to new configuration
 just switch
 
-# Update flake inputs and switch
-just update-switch
+# Check formatting, linting, and dead code
+just lint
+
+# Apply formatting and linting fixes
+just fix
 
 # See all commands
 just help
@@ -251,7 +257,7 @@ There are two complementary mechanisms:
 
 | Mechanism | Scope | How |
 |-----------|-------|-----|
-| CI skip file | Stops *publishing* new builds (host stays at last deployed version) | `just autodeploy-skip <hostname>` then track+commit the file |
+| CI skip file | Stops *publishing* new builds (host stays at last deployed version) | `just autodeploy-skip <hostname>` then commit the file |
 | Built-in divergence detection | Suspends *applying* updates after a manual `nixos-rebuild` | Automatic — `nixos-autodeploy` detects the divergence |
 
 ```bash
@@ -287,9 +293,9 @@ nix develop
 | `nh` | Nix helper used by `just build/switch/test` |
 | `jj` | Jujutsu version control (`jj log`, `jj commit`, `jj git push`) |
 | `nixd` | Nix language server (LSP for editors) |
-| `alejandra` | Nix formatter — run `just fmt` before committing |
-| `statix` | Nix linter |
-| `deadnix` | Detects unused Nix bindings |
+| `alejandra` | Nix formatter — run `just fmt` or `just fix` |
+| `statix` | Nix linter — run `just lint` (check) or `just fix` (apply) |
+| `deadnix` | Detects unused Nix bindings — run `just lint` (check) or `just fix` (apply) |
 
 > **Note**: `jj` and `nh` are also needed on a blank machine (e.g. after first
 > install) to run `just switch`. Both are in the dev shell so `nix develop`
