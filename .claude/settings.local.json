@@ -22,5 +22,7 @@
       "Bash(jj new:*)"
     ]
   },
-  "outputStyle": "Explanatory"
+  "outputStyle": "Explanatory",
+  "spinnerTipsEnabled": false,
+  "prefersReducedMotion": true
 }

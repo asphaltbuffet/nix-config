@@ -1,0 +1,75 @@
+flowchart TD
+    %% ── Flake update triggers ─────────────────────────────────────────────
+    SCHEDULE(["cron<br />'0 8 */3 * *'"])
+    FLDISPATCH(["workflow_dispatch"])
+
+    %% ── Flake update workflow ─────────────────────────────────────────────
+    subgraph FLAKE ["update_flake_lock.yaml"]
+        direction TB
+        UPDATE["nix flake update"]
+        FLBUILD["build all hosts in matrix"]
+        DIFF["nix store diff-closures"]
+        OPENPR["create or update PR"]
+    end
+
+    %% ── Autodeploy triggers ───────────────────────────────────────────────
+    PR(["Pull Request merged to main"])
+    DISPATCH(["workflow_dispatch"])
+
+    %% ── Autodeploy workflow ───────────────────────────────────────────────
+    subgraph CI ["autodeploy.yaml"]
+        direction TB
+        AUTODEPLOY["push to main"]
+        BUILD["build all hosts in matrix"]
+        PUBLISH["deploy to GitHub Pages"]
+    end
+
+    %% ── External caches ───────────────────────────────────────────────────
+    subgraph CACHES ["Binary Caches"]
+        CACHIX[("nix-config-grue.cachix.org")]
+        NIXOS[("cache.nixos.org")]
+    end
+
+    %% ── GitHub Pages ──────────────────────────────────────────────────────
+    PAGES[/"GitHub Pages"/]
+
+    %% ── NixOS Hosts ───────────────────────────────────────────────────────
+    TIMER(["systemd timer"])
+    HOST{{"&lt;host&gt;"}}
+
+    %% ── Flake update phase ────────────────────────────────────────────────
+    SCHEDULE --> UPDATE
+    FLDISPATCH --> UPDATE
+    UPDATE -->|"push branch"| FLBUILD
+    FLBUILD -->|"store path artifacts"| DIFF
+    DIFF -->|"package diff fragment"| OPENPR
+    OPENPR -->|"auto-merge"| PR
+
+    %% ── CI push phase ─────────────────────────────────────────────────────
+    PR --> AUTODEPLOY
+    DISPATCH --> AUTODEPLOY
+    AUTODEPLOY --> BUILD
+    BUILD -->|"push store paths"| CACHIX
+    BUILD -->|"store path ref per host"| PUBLISH
+    PUBLISH --> PAGES
+
+    %% ── Host pull phase ───────────────────────────────────────────────────
+    TIMER --> HOST
+    HOST -->|"fetch store path ref"| PAGES
+    HOST -->|"fetch store closures"| CACHIX
+    HOST -->|"cache miss fallback"| NIXOS
+
+    %% ── Styles ────────────────────────────────────────────────────────────
+    %% Colorblind-friendly pastels (Okabe-Ito palette base)
+    classDef ci fill:#b3e2cd,stroke:#238636,color:#000000
+    classDef flake fill:#fde9a2,stroke:#9e6a03,color:#000000
+    classDef cache fill:#a8d4e8,stroke:#1f6feb,color:#000000
+    classDef pages fill:#d4b8e0,stroke:#8957e5,color:#000000
+    classDef host fill:#f4c6a0,stroke:#e07020,color:#000000
+    classDef trigger fill:#111111,stroke:#888888,color:#e6edf3
+
+    class AUTODEPLOY,BUILD,PUBLISH,UPDATE,FLBUILD,DIFF,OPENPR ci
+    class CACHIX,NIXOS cache
+    class PAGES pages
+    class HOST host
+    class PR,DISPATCH,TIMER,SCHEDULE,FLDISPATCH trigger

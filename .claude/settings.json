@@ -1,6 +1,8 @@
 {
-  "enabledPlugins": {
-    "nixd-lsp": true
+  "permissions": {
+    "allow": [
+      "Bash(jj log:*)"
+    ]
   },
   "hooks": {
     "PostToolUse": [
@@ -14,5 +16,9 @@
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "nixd-lsp": true,
+    "github@claude-plugins-official": true
   }
 }

@@ -1,9 +1,9 @@
 {...}: {
   imports = [
     ./hardware-configuration.nix
+    ../../profiles/laptop/t14.nix
 
     ../../common/users.nix
-    ../../profiles/laptop/t14.nix
 
     ../../profiles/base.nix
     ../../profiles/gaming.nix
@@ -16,6 +16,6 @@
   system.stateVersion = "25.05"; # Did you read the comment?
 
   # Pull NixOS updates automatically from CI via cachix + GitHub Pages.
-  # See .autodeploy-skip/snallygaster to pause without editing this file.
+  # Create .autodeploy-skip/snallygaster to pause without editing this file.
   system.autoDeploy.enable = true;
 }

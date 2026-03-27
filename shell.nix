@@ -14,6 +14,7 @@ pkgs.mkShell {
     pkgs.p7zip # benchmark dependency
     pkgs.python3 # required by hookify claude plugin
     pkgs.nodejs # provides npx for MCP servers (e.g. context7)
+    pkgs.nodePackages.mermaid-cli
   ];
   # phoronix-test-suite compiles test suites at runtime and needs these
   # as buildInputs so their headers/libs are on the compiler search paths
