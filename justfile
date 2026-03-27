@@ -271,3 +271,40 @@ autodeploy-status host=hostname:
     @curl -sfL "https://asphaltbuffet.github.io/nix-config/hosts/{{ host }}/store-path" \
         && echo "" \
         || echo "No store path published yet for {{ host }}"
+
+[private]
+[no-exit-message]
+_op-check:
+    #!/usr/bin/env bash
+    if ! op whoami &>/dev/null; then
+        echo "✗ 1Password is not signed in. Unlock 1Password and try again."
+        exit 1
+    fi
+
+# Write the 1Password service account token to /etc/op/ (run once after first boot)
+[group('autodeploy')]
+[no-exit-message]
+autodeploy-provision-token: _op-check
+    #!/usr/bin/env bash
+    set -euo pipefail
+    token_file="/etc/op/1password-service-account-token"
+
+    token=$(op read "op://Private/nixos_service_account/credential" 2>/dev/null) || {
+        echo "✗ Failed to read op://Private/nixos_service_account/credential"
+        exit 1
+    }
+
+    if [[ -z "$token" ]]; then
+        echo "✗ Credential is empty. Check op://Private/nixos_service_account/credential."
+        exit 1
+    fi
+
+    sudo install -m 600 -o root -g root /dev/null "$token_file"
+    echo "OP_SERVICE_ACCOUNT_TOKEN=$token" | sudo tee "$token_file" > /dev/null
+
+    if [[ ! -s "$token_file" ]]; then
+        echo "✗ Token file is empty after write — something went wrong."
+        exit 1
+    fi
+
+    echo "✓ Token written to $token_file"

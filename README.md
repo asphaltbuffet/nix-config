@@ -240,6 +240,11 @@ Add to the host's `configuration.nix`:
 system.autoDeploy.enable = true;
 ```
 
+Then provision the 1Password service account token (requires an authenticated 1Password session):
+```bash
+just autodeploy-provision-token
+```
+
 **Pausing auto-deploy for a host:**
 
 There are two complementary mechanisms:
