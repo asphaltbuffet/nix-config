@@ -15,9 +15,9 @@
         eval "$(op inject --in-file ${./secrets.env} 2>/dev/null)" || true
       fi
 
-      # Set NIXOS_REBOOT_PENDING if a NixOS update is staged but awaiting reboot.
+      # Set NIXOS_REBOOT_PENDING if the running kernel differs from the current config.
       # Used by the starship prompt and the login message below.
-      if [[ "$(readlink /run/booted-system)" != "$(readlink /run/current-system)" ]]; then
+      if [[ "$(readlink /run/booted-system/kernel)" != "$(readlink /run/current-system/kernel)" ]]; then
         export NIXOS_REBOOT_PENDING=1
       fi
 
