@@ -77,10 +77,12 @@ in {
   imports = [inputs.agenix.homeManagerModules.default];
 
   # Declare agenix secret paths for each user secret.
-  age.secrets = builtins.mapAttrs (_name: secret: {
-    inherit (secret) file;
-    mode = "0400";
-  }) userSecrets;
+  age.secrets =
+    builtins.mapAttrs (_name: secret: {
+      inherit (secret) file;
+      mode = "0400";
+    })
+    userSecrets;
 
   home.packages = [loadSecrets];
 }
