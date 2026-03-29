@@ -214,6 +214,42 @@ ssh-add-host hostname pubkey:
     @echo "3. Run: just switch"
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Secrets
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Re-encrypt all secrets after adding a new recipient to secrets.nix
+[group('secrets')]
+rekey:
+    nix shell "github:ryantm/agenix" --command agenix --rekey
+
+# Prep a new host: fetch pubkey from 1Password, add to host dir, then rekey
+# Requires: op item in Service vault named host-<hostname> with field public_key
+[group('secrets')]
+[no-exit-message]
+prep-host hostname: _op-check
+    #!/usr/bin/env bash
+    set -euo pipefail
+    pubkey_file="nixos/hosts/{{ hostname }}/ssh_host_ed25519_key.pub"
+
+    if [[ -f "$pubkey_file" ]]; then
+        echo "✓ $pubkey_file already exists, skipping fetch"
+    else
+        echo "Fetching public key for {{ hostname }} from 1Password..."
+        pubkey=$(op read "op://Service/host-{{ hostname }}/public_key") || {
+            echo "✗ Failed to read op://Service/host-{{ hostname }}/public_key"
+            echo "  Create a Service vault item named 'host-{{ hostname }}' with a 'public_key' field."
+            exit 1
+        }
+        mkdir -p "nixos/hosts/{{ hostname }}"
+        echo "$pubkey" > "$pubkey_file"
+        echo "✓ Written to $pubkey_file"
+    fi
+
+    echo ""
+    echo "Add {{ hostname }} as a recipient in secrets.nix, then run: just rekey"
+    echo "Commit the results and push before running nixos-install on the new host."
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Info
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -272,30 +308,3 @@ _op-check:
         exit 1
     fi
 
-# Write the 1Password service account token to /etc/op/ (run once on first boot)
-[group('autodeploy')]
-[no-exit-message]
-autodeploy-provision-token: _op-check
-    #!/usr/bin/env bash
-    set -euo pipefail
-    token_file="/etc/op/1password-service-account-token"
-
-    token=$(op read "op://Private/nixos_service_account/credential" 2>/dev/null) || {
-        echo "✗ Failed to read op://Private/nixos_service_account/credential"
-        exit 1
-    }
-
-    if [[ -z "$token" ]]; then
-        echo "✗ Credential is empty. Check op://Private/nixos_service_account/credential."
-        exit 1
-    fi
-
-    sudo install -m 600 -o root -g root /dev/null "$token_file"
-    echo "OP_SERVICE_ACCOUNT_TOKEN=$token" | sudo tee "$token_file" > /dev/null
-
-    if [[ ! -s "$token_file" ]]; then
-        echo "✗ Token file is empty after write — something went wrong."
-        exit 1
-    fi
-
-    echo "✓ Token written to $token_file"
