@@ -43,9 +43,9 @@
       statusLine = import ./statusline.nix pkgs;
 
       # ── MCP servers ───────────────────────────────────────────────────────
-      # CONTEXT7_API_KEY is resolved by `op inject` in zsh at shell startup
-      # (home/modules/zsh/secrets.env) before Claude Code launches, so it is
-      # already in the environment when the MCP child process is spawned.
+      # CONTEXT7_API_KEY is loaded by `load-secrets` in zsh at shell startup
+      # before Claude Code launches, so it is already in the environment when
+      # the MCP child process is spawned.
       # "$VAR" interpolation in MCP env blocks is the standard Claude Code
       # pattern; shell command substitution ($(…)) is not supported there.
       mcpServers = {
@@ -55,6 +55,15 @@
           env = {
             CONTEXT7_API_KEY = "$CONTEXT7_API_KEY";
           };
+        };
+
+        # Serena: semantic code analysis via LSP (symbol search, refactoring,
+        # codebase navigation). Registered here so Nix controls the uv version
+        # rather than the plugin's uvx invocation. The serena plugin remains
+        # enabled for its project scaffolding and tool descriptions.
+        serena = {
+          command = "${pkgs.uv}/bin/uvx";
+          args = ["--from" "git+https://github.com/oraios/serena" "serena" "start-mcp-server"];
         };
       };
     };

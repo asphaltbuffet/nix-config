@@ -32,9 +32,8 @@
   systemd.timers.nixos-autodeploy.timerConfig.OnStartupSec = lib.mkForce "5min";
 
   # Wire nixos-autodeploy into healthchecks.io so failed or missed runs are visible.
-  # Only active when autodeploy is enabled. The 1Password service account token is
-  # read from a root-only file provisioned manually on each host
-  # (see README — provisioning steps after first boot).
+  # Only active when autodeploy is enabled. The ping key is decrypted by agenix
+  # to /run/agenix/hcPingKey at activation time (see nixos/common/agenix.nix).
   # The "-" prefixes allow the service to continue if monitoring fails.
   # https://healthchecks.io/docs/monitoring_systemd_tasks/
   systemd.services.nixos-autodeploy = lib.mkIf config.system.autoDeploy.enable (
@@ -46,28 +45,33 @@
       # unset for all other invocations.
       hcPingStart = pkgs.writeShellApplication {
         name = "hc-ping-start";
-        runtimeInputs = [pkgs._1password-cli pkgs.curl];
+        runtimeInputs = [pkgs.curl];
         text = ''
           [[ -n "''${TRIGGER_TIMER_REALTIME_USEC:-}" ]] || exit 0
-          PING_KEY=$(op read "op://Service/ping_key/credential" 2>/dev/null) \
-            || { echo "hc-ping-start: op read failed, skipping ping" >&2; exit 0; }
+          [[ -r /run/agenix/hcPingKey ]] \
+            || { echo "hc-ping-start: /run/agenix/hcPingKey not readable, skipping ping" >&2; exit 0; }
+          PING_KEY=$(< /run/agenix/hcPingKey)
+          export PING_KEY
           curl -fsS --retry 3 "https://hc-ping.com/$PING_KEY/nixos-autodeploy-${host}/start" > /dev/null
+          unset PING_KEY
         '';
       };
       hcPingDone = pkgs.writeShellApplication {
         name = "hc-ping-done";
-        runtimeInputs = [pkgs._1password-cli pkgs.curl];
+        runtimeInputs = [pkgs.curl];
         text = ''
           [[ -n "''${TRIGGER_TIMER_REALTIME_USEC:-}" ]] || exit 0
           EXIT_STATUS="''${EXIT_STATUS:-0}"
-          PING_KEY=$(op read "op://Service/ping_key/credential" 2>/dev/null) \
-            || { echo "hc-ping-done: op read failed, skipping ping" >&2; exit 0; }
+          [[ -r /run/agenix/hcPingKey ]] \
+            || { echo "hc-ping-done: /run/agenix/hcPingKey not readable, skipping ping" >&2; exit 0; }
+          PING_KEY=$(< /run/agenix/hcPingKey)
+          export PING_KEY
           curl -fsS --retry 3 "https://hc-ping.com/$PING_KEY/nixos-autodeploy-${host}/$EXIT_STATUS" > /dev/null
+          unset PING_KEY
         '';
       };
     in {
       serviceConfig = {
-        EnvironmentFile = "-/etc/op/1password-service-account-token";
         Environment = "HOME=/root";
         # "-" prefix means failure is non-fatal; service continues regardless.
         ExecStartPre = "-${hcPingStart}/bin/hc-ping-start";

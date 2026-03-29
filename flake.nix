@@ -35,6 +35,11 @@
       url = "github:hlsb-fulda/nixos-autodeploy";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs @ {
@@ -44,6 +49,7 @@
     home-manager,
     nixos-hardware,
     nur,
+    agenix,
     ...
   }: let
     # Supported systems - add more as needed (e.g., "aarch64-linux" for ARM servers)
@@ -78,10 +84,12 @@
             home-manager
             nixos-hardware
             nur
+            agenix
             ;
         };
         modules = [
           nur.modules.nixos.default
+          agenix.nixosModules.default
           ({...}: {config = {nixpkgs.overlays = overlays;};})
           {
             environment.systemPackages = [
