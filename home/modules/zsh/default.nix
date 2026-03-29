@@ -10,9 +10,9 @@
     };
 
     initContent = ''
-      # Inject 1Password secrets if op is available and signed in
-      if command -v op &>/dev/null; then
-        eval "$(op inject --in-file ${./secrets.env} 2>/dev/null)" || true
+      # Load secrets from agenix-decrypted files into environment variables.
+      if command -v load-secrets &>/dev/null; then
+        load-secrets
       fi
 
       # Set NIXOS_REBOOT_PENDING if the running kernel differs from the current config.
