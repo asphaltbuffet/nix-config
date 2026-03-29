@@ -8,6 +8,7 @@
   imports = [
     inputs.home-manager.nixosModules.home-manager
     ../common/1password.nix
+    ../common/agenix.nix
     ../common/autodeploy.nix
     ../common/firefox.nix
     ../common/nas.nix
