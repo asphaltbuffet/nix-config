@@ -58,7 +58,9 @@ When running shell commands, prefer these modern alternatives:
 - **Formatter**: alejandra (enforced in `nix flake check`). Always run `just fmt` before committing.
 - **Linter**: statix (available in dev shell).
 - **VCS**: jujutsu (jj) colocated with git. Main branch is `main`. For isolated workspaces use `jj workspace add <path> --name <name>` (not `git worktree add`); no `.gitignore` entry needed.
-- **Secrets**: Managed externally via 1Password (`op inject` in zsh). No agenix in this repo.
+- **Secrets**: Managed with agenix. `.age` files are ciphertext (safe to commit). `secrets.nix` maps files to age recipient public keys. System secrets decrypt to `/run/agenix/` (root-owned). User secrets also decrypt to `/run/agenix/` (user-owned). The `home/modules/agenix/default.nix` `userSecrets` attrset is the single source of truth for user secret → env var mappings. Add new secrets there + in `secrets.nix` + encrypt the `.age` file.
+- **Rekeying**: Run `just rekey` after adding a new recipient to `secrets.nix`. Requires agenix CLI and your SSH key loaded in the agent.
+- **New host prep**: `just prep-host <hostname>` fetches the host pubkey from 1Password `Service` vault, saves to `nixos/hosts/<hostname>/ssh_host_ed25519_key.pub`, and prints instructions to update `secrets.nix`.
 - **Editor**: Neovim is the primary editor (`home/modules/nvim/`). Lua-based config with Nix-managed plugins, LSP (gopls, nixd, pyright, lua_ls), and carbonfox theme. The legacy vim module (`home/modules/vim/`) is still present but `defaultEditor` is disabled.
 - **Module pattern**: Home-manager tool configs live in `home/modules/<tool>/default.nix`. Import them from roles, not directly from user files.
 - **Adding a host**: Create `nixos/hosts/<name>/` with `configuration.nix` and `hardware-configuration.nix`. It will be auto-discovered by both the flake and CI (`.github/workflows/build-hosts.yaml` discovers hosts from `nixos/hosts/` at runtime).

@@ -203,27 +203,31 @@ See [`docs/security/ssh-key-management.md`](docs/security/ssh-key-management.md)
 
 ## Secrets Management
 
-Secrets are managed via [1Password](https://1password.com) using the `op inject`
-CLI pattern — no encrypted files in the repo, no host key ceremony when adding
-new machines.
+Secrets are managed with [agenix](https://github.com/ryantm/agenix) — encrypted
+with age to SSH public keys and stored as `.age` files in the repo.
 
-User-session secrets (API keys) are injected into zsh at login via:
+| Layer | Tool | Where secrets live |
+|---|---|---|
+| System secrets (e.g. healthchecks ping key) | agenix | `/run/agenix/hcPingKey` (tmpfs, root:root 0400) |
+| User secrets (API keys, tokens) | agenix | `/run/agenix/<name>` (tmpfs, user:user 0400) |
+| Bootstrap key distribution | 1Password `op` CLI | Host SSH keypairs in `Service` vault |
 
-```bash
-eval "$(op inject --in-file ~/.config/op/secrets.env 2>/dev/null)" || true
-```
+**Adding a secret:**
+1. Encrypt: `nix shell "github:ryantm/agenix" --command agenix -e secrets/<path>.age`
+2. Add to `secrets.nix` (recipients) and `home/modules/agenix/default.nix` (env var mapping)
+3. Commit and `just switch`
 
-The template (`home/modules/zsh/secrets.env`) contains `op://` references —
-inert without an authenticated 1Password session. If 1Password is locked, the
-shell opens normally and env vars are simply unset until you unlock and open a
-new shell.
+**Adding a new host:**
+1. Create SSH keypair in 1Password (`Service` vault, item `host-<hostname>`)
+2. Run `just prep-host <hostname>` on any existing host
+3. Add host to `secrets.nix` recipients and run `just rekey`
+4. Commit, push, and wait for merge
+5. On the new host ISO: `op read "op://Service/host-<hostname>/private_key" > /etc/ssh/ssh_host_ed25519_key && chmod 600 /etc/ssh/ssh_host_ed25519_key`
+6. Run `nixos-install --flake "github:asphaltbuffet/nix-config#<hostname>"`
 
 Tailscale authentication state persists in `/var/lib/tailscale/` — no auth key
 is stored in the config. On a fresh install, run `sudo tailscale up --auth-key
 <key>` once interactively; subsequent reboots reconnect automatically.
-
-See [`docs/security/secrets-migration-agenix-to-1password.md`](docs/security/secrets-migration-agenix-to-1password.md)
-for the full rationale and migration notes.
 
 ## Auto-Deploy
 
