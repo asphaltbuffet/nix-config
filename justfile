@@ -217,10 +217,21 @@ ssh-add-host hostname pubkey:
 # Secrets
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Re-encrypt all secrets after adding a new recipient to secrets.nix
+# Re-encrypt all secrets after adding a new recipient to secrets.nix.
+# Runs as root (for host key access) while preserving the 1Password SSH agent socket.
 [group('secrets')]
 rekey:
-    nix shell "github:ryantm/agenix" --command agenix --rekey
+    sudo SSH_AUTH_SOCK="${SSH_AUTH_SOCK:-$HOME/.1password/agent.sock}" agenix --rekey -i /etc/ssh/ssh_host_ed25519_key
+
+# Re-encrypt all secrets after adding new keys
+[group('secrets')]
+secret-rekey:
+    cd {{ flake }}/secrets && sudo agenix -r /etc/ssh/ssh_host_ed25519_key
+
+# List all available secrets
+[group('secrets')]
+secret-list:
+    @fd -e age . {{ flake }}/secrets/ -x basename -s .age | sort
 
 # Prep a new host: fetch pubkey from 1Password, add to host dir, then rekey
 # Requires: op item in Service vault named host-<hostname> with field public_key

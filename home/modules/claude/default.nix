@@ -63,7 +63,18 @@
         # enabled for its project scaffolding and tool descriptions.
         serena = {
           command = "${pkgs.uv}/bin/uvx";
-          args = ["--from" "git+https://github.com/oraios/serena" "serena" "start-mcp-server"];
+          args = [
+            "--from"
+            "git+https://github.com/oraios/serena"
+            "serena"
+            "start-mcp-server"
+            "--context"
+            "claude-code"
+            "--project-from-cwd"
+          ];
+          env = {
+            ENABLE_TOOL_SEARCH = true;
+          };
         };
       };
     };

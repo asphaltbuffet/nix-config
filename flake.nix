@@ -4,6 +4,11 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     alejandra = {
       url = "github:kamadorueda/alejandra/4.0.0";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -35,21 +40,16 @@
       url = "github:hlsb-fulda/nixos-autodeploy";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    agenix = {
-      url = "github:ryantm/agenix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs = inputs @ {
     self,
     nixpkgs,
+    agenix,
     alejandra,
     home-manager,
     nixos-hardware,
     nur,
-    agenix,
     ...
   }: let
     # Supported systems - add more as needed (e.g., "aarch64-linux" for ARM servers)
@@ -81,10 +81,10 @@
             self
             inputs
             nixpkgs
+            agenix
             home-manager
             nixos-hardware
             nur
-            agenix
             ;
         };
         modules = [
@@ -93,6 +93,7 @@
           ({...}: {config = {nixpkgs.overlays = overlays;};})
           {
             environment.systemPackages = [
+              agenix.packages.${system}.default
               alejandra.defaultPackage.${system}
             ];
           }
@@ -104,10 +105,11 @@
       (nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = {
-          inherit self inputs nixpkgs;
+          inherit self inputs nixpkgs agenix;
         };
         modules = [
           "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+          {environment.systemPackages = [agenix.packages.${system}.default];}
           ./nixos/installer/configuration.nix
         ];
       }).config.system.build.isoImage;
@@ -131,7 +133,7 @@
     devShells = forAllSystems (system: let
       pkgs = mkPkgs system;
     in {
-      default = import ./shell.nix {inherit pkgs;};
+      default = import ./shell.nix {inherit pkgs system agenix;};
     });
 
     # Runnable apps: `nix run .#benchmark`

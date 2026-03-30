@@ -19,7 +19,11 @@
       "Skill(claude-md-management:revise-claude-md)",
       "mcp__context7__query-docs",
       "Bash(nix flake:*)",
-      "Bash(jj new:*)"
+      "Bash(jj new:*)",
+      "mcp__serena__check_onboarding_performed",
+      "mcp__serena__onboarding",
+      "mcp__serena__write_memory",
+      "mcp__serena__list_dir"
     ]
   },
   "outputStyle": "Explanatory",
