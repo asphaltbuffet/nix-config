@@ -32,11 +32,6 @@
   # Enable NFS for automounting
   boot.supportedFilesystems = ["nfs"];
 
-  fonts.packages = with pkgs; [
-    fira-code
-    roboto-mono
-  ];
-
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
 
@@ -66,6 +61,7 @@
 
   # List services that you want to enable:
   services.envfs.enable = true;
+  services.prometheus.exporters.node.enable = true;
   services.fwupd.enable = true;
 
   # Refresh fwupd metadata weekly; only on AC power to avoid draining battery.
@@ -103,14 +99,6 @@
       }
     ];
   };
-  services.printing.enable = lib.mkDefault true;
-
-  services.xserver.xkb = {
-    layout = "us";
-    options = "caps:swapescape";
-    variant = "";
-  };
-
   # Enable Docker
   virtualisation.docker.enable = true;
 
@@ -131,46 +119,9 @@
     clean.extraArgs = lib.mkDefault "--keep-since 4d --keep 3";
   };
 
-  programs.vim = {
-    enable = true;
-    defaultEditor = true;
-    package = (pkgs.vim-full.override {}).customize {
-      name = "vim";
-      # Install plugins for example for syntax highlighting of nix files
-      vimrcConfig.packages.myplugins = with pkgs.vimPlugins; {
-        start = [
-          vim-sensible
-          vim-nix
-          vim-lastplace
-          vim-surround
-          vim-commentary
-          vim-repeat
-          vim-unimpaired
-        ];
-        opt = [];
-      };
-      vimrcConfig.customRC = ''
-        set gcr=a:blinkon0
-        let mapleader=','
-        set hlsearch
-        set fileformats=unix,dos,mac
-
-        noremap <leader>h :<C-u>split<CR>
-        noremap <leader>v :<C-u>vsplit<CR>
-      '';
-    };
-  };
-
   programs.nix-ld.enable = true;
 
-  # Grant the active console user access to the PC speaker evdev node without
-  # adding them to the broad `input` group (which would expose all input devices).
-  services.udev.extraRules = ''
-    SUBSYSTEM=="input", ATTRS{name}=="PC Speaker", TAG+="uaccess"
-  '';
-
   environment.systemPackages = with pkgs; [
-    beep
     curl
     git
     rclone
