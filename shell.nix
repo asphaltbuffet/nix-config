@@ -1,4 +1,8 @@
-{pkgs}:
+{
+  pkgs,
+  system,
+  agenix,
+}:
 pkgs.mkShell {
   packages = [
     pkgs.nixd # nix LSP (understands flake option types)
@@ -7,6 +11,7 @@ pkgs.mkShell {
     pkgs.deadnix # find unused nix code
     pkgs.just # command runner (justfile recipes)
     pkgs.nh # nix helper (build/switch/test wrappers)
+    agenix.packages.${system}.default # secrets management
     pkgs.nvd # nix diff
     pkgs.cachix # personal nix cache
     pkgs.jujutsu # version control (jj)

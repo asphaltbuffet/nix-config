@@ -58,12 +58,24 @@
         };
 
         # Serena: semantic code analysis via LSP (symbol search, refactoring,
-        # codebase navigation). Registered here so Nix controls the uv version
-        # rather than the plugin's uvx invocation. The serena plugin remains
-        # enabled for its project scaffolding and tool descriptions.
+        # codebase navigation). Registered here with --project-from-cwd so
+        # Nix controls the uv version and the project is always set correctly.
+        # The serena plugin is disabled in plugins.nix to avoid a duplicate
+        # MCP server without project context.
         serena = {
           command = "${pkgs.uv}/bin/uvx";
-          args = ["--from" "git+https://github.com/oraios/serena" "serena" "start-mcp-server"];
+          args = [
+            "--from"
+            "git+https://github.com/oraios/serena"
+            "serena"
+            "start-mcp-server"
+            "--context"
+            "claude-code"
+            "--project-from-cwd"
+          ];
+          env = {
+            ENABLE_TOOL_SEARCH = true;
+          };
         };
       };
     };

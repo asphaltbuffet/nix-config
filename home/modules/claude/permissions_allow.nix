@@ -18,4 +18,5 @@
   "Bash(just fmt*)"
   "Bash(just diff*)"
   "Bash(just hosts*)"
+  "Bash(just lint*)"
 ]

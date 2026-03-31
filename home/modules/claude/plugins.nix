@@ -11,9 +11,11 @@
   # gopls-lsp disabled: serena provides LSP-backed symbol navigation for
   # all project languages via its own language server integration.
   "gopls-lsp@claude-plugins-official" = false;
-  # Serena MCP server is registered in default.nix (Nix-managed uvx invocation).
-  # The plugin remains enabled for project scaffolding and tool descriptions.
-  "serena@claude-plugins-official" = true;
+  # Serena MCP server is registered in default.nix (Nix-managed uvx invocation
+  # with --project-from-cwd). The plugin is disabled because enabling it also
+  # starts a second MCP server without project context, creating duplicate
+  # tool namespaces (mcp__serena__* vs mcp__plugin_serena_serena__*).
+  "serena@claude-plugins-official" = false;
 
   # ── Workflow / skills ──────────────────────────────────────────────────
   "superpowers@claude-plugins-official" = true;

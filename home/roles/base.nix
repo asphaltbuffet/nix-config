@@ -10,7 +10,6 @@
   imports = [
     inputs.nix-index-database.homeModules.nix-index
 
-    ../modules/agenix
     ../modules/eza
     ../modules/fzf
     ../modules/git

@@ -7,14 +7,10 @@
       EDITOR = "vim";
       VISUAL = "vim";
       DIRENV_LOG_FORMAT = ""; # silence direnv loading/export messages
+      SSH_AUTH_SOCK = "${config.home.homeDirectory}/.1password/agent.sock";
     };
 
     initContent = ''
-      # Load secrets from agenix-decrypted files into environment variables.
-      if command -v load-secrets &>/dev/null; then
-        load-secrets
-      fi
-
       # Set NIXOS_REBOOT_PENDING if the running kernel differs from the current config.
       # Used by the starship prompt and the login message below.
       if [[ "$(readlink /run/booted-system/kernel)" != "$(readlink /run/current-system/kernel)" ]]; then
