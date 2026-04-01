@@ -1,19 +1,13 @@
 # nixos/profiles/server.nix
-# Lightweight headless server profile. Import alongside base.nix for home-lab nodes.
+# Headless server profile. Import alongside base.nix for home-lab nodes.
 # Do NOT import laptop/ with this profile — they are mutually exclusive.
-{lib, ...}: {
-  # Explicitly disable all desktop/GUI services
-  services.xserver.enable = lib.mkForce false;
-  services.displayManager.sddm.enable = lib.mkForce false;
-  services.desktopManager.plasma6.enable = lib.mkForce false;
+{...}: {
+  imports = [
+    ../common/tailscale-subnet-router.nix
+    ../common/monitoring.nix
+  ];
 
-  # No bluetooth on headless servers
-  hardware.bluetooth.enable = lib.mkForce false;
-
-  # No print spooler on servers (base.nix sets mkDefault true)
-  services.printing.enable = lib.mkForce false;
-
-  # Harden SSH for server use (stricter than base.nix defaults)
+  # Harden SSH for server use
   services.openssh = {
     enable = true;
     settings = {
@@ -24,6 +18,10 @@
     };
   };
 
-  # Disable firmware update service — servers are not AC-only and rarely need fwupd
-  services.fwupd.enable = lib.mkForce false;
+  # CUPS print server — serve printers to the network via mDNS/Bonjour
+  services.printing.enable = true;
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;
+  };
 }
