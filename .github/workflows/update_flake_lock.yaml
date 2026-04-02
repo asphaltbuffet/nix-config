@@ -79,6 +79,17 @@ jobs:
         # main branch closure as the baseline for nix store diff-closures.
         # The update branch's store paths arrive via downloaded artifacts.
 
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
       - uses: cachix/install-nix-action@v31
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
