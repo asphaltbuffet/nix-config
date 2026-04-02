@@ -136,12 +136,6 @@
       default = import ./shell.nix {inherit pkgs system agenix;};
     });
 
-    # Runnable apps: `nix run .#benchmark`
-    apps = forAllSystems (system: let
-      pkgs = mkPkgs system;
-    in
-      import ./apps/benchmark.nix {inherit pkgs;});
-
     # Formatter for `nix fmt`
     formatter = forAllSystems (system: alejandra.defaultPackage.${system});
 

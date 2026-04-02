@@ -19,10 +19,6 @@ just check              # Run nix flake check (includes formatting check)
 just update             # Update flake.lock inputs
 ```
 
-```bash
-nix run .#benchmark     # Run phoronix benchmark suite (compress, ram, fio, blake2, openssl)
-```
-
 Dev shell: `nix develop` provides nixd (Nix LSP), alejandra, statix, deadnix, and just.
 
 ## Architecture
@@ -43,7 +39,6 @@ This is a NixOS + home-manager flake for three hosts (wendigo, kushtaka, snallyg
 
 **Flake** (`flake.nix`): `mkHost` builds a NixOS system by composing `nixos/hosts/<name>/configuration.nix` with NUR overlays and system packages. All flake inputs are passed to modules via `specialArgs`.
 - `shell.nix` — Dev shell definition (imported by `flake.nix`; also usable as a legacy `nix-shell`)
-- `apps/benchmark.nix` — Phoronix benchmark app (imported by `flake.nix`)
 
 ## Preferred CLI Tools
 
