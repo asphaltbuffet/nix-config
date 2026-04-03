@@ -81,8 +81,8 @@
         };
 
         # Serena: semantic code analysis via LSP (symbol search, refactoring,
-        # codebase navigation). Registered here with --project-from-cwd so
-        # Nix controls the uv version and the project is always set correctly.
+        # codebase navigation). Registered here with --project so Nix controls
+        # the uv version and the project is always set correctly.
         # The serena plugin is disabled in plugins.nix to avoid a duplicate
         # MCP server without project context.
         serena = {
@@ -94,7 +94,8 @@
             "start-mcp-server"
             "--context"
             "claude-code"
-            "--project-from-cwd"
+            "--project"
+            "."
           ];
           env = {
             ENABLE_TOOL_SEARCH = true;
