@@ -40,6 +40,11 @@
       url = "github:hlsb-fulda/nixos-autodeploy";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    serena = {
+      url = "github:oraios/serena";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs @ {
