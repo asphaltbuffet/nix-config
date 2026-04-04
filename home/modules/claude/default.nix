@@ -5,6 +5,7 @@
 }: {
   programs.claude-code = {
     enable = true;
+    package = pkgs.claude-code;
 
     # User-level CLAUDE.md: applies globally to every project session.
     # Keep minimal — project-level CLAUDE.md files handle specifics.

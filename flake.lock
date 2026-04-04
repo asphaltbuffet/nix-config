@@ -405,7 +405,7 @@
       },
       "original": {
         "owner": "NixOS",
-        "ref": "nixos-unstable",
+        "ref": "nixpkgs-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -571,11 +571,11 @@
         "uv2nix": "uv2nix"
       },
       "locked": {
-        "lastModified": 1775325622,
-        "narHash": "sha256-SU7F9eAFPe6xNsdwTt7CftQpunv+L6S1PtQfkJ/IQYg=",
+        "lastModified": 1775330959,
+        "narHash": "sha256-r+L6vyfhCcCt6MDv8qkUeqyJUSZC4fgkJOvlg1j0TNg=",
         "owner": "oraios",
         "repo": "serena",
-        "rev": "089706c798a7ae520e33790ab5477d2e50471217",
+        "rev": "599266ec5f74a4cfce04f1fcf9b81ac3dace6f81",
         "type": "github"
       },
       "original": {
