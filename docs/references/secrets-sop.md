@@ -6,14 +6,20 @@ Secrets are managed with **agenix**. `.age` files are ciphertext (safe to commit
 
 - System secrets decrypt to `/run/agenix/` (root-owned)
 - User secrets decrypt to `/run/agenix/` (user-owned)
-- `home/modules/agenix/default.nix` `userSecrets` attrset is the single source of truth for user secret → env var mappings
+- The `secretEnvs` list in `home/users/<name>.nix` is the single source of truth for user secret → env var mappings. `age.secrets` entries and `zsh.initContent` shell exports are both derived from it automatically — no other files need editing for a new user secret.
 
-## Adding a New Secret
+## Adding a New User Secret
 
-1. Add the secret path + recipient keys to `secrets/secrets.nix`
-2. Add user secret → env var mapping to `home/modules/agenix/default.nix` (`userSecrets` attrset)
-3. Encrypt the `.age` file: `agenix -e secrets/<name>.age`
-4. Track with jj: `jj file track secrets/<name>.age`
+1. Add the secret path + recipient keys to `secrets/secrets.nix`:
+   ```nix
+   "grue/mysecret.age".publicKeys = [grue] ++ allHosts;
+   ```
+2. Add to the `secretEnvs` list in `home/users/grue.nix`:
+   ```nix
+   { secret = "mysecret"; env = "MY_ENV_VAR"; }
+   ```
+3. Encrypt the `.age` file: `agenix -e secrets/grue/mysecret.age`
+4. Track with jj: `jj file track secrets/grue/mysecret.age`
 
 ## Rekeying
 

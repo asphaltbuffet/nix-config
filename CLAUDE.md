@@ -129,7 +129,7 @@ When running shell commands, prefer these modern alternatives:
 
 See `docs/references/secrets-sop.md` when touching secrets, agenix, or the SSH module.
 
-- **Secrets**: Managed with agenix. `.age` files are ciphertext (safe to commit). `secrets.nix` maps files to age recipient public keys. The `home/modules/agenix/default.nix` `userSecrets` attrset is the single source of truth for user secret → env var mappings. Add new secrets there + in `secrets.nix` + encrypt the `.age` file.
+- **Secrets**: Managed with agenix. `.age` files are ciphertext (safe to commit). `secrets.nix` maps files to age recipient public keys. The `secretEnvs` list in `home/users/<name>.nix` is the single source of truth for user secret → env var mappings; `age.secrets` and `zsh.initContent` exports are derived from it automatically. See `docs/references/secrets-sop.md` for the full workflow.
 - **Rekeying**: Run `just rekey` after adding a new recipient to `secrets.nix`.
 
 ---
