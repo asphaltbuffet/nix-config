@@ -19,6 +19,5 @@ pkgs.mkShell {
     pkgs.python3 # required by hookify claude plugin
     pkgs.nodejs # provides npx for MCP servers (e.g. context7)
     pkgs.uv # python package manager (used by serena MCP server)
-    pkgs.nodePackages.mermaid-cli
   ];
 }
