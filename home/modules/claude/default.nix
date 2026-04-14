@@ -1,8 +1,4 @@
-{
-  pkgs,
-  inputs,
-  ...
-}: {
+{pkgs, ...}: {
   programs.claude-code = {
     enable = true;
     package = pkgs.claude-code;
@@ -48,23 +44,6 @@
           args = ["-y" "@upstash/context7-mcp@latest"];
           env = {
             CONTEXT7_API_KEY = "$CONTEXT7_API_KEY";
-          };
-        };
-
-        # Serena: semantic code analysis via LSP (symbol search, refactoring,
-        # codebase navigation). Registered here with --project so Nix controls
-        # the serena version and the project is always set correctly.
-        serena = {
-          command = "${inputs.serena.packages.${pkgs.stdenv.hostPlatform.system}.serena}/bin/serena";
-          args = [
-            "start-mcp-server"
-            "--context"
-            "claude-code"
-            "--project"
-            "."
-          ];
-          env = {
-            ENABLE_TOOL_SEARCH = true;
           };
         };
       };
