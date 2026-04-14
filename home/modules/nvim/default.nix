@@ -7,6 +7,10 @@
     viAlias = true;
     vimAlias = true;
 
+    # enable legacy behavior explicitly for now
+    withRuby = true;
+    withPython3 = true;
+
     initLua = builtins.concatStringsSep "\n" [
       (builtins.readFile ./options.lua)
       (builtins.readFile ./keymaps.lua)
