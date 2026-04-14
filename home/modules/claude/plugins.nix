@@ -8,14 +8,7 @@
 # Project-level entries are merged on top of these global defaults.
 {
   # ── LSP / codebase navigation ──────────────────────────────────────────
-  # gopls-lsp disabled: serena provides LSP-backed symbol navigation for
-  # all project languages via its own language server integration.
-  "gopls-lsp@claude-plugins-official" = false;
-  # Serena MCP server is registered in default.nix (Nix-managed uvx invocation
-  # with --project-from-cwd). The plugin is disabled because enabling it also
-  # starts a second MCP server without project context, creating duplicate
-  # tool namespaces (mcp__serena__* vs mcp__plugin_serena_serena__*).
-  "serena@claude-plugins-official" = false;
+  "gopls-lsp@claude-plugins-official" = true;
 
   # ── Workflow / skills ──────────────────────────────────────────────────
   "superpowers@claude-plugins-official" = true;
@@ -23,9 +16,7 @@
   "code-simplifier@claude-plugins-official" = true;
   "claude-md-management@claude-plugins-official" = true;
   "claude-code-setup@claude-plugins-official" = true;
-  "hookify@claude-plugins-official" = true;
-  # atomic-agents and feature-dev disabled: serena covers codebase
-  # understanding and editing workflows more deeply via LSP semantics.
+  "hookify@claude-plugins-official" = false;
   "atomic-agents@claude-plugins-official" = false;
   "feature-dev@claude-plugins-official" = false;
   "skill-creator@daymade-skills" = true;

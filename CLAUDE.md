@@ -2,6 +2,46 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. You may edit this file without asking permission.
 
+## Information Recording Principles (Claude must read)
+
+This document uses **progressive disclosure** to optimize LLM working efficiency.
+
+### Level 1 (this file) records only
+
+| Type | Examples |
+|------|---------|
+| Core command table | `just build`, `just switch` |
+| Iron rules / prohibitions | Never use `git add`; always `jj file track` |
+| Common error diagnosis | symptom → cause → fix (complete flow) |
+| Code patterns | directly-copyable code blocks |
+| Directory navigation | function → file mapping |
+| Trigger index tables | pointers to Level 2 |
+
+### Level 2 (`docs/references/`) records
+
+| Type | Examples |
+|------|---------|
+| Detailed SOP workflows | Complete multi-step procedures |
+| Edge case handling | Rare error diagnosis |
+| Full configuration examples | All parameters explained |
+| Historical decision records | Why things are designed this way |
+
+### When a user asks to record information
+
+1. **Is it high-frequency?** → write to CLAUDE.md (Level 1)
+2. **Is it a detailed SOP or edge case?** → write to `docs/references/` (Level 2) with a trigger entry in the index tables below
+
+---
+
+## Reference Index (check here first when encountering problems)
+
+| Trigger scenario | Document | Core content |
+|---|---|---|
+| Adding/editing secrets, `.age` files, agenix, SSH module, git signing | `docs/references/secrets-sop.md` | agenix workflow, rekeying, SSH matchBlocks, host prep |
+| Editing GitHub Actions workflows, CI permissions errors, matrix outputs, force-push on CI | `docs/references/ci-github-actions-sop.md` | permissions ceiling, build-hosts.yaml callers, autodeploy |
+
+---
+
 ## Build & Development Commands
 
 All commands use `just` (a command runner) and `nh` (a Nix helper) under the hood:
@@ -20,6 +60,8 @@ just update             # Update flake.lock inputs
 ```
 
 Dev shell: `nix develop` provides nixd (Nix LSP), alejandra, statix, deadnix, and just.
+
+---
 
 ## Architecture
 
@@ -40,6 +82,8 @@ This is a NixOS + home-manager flake for three hosts (wendigo, kushtaka, snallyg
 **Flake** (`flake.nix`): `mkHost` builds a NixOS system by composing `nixos/hosts/<name>/configuration.nix` with NUR overlays and system packages. All flake inputs are passed to modules via `specialArgs`.
 - `shell.nix` — Dev shell definition (imported by `flake.nix`; also usable as a legacy `nix-shell`)
 
+---
+
 ## Preferred CLI Tools
 
 When running shell commands, prefer these modern alternatives:
@@ -48,35 +92,47 @@ When running shell commands, prefer these modern alternatives:
 - `sd` instead of `sed` (for in-place substitution)
 - `jq` instead of Python scripts for JSON processing
 
+---
+
 ## Key Conventions
+
+### VCS & Formatting (always apply)
 
 - **Formatter**: alejandra (enforced in `nix flake check`). Always run `just fmt` before committing.
 - **Linter**: statix (available in dev shell).
 - **VCS**: jujutsu (jj) colocated with git. Main branch is `main`. For isolated workspaces use `jj workspace add <path> --name <name>` (not `git worktree add`); no `.gitignore` entry needed.
-- **Secrets**: Managed with agenix. `.age` files are ciphertext (safe to commit). `secrets.nix` maps files to age recipient public keys. System secrets decrypt to `/run/agenix/` (root-owned). User secrets also decrypt to `/run/agenix/` (user-owned). The `home/modules/agenix/default.nix` `userSecrets` attrset is the single source of truth for user secret → env var mappings. Add new secrets there + in `secrets.nix` + encrypt the `.age` file.
-- **Rekeying**: Run `just rekey` after adding a new recipient to `secrets.nix`. Requires agenix CLI and your SSH key loaded in the agent.
-- **New host prep**: `just prep-host <hostname>` fetches the host pubkey from 1Password `Service` vault, saves to `nixos/hosts/<hostname>/ssh_host_ed25519_key.pub`, and prints instructions to update `secrets.nix`.
-- **Editor**: Neovim is the primary editor (`home/modules/nvim/`). Lua-based config with Nix-managed plugins, LSP (gopls, nixd, pyright, lua_ls), and carbonfox theme. The legacy vim module (`home/modules/vim/`) is still present but `defaultEditor` is disabled.
+- **Parallel subagents + jj**: Do NOT dispatch multiple subagents in parallel when they need to commit — jj has a single mutable working copy (`@`) and parallel agents conflict. Execute sequentially.
+
+### Shell & YAML (always apply)
+
+- **Shell `#` quoting**: Any argument containing `#` (e.g. `nix run "nixpkgs#nvd"`) must be double-quoted in zsh — unquoted `#` starts a comment. This applies in Bash tool calls too.
+- **YAML validation**: Use `yq -e '.' file.yaml` to validate YAML syntax. Never use `python3 -c "import yaml..."` — python3 is not reliably on PATH.
+
+### Nix-specific gotchas (iron rules)
+
+- **New files + Nix flake**: The flake copies sources via `self`, so new files must be tracked before `just build` can see them. Use `jj file track <path>` (never `git add`).
+- **`pkgs.system` deprecated**: Use `pkgs.stdenv.hostPlatform.system` instead. `pkgs.system` triggers `evaluation warning: 'system' has been renamed to/replaced by 'stdenv.hostPlatform.system'`.
+- **nix.settings binary caches**: Use `extra-substituters` / `extra-trusted-public-keys` to append a cache without replacing the default `cache.nixos.org`. Bare `substituters` / `trusted-public-keys` are replacement lists.
+- **GC already automated**: `programs.nh.clean.enable = true` in `base.nix` creates a systemd GC timer — no need to add a custom `nix-gc` timer.
+- **KDE Plasma + TLP**: `services.desktopManager.plasma6.enable` implicitly enables `power-profiles-daemon`. Use `lib.mkForce false` to disable it before enabling TLP (they are mutually exclusive).
+- **logind config**: Use `services.logind.settings.Login` (attrset), not the removed `services.logind.extraConfig` (string).
+
+### Module & host patterns
+
 - **Module pattern**: Home-manager tool configs live in `home/modules/<tool>/default.nix`. Import them from roles, not directly from user files.
 - **Adding a host**: Create `nixos/hosts/<name>/` with `configuration.nix` and `hardware-configuration.nix`. It will be auto-discovered by both the flake and CI (`.github/workflows/build-hosts.yaml` discovers hosts from `nixos/hosts/` at runtime).
 - **Adding a user**: Create `home/users/<name>.nix`, add user definition and home-manager mapping in `nixos/common/users.nix`.
 - **NUR packages**: Accessed via `pkgs.nur.repos.<owner>.<pkg>` after overlay in flake.nix.
-- **New files + Nix flake**: The flake copies sources via `self`, so new files must be tracked before `just build` can see them. Use `jj file track <path>` (never `git add`).
-- **KDE Plasma + TLP**: `services.desktopManager.plasma6.enable` implicitly enables `power-profiles-daemon`. Use `lib.mkForce false` to disable it before enabling TLP (they are mutually exclusive).
-- **logind config**: Use `services.logind.settings.Login` (attrset), not the removed `services.logind.extraConfig` (string).
-- **GC already automated**: `programs.nh.clean.enable = true` in `base.nix` creates a systemd GC timer — no need to add a custom `nix-gc` timer.
-- **SSH module**: `home/modules/ssh/default.nix` configures 1Password SSH agent via `programs.ssh.matchBlocks."*"` (not `extraConfig`). Set `enableDefaultConfig = false` to suppress the deprecated default Host * block warning. Use `programs.git.signing` (typed options) not raw `settings` keys for git signing.
-- **`programs.ssh.extraConfig` + assertion**: Setting `extraConfig` to a non-empty string requires `matchBlocks."*"` to exist, or home-manager throws an assertion. Always use `matchBlocks."*"` for default host config instead.
-- **Parallel subagents + jj**: Do NOT dispatch multiple subagents in parallel when they need to commit — jj has a single mutable working copy (`@`) and parallel agents conflict. Execute sequentially.
-- **`just ssh-verify`**: Uses `|| true` to absorb `ssh -T git@github.com`'s exit code 1 (GitHub always returns 1 for non-shell SSH). Without this, `set -euo pipefail` causes false failures.
-- **nix.settings binary caches**: Use `extra-substituters` / `extra-trusted-public-keys` to append a cache without replacing the default `cache.nixos.org`. Bare `substituters` / `trusted-public-keys` are replacement lists.
-- **Auto-deploy**: `nixos-autodeploy` is active (see `nixos/common/autodeploy.nix`). Hosts opt in with `system.autoDeploy.enable = true`. Store paths are published to GitHub Pages; verify with `just autodeploy-status <host>`. switchMode defaults to `"smart"` (applies immediately for non-kernel updates; kernel updates wait for reboot).
-- **GitHub Actions `permissions:` and reusable workflows**: The workflow-level `permissions:` block in a *calling* workflow is a hard ceiling — any permission not listed there is implicitly `none`, and the called workflow's jobs cannot exceed it. Whenever you add or change a permission in a job inside `build-hosts.yaml`, audit ALL callers (`autodeploy.yaml`, `pr-check.yaml`, `update_flake_lock.yaml`) and ensure that permission is present at their workflow level too. Omitting it produces a "nested job is requesting X, but is only allowed none" validation error. Contrast: `permissions:` on a `workflow_call` *job* block (not the workflow itself) IS silently ignored — only the called workflow's own job-level declarations govern.
-- **Shell `#` quoting**: Any argument containing `#` (e.g. `nix run "nixpkgs#nvd"`) must be double-quoted in zsh — unquoted `#` starts a comment. This applies in Bash tool calls too.
-- **YAML validation**: Use `yq -e '.' file.yaml` to validate YAML syntax. Never use `python3 -c "import yaml..."` — python3 is not reliably on PATH.
-- **`git push --force-with-lease` on CI**: Fresh runners have no tracking refs. Run `git fetch origin "$branch" || true` before pushing to establish the tracking ref, or `--force-with-lease` rejects same-day re-runs with "stale info".
-- **GitHub Actions matrix outputs**: Matrix job outputs cannot be consumed by downstream jobs directly. Pass per-matrix-leg data via artifact upload/download (e.g., `upload-artifact` per host, `download-artifact` with `pattern:` + `merge-multiple: true` downstream).
-- **`build-hosts.yaml` is shared**: Called by `autodeploy.yaml`, `pr-check.yaml`, and `update_flake_lock.yaml`. New steps added there affect all callers — gate them behind a boolean input with `default: false` (see `publish-pages` and `upload-store-path-for-diff` as examples).
+- **Editor**: Neovim is the primary editor (`home/modules/nvim/`). Lua-based config with Nix-managed plugins, LSP (gopls, nixd, pyright, lua_ls), and carbonfox theme. The legacy vim module (`home/modules/vim/`) is still present but `defaultEditor` is disabled.
+
+### Secrets & SSH
+
+See `docs/references/secrets-sop.md` when touching secrets, agenix, or the SSH module.
+
+- **Secrets**: Managed with agenix. `.age` files are ciphertext (safe to commit). `secrets.nix` maps files to age recipient public keys. The `secretEnvs` list in `home/users/<name>.nix` is the single source of truth for user secret → env var mappings; `age.secrets` and `zsh.initContent` exports are derived from it automatically. See `docs/references/secrets-sop.md` for the full workflow.
+- **Rekeying**: Run `just rekey` after adding a new recipient to `secrets.nix`.
+
+---
 
 ## Host Type Matrix
 
@@ -90,6 +146,22 @@ When running shell commands, prefer these modern alternatives:
 
 `server.nix` and `laptop/` are mutually exclusive — never import both.
 
+---
+
+## Before You Edit (task-oriented lookup)
+
+| You are about to… | Read this first | Key pitfall |
+|---|---|---|
+| Add or rotate a secret / edit `.age` file | `docs/references/secrets-sop.md` | Run `just rekey` after adding recipient |
+| Edit `home/modules/ssh/` | `docs/references/secrets-sop.md` | Use `matchBlocks."*"`, not `extraConfig`; set `enableDefaultConfig = false` |
+| Edit any GitHub Actions workflow | `docs/references/ci-github-actions-sop.md` | Permissions ceiling applies to all callers of `build-hosts.yaml` |
+| Add a step to `build-hosts.yaml` | `docs/references/ci-github-actions-sop.md` | Gate behind boolean input with `default: false` |
+| Add a new host | Host type matrix above + `just prep-host <hostname>` | `server.nix` and `laptop/` are mutually exclusive |
+| Add a new home-manager module | Module pattern: `home/modules/<tool>/default.nix`, import from roles | Never import directly from user files |
+| Create any new file | `jj file track <path>` before `just build` | Flake won't see untracked files |
+
+---
+
 ## Workflow Skills
 
 Use these slash commands for guided workflows:
@@ -98,3 +170,12 @@ Use these slash commands for guided workflows:
 - `/add-module` — Add a new home-manager module and wire it into a role
 - `/deploy` — Safe deployment workflow: fmt → build → diff → test/switch → verify
 - `/nix-build-check` — Build and optionally activate config for any host
+
+---
+
+## Reference Trigger Index (long-conversation reminder)
+
+| Trigger scenario | Document | Core content |
+|---|---|---|
+| Secrets, agenix, `.age` files, SSH module, git signing, host prep | `docs/references/secrets-sop.md` | agenix workflow, rekeying, SSH matchBlocks |
+| GitHub Actions permissions errors, CI matrix outputs, `build-hosts.yaml` callers, autodeploy, `force-with-lease` on CI | `docs/references/ci-github-actions-sop.md` | permissions ceiling, shared workflow gate pattern |

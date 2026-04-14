@@ -2,7 +2,7 @@
   description = "My programs and configurations";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     agenix = {
       url = "github:ryantm/agenix";
@@ -38,6 +38,11 @@
 
     nixos-autodeploy = {
       url = "github:hlsb-fulda/nixos-autodeploy";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    serena = {
+      url = "github:oraios/serena";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

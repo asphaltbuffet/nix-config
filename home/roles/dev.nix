@@ -1,5 +1,9 @@
 # home/roles/dev.nix
-{pkgs, ...}: {
+{
+  pkgs,
+  inputs,
+  ...
+}: {
   imports = [
     ../modules/claude
     ../modules/crush
@@ -11,11 +15,13 @@
     ../modules/nvim
   ];
 
-  home.packages = with pkgs; [
-    gum
-    ijq
-    jq
-    yq
-    presenterm
-  ];
+  home.packages =
+    (with pkgs; [
+      gum
+      ijq
+      jq
+      yq
+      presenterm
+    ])
+    ++ [inputs.serena.packages.${pkgs.stdenv.hostPlatform.system}.serena];
 }

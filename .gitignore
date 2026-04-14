@@ -3,9 +3,7 @@
 result
 result-*
 .direnv/
+*.bak.*
 
 *.orig
 *.qcow2
-
-.serena/cache/
-.serena/project.local.yml
