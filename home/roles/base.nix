@@ -10,6 +10,7 @@
   imports = [
     inputs.nix-index-database.homeModules.nix-index
 
+    ../modules/atuin
     ../modules/eza
     ../modules/fzf
     ../modules/git
