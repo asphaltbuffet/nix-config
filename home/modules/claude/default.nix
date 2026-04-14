@@ -5,10 +5,10 @@
 
     # User-level CLAUDE.md: applies globally to every project session.
     # Keep minimal — project-level CLAUDE.md files handle specifics.
-    memory.source = ./claude-md.md;
+    context = ./claude-md.md;
 
     # ── Skills ────────────────────────────────────────────────────────────
-    skillsDir = ./skills;
+    skills = ./skills;
 
     settings = {
       # ── Plugins ──────────────────────────────────────────────────────────
