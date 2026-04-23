@@ -13,8 +13,25 @@
   hardware.bluetooth.enable = true;
   services.blueman.enable = true;
 
-  # Printing — laptop hosts run CUPS locally
+  # Printing — both printers support IPP Everywhere (driverless IPP/Mopria);
+  # no host-side driver packages are needed.
   services.printing.enable = true;
+
+  # mDNS/Bonjour — auto-discovers network printers advertising via DNS-SD
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true; # allows resolving .local hostnames for printer discovery
+    openFirewall = true; # opens UDP 5353 for mDNS; intentional for LAN printer discovery
+  };
+
+  # auto-creates CUPS queues for discovered network printers (no manual lpadmin needed)
+  services.printing.browsed.enable = true;
+
+  # cups-browsed has a race condition on first boot: it may start before Avahi
+  # has fully resolved .local hostnames, leaving queues with no destination.
+  # Explicitly ordering it after avahi-daemon.service prevents this.
+  systemd.services.cups-browsed.after = ["avahi-daemon.service"];
+  systemd.services.cups-browsed.requires = ["avahi-daemon.service"];
 
   #### Desktop-related system packages ####
   environment.systemPackages = with pkgs; [
