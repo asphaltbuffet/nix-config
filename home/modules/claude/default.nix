@@ -17,6 +17,7 @@
       # ── Behaviour ─────────────────────────────────────────────────────────
       alwaysThinkingEnabled = false;
       effortLevel = "medium";
+      model = "opusplan";
       promptSuggestionEnabled = false;
 
       # ── Permissions ───────────────────────────────────────────────────────
