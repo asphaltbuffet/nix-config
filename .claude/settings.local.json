@@ -33,7 +33,8 @@
       "mcp__serena__write_memory",
       "Read(//home/grue/.claude/plugins/marketplaces/daymade-skills/skill-creator/**)",
       "Bash(python3 -m scripts.init_skill --help)",
-      "Skill(nix-config)"
+      "Skill(nix-config)",
+      "WebSearch"
     ]
   },
   "outputStyle": "Explanatory",
