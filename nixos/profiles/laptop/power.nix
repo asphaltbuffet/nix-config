@@ -40,10 +40,10 @@
     };
   };
 
-  # Suspend on lid close regardless of power state
   services.logind.settings.Login = {
     HandleLidSwitch = "suspend";
-    HandleLidSwitchExternalPower = "suspend";
+    HandleLidSwitchExternalPower = "ignore";
+    HandleLidSwitchDocked = "ignore";
     HandlePowerKey = "suspend";
     IdleAction = "suspend";
     IdleActionSec = "300";
