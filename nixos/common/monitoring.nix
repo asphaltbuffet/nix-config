@@ -8,7 +8,7 @@
 #
 # Grafana binds to 0.0.0.0:3000 but is only reachable via the tailscale0
 # interface (trusted in nixos/common/tailscale.nix).
-{...}: {
+_: {
   age.secrets.grafanaKey = {
     file = ../../secrets/grafanaKey.age;
     owner = "grafana";

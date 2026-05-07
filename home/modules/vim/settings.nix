@@ -1,5 +1,5 @@
 # Vim settings
-{...}: {
+_: {
   programs.vim.settings = {
     # Search
     ignorecase = true;

@@ -1,5 +1,5 @@
 # Vim keymaps and plugin configuration
-{...}: {
+_: {
   programs.vim.extraConfig = ''
     " General settings
     set gcr=a:blinkon0

@@ -1,5 +1,5 @@
 # /home/users/sukey.nix
-{pkgs, ...}: {
+{...}: {
   imports = [
     ../roles/base.nix
   ];
