@@ -69,5 +69,10 @@ end, { desc = "Format file" })
 -- Set working directory to current file
 map("n", "<Leader>.", ":lcd %:p:h<CR>", { desc = "Set cwd to file dir" })
 
+-- Toggle LSP inlay hints
+map("n", "<Leader>li", function()
+  vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
+end, { desc = "Toggle inlay hints" })
+
 -- FixWhitespace command
 vim.api.nvim_create_user_command("FixWhitespace", [[%s/\s\+$//e]], {})
