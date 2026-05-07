@@ -26,6 +26,7 @@
     ../modules/1password
     ../modules/kitty
     ../modules/mullvad
+    ../modules/signal
   ];
 
   #### Home-Manager essentials ####
@@ -53,7 +54,6 @@
 
     # GUI stuff
     discord
-    signal-desktop
     vlc
   ];
 
