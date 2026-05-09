@@ -5,9 +5,11 @@
 
     shellIntegration.enableZshIntegration = true;
     themeFile = "gruvbox-dark";
-    font.package = pkgs.fira-code;
-    font.name = "Fira Code";
-    font.size = 14;
+    font = {
+      package = pkgs.fira-code;
+      name = "Fira Code";
+      size = 14;
+    };
 
     keybindings = {
       "ctrl+shift+t" = "new_tab_with_cwd";

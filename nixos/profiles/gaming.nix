@@ -1,5 +1,5 @@
 # nixos/profiles/gaming.nix
-{...}: {
+_: {
   programs.steam = {
     enable = true;
 

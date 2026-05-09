@@ -4,7 +4,7 @@
 #
 # NAS UID mapping (must match NixOS UIDs in users.nix):
 #   grue (2001) / jsquats (2003) / sukey (2004)
-{...}: let
+_: let
   nasHost = "192.168.86.22"; # TODO: at some point change this to an fqdn
   nfsOptions = [
     "vers=4.1"

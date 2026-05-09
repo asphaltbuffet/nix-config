@@ -50,7 +50,7 @@
     secret,
     env,
   }: let
-    path = config.age.secrets.${secret}.path;
+    inherit (config.age.secrets.${secret}) path;
   in ''
     if [[ -r "${path}" ]]; then
       ${env}="$(< "${path}")"
@@ -71,13 +71,16 @@ in {
     ../modules/pop
   ];
 
-  home.username = "grue";
-  home.homeDirectory = "/home/grue";
-  home.stateVersion = "25.05";
+  home = {
+    username = "grue";
+    homeDirectory = "/home/grue";
+    stateVersion = "25.05";
+  };
 
-  programs.git.settings.user = identity;
-
-  programs.jujutsu.settings.user = identity;
+  programs = {
+    git.settings.user = identity;
+    jujutsu.settings.user = identity;
+  };
 
   # Personal touches
   home.packages = with pkgs; [

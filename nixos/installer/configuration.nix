@@ -31,21 +31,25 @@ in {
 
   # Override the empty initialHashedPassword set by installation-cd-minimal.nix
   # so the live session has a usable password for SSH access
-  users.users.nixos.initialHashedPassword = lib.mkForce null;
-  users.users.nixos.initialPassword = "nixos";
+  users.users.nixos = {
+    initialHashedPassword = lib.mkForce null;
+    initialPassword = "nixos";
+  };
 
-  environment.systemPackages = [bootstrapScript];
+  environment = {
+    systemPackages = [bootstrapScript];
 
-  # Bundle a read-only snapshot of the repo into the ISO.
-  # Available at /etc/nix-config for reference; nixos-install should still
-  # pull from GitHub after commits are pushed (or from a USB-mounted checkout).
-  environment.etc."nix-config".source = self;
+    # Bundle a read-only snapshot of the repo into the ISO.
+    # Available at /etc/nix-config for reference; nixos-install should still
+    # pull from GitHub after commits are pushed (or from a USB-mounted checkout).
+    etc."nix-config".source = self;
 
-  # Greet users with the bootstrap hint at login
-  environment.interactiveShellInit = ''
-    echo ""
-    echo "  NixOS Installer — to bootstrap a new host, run: nixos-bootstrap"
-    echo "  Repo snapshot available at: /etc/nix-config (read-only)"
-    echo ""
-  '';
+    # Greet users with the bootstrap hint at login
+    interactiveShellInit = ''
+      echo ""
+      echo "  NixOS Installer — to bootstrap a new host, run: nixos-bootstrap"
+      echo "  Repo snapshot available at: /etc/nix-config (read-only)"
+      echo ""
+    '';
+  };
 }

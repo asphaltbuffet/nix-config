@@ -95,7 +95,7 @@
         modules = [
           nur.modules.nixos.default
           agenix.nixosModules.default
-          ({...}: {config = {nixpkgs.overlays = overlays;};})
+          (_: {config = {nixpkgs.overlays = overlays;};})
           {
             environment.systemPackages = [
               agenix.packages.${system}.default

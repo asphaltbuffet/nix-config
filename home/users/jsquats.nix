@@ -1,5 +1,5 @@
 # home/users/jsquats.nix
-{pkgs, ...}: {
+{...}: {
   imports = [
     ../roles/base.nix
     ../roles/player.nix

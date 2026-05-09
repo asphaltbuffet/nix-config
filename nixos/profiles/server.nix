@@ -19,9 +19,11 @@
   };
 
   # CUPS print server — serve printers to the network via mDNS/Bonjour
-  services.printing.enable = true;
-  services.avahi = {
-    enable = true;
-    nssmdns4 = true;
+  services = {
+    printing.enable = true;
+    avahi = {
+      enable = true;
+      nssmdns4 = true;
+    };
   };
 }

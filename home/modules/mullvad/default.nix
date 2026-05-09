@@ -1,4 +1,4 @@
-{...}: {
+_: {
   programs.mullvad-vpn = {
     enable = true;
 

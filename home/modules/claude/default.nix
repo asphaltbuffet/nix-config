@@ -19,6 +19,7 @@
       effortLevel = "medium";
       model = "opusplan";
       promptSuggestionEnabled = false;
+      includeGitInstructions = false;
 
       # ── Permissions ───────────────────────────────────────────────────────
       # Only read-only commands are pre-approved here. Commands that make
