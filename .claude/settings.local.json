@@ -34,7 +34,11 @@
       "Read(//home/grue/.claude/plugins/marketplaces/daymade-skills/skill-creator/**)",
       "Bash(python3 -m scripts.init_skill --help)",
       "Skill(nix-config)",
-      "WebSearch"
+      "WebSearch",
+      "mcp__plugin_claude-code-home-manager_serena__check_onboarding_performed",
+      "mcp__plugin_claude-code-home-manager_serena__initial_instructions",
+      "Read(//home/grue/.claude/skills/**)",
+      "Read(//home/grue/.claude/plugins/**)"
     ]
   },
   "outputStyle": "Explanatory",

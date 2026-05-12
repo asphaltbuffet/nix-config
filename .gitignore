@@ -7,3 +7,5 @@ result-*
 
 *.orig
 *.qcow2
+
+docs/summaries/

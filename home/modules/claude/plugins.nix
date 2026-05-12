@@ -30,9 +30,6 @@
   "mermaid-tools@daymade-skills" = true;
   "statusline-generator@daymade-skills" = true;
 
-  # ── Context / data ─────────────────────────────────────────────────────
-  "context7@claude-plugins-official" = true;
-
   # ── Output style ───────────────────────────────────────────────────────
   "explanatory-output-style@claude-plugins-official" = true;
 }
