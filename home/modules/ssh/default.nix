@@ -20,22 +20,34 @@ in {
       # Host * block that home-manager injects automatically.
       enableDefaultConfig = false;
 
-      matchBlocks = {
-        # Route all SSH auth through 1Password agent.
-        # Uses absolute path via config.home.homeDirectory to ensure correct
-        # expansion in all contexts (interactive and non-interactive git operations).
-        # Note: IdentityAgent with 1P means no key files on disk — 1P holds the private key.
+      settings = {
         "*" = {
-          identityAgent = "${config.home.homeDirectory}/.1password/agent.sock";
-          serverAliveInterval = 60;
-          serverAliveCountMax = 3;
+          IdentityAgent = "${config.home.homeDirectory}/.1password/agent.sock";
+          ForwardAgent = false;
+          AddKeysToAgent = "no";
+          Compression = false;
+          ServerAliveInterval = 60;
+          ServerAliveCountMax = 3;
+          HashKnownHosts = false;
+          UserKnownHostsFile = "${config.home.homeDirectory}/.ssh/known_hosts";
+          ControlMaster = "auto";
+          ControlPath = "${config.home.homeDirectory}/.ssh/master-%r@%n:%p";
+          ControlPersist = "10m";
         };
 
         # Tailscale hosts — surfaced to wishlist via ~/.ssh/config.
         # MagicDNS domain: armadillo-toad.ts.net
-        "wendigo".hostname = "wendigo.armadillo-toad.ts.net";
-        "kushtaka".hostname = "kushtaka.armadillo-toad.ts.net";
-        "snallygaster".hostname = "snallygaster.armadillo-toad.ts.net";
+        "wendigo" = {
+          Hostname = "wendigo.armadillo-toad.ts.net";
+        };
+
+        "kushtaka" = {
+          Hostname = "kushtaka.armadillo-toad.ts.net";
+        };
+
+        "snallygaster" = {
+          Hostname = "snallygaster.armadillo-toad.ts.net";
+        };
       };
     };
 
