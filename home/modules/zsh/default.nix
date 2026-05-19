@@ -21,6 +21,15 @@
       if [[ -o login ]] && [[ -n "$NIXOS_REBOOT_PENDING" ]]; then
         echo "⚠ NixOS update staged — reboot to apply."
       fi
+
+      # Launch Claude Code with Serena's system-prompt override enabled.
+      # Use `serclaude` to bias the agent toward Serena's MCP tools;
+      # plain `claude` keeps the default Claude Code system prompt.
+      serclaude() {
+        local prompt
+        prompt="$(serena prompts print-cc-system-prompt-override)" || return
+        command claude --append-system-prompt="$prompt" "$@"
+      }
     '';
 
     defaultKeymap = "viins";

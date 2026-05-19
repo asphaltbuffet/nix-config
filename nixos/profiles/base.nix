@@ -22,6 +22,8 @@
     backupFileExtension = "hm-bak"; # rename conflicts instead of failing
   };
 
+  environment.localBinInPath = true;
+
   # Set your time zone.
   time.timeZone = "America/New_York";
 
