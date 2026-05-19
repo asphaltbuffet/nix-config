@@ -1,4 +1,6 @@
 {pkgs, ...}: {
+  imports = [../common/compat.nix];
+
   nix.settings.experimental-features = [
     "nix-command"
     "flakes"

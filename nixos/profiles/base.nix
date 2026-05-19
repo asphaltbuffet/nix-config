@@ -13,6 +13,7 @@
     ../common/firefox.nix
     ../common/nas.nix
     ../common/tailscale.nix
+    ../common/compat.nix
   ];
 
   home-manager = {
