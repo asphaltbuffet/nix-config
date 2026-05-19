@@ -44,19 +44,19 @@ This document uses **progressive disclosure** to optimize LLM working efficiency
 
 ## Build & Development Commands
 
-All commands use `just` (a command runner) and `nh` (a Nix helper) under the hood:
+All commands use `just` (a command runner) and `nh` (a Nix helper) under the hood. Run `just help` to see all available recipes.
 
 ```bash
-just build              # Build config without activating (current host)
-just build <host>       # Build for a specific host
-just switch             # Build and activate (makes it boot default)
-just test               # Build and activate without making it boot default
-just diff               # Build and diff closure against /run/current-system (uses nvd)
-just lint               # Check formatting (alejandra), linting (statix), dead code (deadnix)
-just fix                # Apply formatting and linting fixes
-just fmt                # Format all .nix files with alejandra
-just check              # Run nix flake check (includes formatting check)
-just update             # Update flake.lock inputs
+just build              # Verify changes compile before deploying; use to catch eval errors early
+just build <host>       # Same, for a specific host (e.g. when editing host-specific config)
+just test               # Apply changes to running system WITHOUT touching bootloader — use this to verify a build activates correctly; ask user before running
+# just switch           # NEVER run as agent — permanently alters boot default on the live system; user-only
+just fmt                # Always run before committing; fixes formatting, lint, and dead code
+just lint               # Read-only check — use in CI or to verify before running fmt
+just precommit          # Full pre-commit gate: lint + flake check (slower than lint alone)
+just update             # Bump all flake inputs to latest; run when you want upstream changes
+just rekey              # Must run after adding a host or user key to secrets/secrets.nix
+just prep-host <name>   # First step when onboarding a new host — fetches its pubkey from 1Password
 ```
 
 Dev shell: `nix develop` provides nixd (Nix LSP), alejandra, statix, deadnix, and just.

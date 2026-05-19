@@ -48,17 +48,14 @@ NixOS and home-manager configuration for personal systems.
 # Build without activating
 just build
 
-# Preview what would change (build + closure diff vs current system)
-just diff
-
 # Build and switch to new configuration
 just switch
 
+# Format and apply linting fixes
+just fmt
+
 # Check formatting, linting, and dead code
 just lint
-
-# Apply formatting and linting fixes
-just fix
 
 # See all commands
 just help
@@ -194,7 +191,6 @@ SSH keys are managed via [1Password SSH agent](https://developer.1password.com/d
 ```bash
 just ssh-verify       # Check agent, GitHub auth, and signing config
 just ssh-agent-check  # Verify 1Password agent is running
-just ssh-pubkey       # Print public key (for adding to servers)
 just ssh-rotate       # Guided key rotation workflow
 just ssh-add-host <hostname> "<pubkey>"  # Instructions for adding a new host key
 ```
@@ -250,10 +246,7 @@ Add to the host's `configuration.nix`:
 system.autoDeploy.enable = true;
 ```
 
-Then provision the 1Password service account token (requires an authenticated 1Password session):
-```bash
-just autodeploy-provision-token
-```
+Then provision the 1Password service account token on the host (requires an authenticated 1Password session — see the host's autodeploy module for details).
 
 **Pausing auto-deploy for a host:**
 

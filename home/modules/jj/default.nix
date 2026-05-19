@@ -1,5 +1,7 @@
 # home/modules/jj/default.nix
-{pkgs, ...}: {
+{pkgs, ...}: let
+  fetchScript = import ./fetch-script.nix {inherit pkgs;};
+in {
   programs.jujutsu = {
     enable = true;
 
@@ -54,5 +56,26 @@
 
   programs.jjui = {
     enable = true;
+  };
+
+  systemd.user.services.jj-git-fetch = {
+    Unit = {
+      Description = "Fetch all jj repos under ~/dev";
+      After = ["network-online.target"];
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${fetchScript}/bin/jj-git-fetch-all";
+    };
+  };
+
+  systemd.user.timers.jj-git-fetch = {
+    Unit.Description = "Periodic jj git fetch for all repos under ~/dev";
+    Timer = {
+      OnBootSec = "5m";
+      OnUnitActiveSec = "15m";
+      Persistent = true;
+    };
+    Install.WantedBy = ["timers.target"];
   };
 }

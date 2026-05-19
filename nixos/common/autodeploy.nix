@@ -39,15 +39,10 @@
   systemd.services.nixos-autodeploy = lib.mkIf config.system.autoDeploy.enable (
     let
       host = config.networking.hostName;
-      # Only ping healthchecks when triggered by the timer, not by the activation
-      # script (which fires after every nixos-rebuild switch/test). Systemd sets
-      # TRIGGER_TIMER_REALTIME_USEC when a service is started by a timer; it is
-      # unset for all other invocations.
       hcPingStart = pkgs.writeShellApplication {
         name = "hc-ping-start";
         runtimeInputs = [pkgs.curl];
         text = ''
-          [[ -n "''${TRIGGER_TIMER_REALTIME_USEC:-}" ]] || exit 0
           [[ -r /run/agenix/hcPingKey ]] \
             || { echo "hc-ping-start: /run/agenix/hcPingKey not readable, skipping ping" >&2; exit 0; }
           PING_KEY=$(< /run/agenix/hcPingKey)
@@ -60,7 +55,6 @@
         name = "hc-ping-done";
         runtimeInputs = [pkgs.curl];
         text = ''
-          [[ -n "''${TRIGGER_TIMER_REALTIME_USEC:-}" ]] || exit 0
           EXIT_STATUS="''${EXIT_STATUS:-0}"
           [[ -r /run/agenix/hcPingKey ]] \
             || { echo "hc-ping-done: /run/agenix/hcPingKey not readable, skipping ping" >&2; exit 0; }
