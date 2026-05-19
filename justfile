@@ -1,5 +1,8 @@
 # https://just.systems
 
+set quiet
+
+cachix_url := "https://asphaltbuffet.github.io/nix-config"
 hostname := `hostname`
 flake := justfile_directory()
 
@@ -19,7 +22,7 @@ build host=hostname:
 [group('build')]
 iso:
     nix build {{ flake }}#installer
-    @echo "ISO: $(ls -1 result/iso/*.iso 2>/dev/null || echo 'build failed')"
+    echo "ISO: $(ls -1 result/iso/*.iso 2>/dev/null || echo 'build failed')"
 
 # Boot the installer ISO in QEMU (SSH: ssh -p 2222 nixos@localhost, exit: Ctrl+A X)
 [group('build')]
@@ -72,54 +75,40 @@ update:
 clean generations="3" since="5d":
     nh clean all --keep {{ generations }} -K {{ since }} -a
 
-# Build and diff closure against current system (does not activate)
-[group('maintenance')]
-diff host=hostname:
-    nh os build -H {{ host }} {{ flake }}
-    nvd diff /run/current-system result
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Development
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Format all nix files with alejandra
+# Apply formatting and linting fixes
 [group('dev')]
 fmt:
     alejandra -qq {{ flake }}
+    statix fix {{ flake }}
+    deadnix --edit {{ flake }}
+    just --fmt --unstable
 
-# Check nix formatting, lint (statix), and dead code (deadnix) without modifying files
+# Check formatting and linting
 [group('dev')]
+[no-exit-message]
 lint:
     alejandra --check -qq {{ flake }}
     statix check {{ flake }}
     deadnix {{ flake }}
-
-# Apply formatting and linting fixes
-[group('dev')]
-fix:
-    alejandra -qq {{ flake }}
-    statix fix {{ flake }}
-    deadnix --edit {{ flake }}
-
-# Check flake outputs for errors
-[group('dev')]
-check:
-    nix flake check {{ flake }}
+    just --check --fmt --unstable 1> /dev/null
 
 # Show flake inputs and their versions
 [group('dev')]
 inputs:
     nix flake metadata {{ flake }}
 
+# Format and check before committing
+[group('dev')]
+precommit: lint
+    nix flake check {{ flake }}
+
 # ─────────────────────────────────────────────────────────────────────────────
 # SSH Key Management
 # ─────────────────────────────────────────────────────────────────────────────
-
-# Print the SSH public key from 1Password
-[group('ssh')]
-ssh-pubkey:
-    @op item get "grue-main" --fields label="public key" 2>/dev/null || \
-        echo "Error: 1Password CLI not authenticated. Run: op signin"
 
 # Check 1Password SSH agent is running and has keys loaded
 [group('ssh')]
@@ -206,12 +195,12 @@ ssh-verify:
 # Print instructions for adding a host's SSH public key to secrets.nix
 [group('ssh')]
 ssh-add-host hostname pubkey:
-    @echo "1. Add to secrets/secrets.nix in the 'let' block:"
-    @echo "     {{ hostname }} = \"{{ pubkey }}\";"
-    @echo ""
-    @echo "2. Add '{{ hostname }}' to the systems = [...] list."
-    @echo ""
-    @echo "3. Run: just switch"
+    echo "1. Add to secrets/secrets.nix in the 'let' block:"
+    echo "     {{ hostname }} = \"{{ pubkey }}\";"
+    echo ""
+    echo "2. Add '{{ hostname }}' to the systems = [...] list."
+    echo ""
+    echo "3. Run: just switch"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Secrets
@@ -231,7 +220,7 @@ secret-rekey:
 # List all available secrets
 [group('secrets')]
 secret-list:
-    @fd -e age . {{ flake }}/secrets/ -x basename -s .age | sort
+    fd -e age . {{ flake }}/secrets/ -x basename -s .age | sort
 
 # Prep a new host: fetch pubkey from 1Password, add to host dir, then rekey
 # Requires: op item in Service vault named host-<hostname> with field public_key
@@ -267,17 +256,17 @@ prep-host hostname: _op-check
 # List available hosts
 [group('info')]
 hosts:
-    @basename -a {{ flake }}/nixos/hosts/*/
+    basename -a {{ flake }}/nixos/hosts/*/
 
 # Show current system generation info
 [group('info')]
 generation:
-    @nixos-rebuild list-generations | head -5
+    nixos-rebuild list-generations | head -5
 
 # Show available commands
 [group('info')]
 help:
-    @just --list --unsorted
+    just --list --unsorted
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Auto-Deploy
@@ -286,27 +275,30 @@ help:
 # Pause CI store-path publishing for a host (build still runs, Cachix still updated)
 [group('autodeploy')]
 autodeploy-skip host:
-    @if [ -f ".autodeploy-skip/{{ host }}" ]; then \
-        echo "{{ host }} is already skipped"; \
-    else \
-        touch ".autodeploy-skip/{{ host }}" && \
-        echo "Created .autodeploy-skip/{{ host }} — commit to activate"; \
+    #!/usr/bin/env bash
+    if [ -f ".autodeploy-skip/{{ host }}" ]; then
+        echo "{{ host }} is already skipped"
+    else
+        touch ".autodeploy-skip/{{ host }}"
+        echo "Created .autodeploy-skip/{{ host }} — commit to activate"
     fi
 
 # Resume CI store-path publishing for a host
 [group('autodeploy')]
 autodeploy-resume host:
-    @if [ ! -f ".autodeploy-skip/{{ host }}" ]; then \
-        echo "{{ host }} is not currently skipped"; \
-    else \
-        rm ".autodeploy-skip/{{ host }}" && \
-        echo "Removed .autodeploy-skip/{{ host }} — commit to resume auto-deploy"; \
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ ! -f ".autodeploy-skip/{{ host }}" ]; then
+        echo "{{ host }} is not currently skipped"
+    else
+        rm ".autodeploy-skip/{{ host }}"
+        echo "Removed .autodeploy-skip/{{ host }} — commit to resume auto-deploy"
     fi
 
 # Show the published store path for a host
 [group('autodeploy')]
 autodeploy-status host=hostname:
-    @curl -sfL "https://asphaltbuffet.github.io/nix-config/hosts/{{ host }}/store-path" \
+    curl -sfL "{{ cachix_url }}/hosts/{{ host }}/store-path" \
         && echo "" \
         || echo "No store path published yet for {{ host }}"
 
@@ -314,8 +306,8 @@ autodeploy-status host=hostname:
 [private]
 _op-check:
     #!/usr/bin/env bash
+    set -euo pipefail
     if ! op whoami &>/dev/null; then
         echo "✗ 1Password is not signed in. Unlock 1Password and try again."
         exit 1
     fi
-
