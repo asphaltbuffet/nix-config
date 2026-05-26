@@ -17,18 +17,7 @@
   "claude-md-management@claude-plugins-official" = true;
   "claude-code-setup@claude-plugins-official" = true;
   "hookify@claude-plugins-official" = false;
-  "atomic-agents@claude-plugins-official" = false;
-  "feature-dev@claude-plugins-official" = false;
-  "skill-creator@daymade-skills" = true;
-  "skill-reviewer@daymade-skills" = true;
-  "skills-search@daymade-skills" = false;
   "deep-research@daymade-skills" = true;
-  "claude-md-progressive-disclosurer@daymade-skills" = true;
-  "claude-skills-troubleshooting@daymade-skills" = true;
-  "cli-demo-generator@daymade-skills" = true;
-  "docs-cleaner@daymade-skills" = true;
-  "mermaid-tools@daymade-skills" = true;
-  "statusline-generator@daymade-skills" = true;
 
   # ── Output style ───────────────────────────────────────────────────────
   "explanatory-output-style@claude-plugins-official" = true;
