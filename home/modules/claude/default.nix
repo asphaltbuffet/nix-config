@@ -47,9 +47,10 @@
       # ── Behaviour ─────────────────────────────────────────────────────────
       alwaysThinkingEnabled = false;
       effortLevel = "medium";
-      model = "opusplan";
+      model = "sonnet";
       promptSuggestionEnabled = false;
       includeGitInstructions = false;
+      skillListingBudgetFraction = 0.03;
 
       # ── Permissions ───────────────────────────────────────────────────────
       # Only read-only commands are pre-approved here. Commands that make
