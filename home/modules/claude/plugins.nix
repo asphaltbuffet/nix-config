@@ -11,13 +11,13 @@
   "gopls-lsp@claude-plugins-official" = true;
 
   # ── Workflow / skills ──────────────────────────────────────────────────
-  "superpowers@claude-plugins-official" = true;
+  "superpowers@claude-plugins-official" = false;
   "code-review@claude-plugins-official" = true;
-  "code-simplifier@claude-plugins-official" = true;
+  "code-simplifier@claude-plugins-official" = false;
   "claude-md-management@claude-plugins-official" = true;
-  "claude-code-setup@claude-plugins-official" = true;
+  "claude-code-setup@claude-plugins-official" = false;
   "hookify@claude-plugins-official" = false;
-  "deep-research@daymade-skills" = true;
+  "deep-research@daymade-skills" = false;
 
   # ── Output style ───────────────────────────────────────────────────────
   "explanatory-output-style@claude-plugins-official" = true;
