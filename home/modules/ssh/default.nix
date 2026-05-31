@@ -48,6 +48,14 @@ in {
         "snallygaster" = {
           Hostname = "snallygaster.armadillo-toad.ts.net";
         };
+
+        # Bootstrap targets on the LAN (e.g. fresh NixOS installs) don't have
+        # 1Password keys — bypass the agent so password auth works cleanly.
+        # Only matches bare IP connections; named/Tailscale hosts are unaffected.
+        "192.168.86.*" = {
+          IdentityAgent = "none";
+          PubkeyAuthentication = false;
+        };
       };
     };
 

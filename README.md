@@ -106,11 +106,14 @@ for reference — no network required to inspect the config.
 
 ```bash
 parted /dev/nvme0n1 -- mklabel gpt
-parted /dev/nvme0n1 -- mkpart root ext4 512MB 100%
 parted /dev/nvme0n1 -- mkpart ESP fat32 1MB 512MB
-parted /dev/nvme0n1 -- set 2 esp on
-mkfs.ext4 -L nixos /dev/nvme0n1p1
-mkfs.fat -F 32 -n boot /dev/nvme0n1p2
+parted /dev/nvme0n1 -- set 1 esp on
+parted /dev/nvme0n1 -- mkpart root ext4 512MB -8GB
+parted /dev/nvme0n1 -- mkpart swap linux-swap -8GB 100%
+mkfs.fat -F 32 -n boot /dev/nvme0n1p1
+mkfs.ext4 -L nixos /dev/nvme0n1p2
+mkswap -L swap /dev/nvme0n1p3
+swapon /dev/nvme0n1p3
 mount /dev/disk/by-label/nixos /mnt
 mkdir -p /mnt/boot
 mount /dev/disk/by-label/boot /mnt/boot
@@ -127,16 +130,17 @@ machine** to pull those files, commit, and push.
 ```bash
 cd ~/nix-config
 
-# Pull new host files from the live ISO (its IP is shown in the bootstrap output)
+# Pull new host files from the live ISO using kitty's transfer protocol.
+# The exact command (with IP pre-filled) is printed by nixos-bootstrap.
 mkdir -p nixos/hosts/<hostname>
-scp nixos@<live-ip>:/home/nixos/nix-config/nixos/hosts/<hostname>/hardware-configuration.nix \
-    nixos/hosts/<hostname>/hardware-configuration.nix
-scp nixos@<live-ip>:/home/nixos/nix-config/nixos/hosts/<hostname>/configuration.nix \
-    nixos/hosts/<hostname>/configuration.nix
+kitten transfer --direction=receive \
+    nixos@<live-ip>:/home/nixos/bootstrap-<hostname>/ \
+    nixos/hosts/<hostname>/
 
 # Track and commit (jj — do NOT use git add)
 jj file track nixos/hosts/<hostname>/configuration.nix
 jj file track nixos/hosts/<hostname>/hardware-configuration.nix
+jj file track nixos/hosts/<hostname>/ssh_host_ed25519_key.pub
 jj commit -m 'feat: add host <hostname>'
 jj git push
 ```
@@ -315,11 +319,12 @@ The VM:
 Inside the VM the install disk is `/dev/vda` (virtio), not `/dev/nvme0n1` —
 substitute accordingly when partitioning.
 
-To `scp` artifacts from the VM back to this host, use port 2222:
+To transfer artifacts from the VM back to this host, use kitty's transfer protocol with port 2222:
 
 ```bash
-scp -P 2222 nixos@localhost:/home/nixos/bootstrap-<hostname>/ssh_host_ed25519_key.pub \
-    nixos/hosts/<hostname>/ssh_host_ed25519_key.pub
+kitten transfer --direction=receive \
+    nixos@localhost:/home/nixos/bootstrap-<hostname>/ \
+    nixos/hosts/<hostname>/
 ```
 
 Delete `vm-disk.qcow2` to start fresh on the next run. Run multiple VMs with
