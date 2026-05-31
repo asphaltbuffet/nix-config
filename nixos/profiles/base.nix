@@ -3,6 +3,7 @@
   inputs,
   pkgs,
   lib,
+  config,
   ...
 }: {
   imports = [
@@ -21,6 +22,9 @@
     useUserPackages = true;
     extraSpecialArgs = {inherit inputs;}; # pass flake inputs to home-manager
     backupFileExtension = "hm-bak"; # rename conflicts instead of failing
+    sharedModules = [
+      {home.stateVersion = config.system.stateVersion;}
+    ];
   };
 
   environment.localBinInPath = true;
