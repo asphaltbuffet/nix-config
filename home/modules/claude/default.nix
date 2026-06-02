@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  lib,
+  ...
+}: {
   programs.claude-code = {
     enable = true;
     package = pkgs.claude-code;
@@ -51,6 +55,7 @@
       promptSuggestionEnabled = false;
       includeGitInstructions = false;
       skillListingBudgetFraction = 0.03;
+      feedbackSurveyRate = 0;
 
       # ── Permissions ───────────────────────────────────────────────────────
       # Only read-only commands are pre-approved here. Commands that make
@@ -112,4 +117,30 @@
       };
     };
   };
+
+  # Before home-manager's writeBoundary runs, rotate any existing .hm-bak to a
+  # timestamped name so the backup slot is free for this switch. This preserves
+  # prior backups (useful for recovering settings) while preventing the
+  # "would be clobbered" error on repeated switches.
+  home.activation.rotateClaudeSettingsBackup = lib.hm.dag.entryBefore ["writeBoundary"] ''
+    bak="$HOME/.claude/settings.json.hm-bak"
+    if [ -f "$bak" ]; then
+      mv "$bak" "$bak.$(date +%Y%m%d-%H%M%S)"
+    fi
+  '';
+
+  # Replace the Nix store symlink for settings.json with a writable copy so
+  # Claude Code can write permission allows during a session. The next
+  # home-manager switch will back up the mutated file as settings.json.hm-bak
+  # (via home-manager.backupFileExtension = "hm-bak") before restoring the
+  # baseline symlink, which this script then copies again.
+  home.activation.makeClaudeSettingsMutable = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    settings="$HOME/.claude/settings.json"
+    if [ -L "$settings" ]; then
+      store_path=$(readlink -f "$settings")
+      rm "$settings"
+      cp "$store_path" "$settings"
+      chmod 644 "$settings"
+    fi
+  '';
 }
