@@ -74,15 +74,22 @@ check_or_guide_mount() {
   echo ""
   echo "  /mnt is not mounted. Disk partitioning is required before bootstrapping."
   echo ""
-  echo "  Detected disk: $disk  (verify with: lsblk)"
+  echo "  Current block devices:"
+  lsblk
+  echo ""
+  echo "  Detected disk: $disk"
+  echo ""
+  echo "  Proposed partition map (conventional GPT: ESP first):"
   echo ""
   echo "    parted ${disk} -- mklabel gpt"
+  echo "    parted ${disk} -- mkpart ESP fat32 1MB 512MB"
+  echo "    parted ${disk} -- set 1 esp on"
   echo "    parted ${disk} -- mkpart root ext4 512MB -8GB"
   echo "    parted ${disk} -- mkpart swap linux-swap -8GB 100%"
-  echo "    parted ${disk} -- mkpart ESP fat32 1MB 512MB"
-  echo "    parted ${disk} -- set 3 esp on"
-  echo "    mkfs.ext4 -L nixos ${disk}${part_suffix}1"
-  echo "    mkfs.fat -F 32 -n boot ${disk}${part_suffix}2"
+  echo "    mkfs.fat -F 32 -n boot ${disk}${part_suffix}1"
+  echo "    mkfs.ext4 -L nixos ${disk}${part_suffix}2"
+  echo "    mkswap -L swap ${disk}${part_suffix}3"
+  echo "    swapon ${disk}${part_suffix}3"
   echo "    mount /dev/disk/by-label/nixos /mnt"
   echo "    mkdir -p /mnt/boot"
   echo "    mount /dev/disk/by-label/boot /mnt/boot"
@@ -90,15 +97,48 @@ check_or_guide_mount() {
   echo "  See: https://nixos.org/manual/nixos/stable/#sec-installation-manual-partitioning"
   echo ""
 
-  if confirm "Have you partitioned and mounted /mnt and are ready to continue?"; then
-    if ! mountpoint -q /mnt; then
-      echo "ERROR: /mnt is still not a mountpoint. Please mount it and re-run nixos-bootstrap."
+  if confirm "Run these partition commands automatically?"; then
+    echo ""
+    echo "  !! WARNING: This will ERASE ALL DATA on ${disk} !!"
+    echo ""
+    printf "  Type the disk path to confirm (%s): " "$disk"
+    local confirmation
+    read -r confirmation
+    if [[ "$confirmation" != "$disk" ]]; then
+      echo "Confirmation did not match. Aborting."
       exit 1
     fi
-    echo "✓ /mnt is now mounted."
+
+    echo ""
+    echo "Partitioning ${disk}..."
+    parted "$disk" -- mklabel gpt
+    parted "$disk" -- mkpart ESP fat32 1MB 512MB
+    parted "$disk" -- set 1 esp on
+    parted "$disk" -- mkpart root ext4 512MB -8GB
+    parted "$disk" -- mkpart swap linux-swap -8GB 100%
+
+    echo "Formatting partitions..."
+    mkfs.fat -F 32 -n boot "${disk}${part_suffix}1"
+    mkfs.ext4 -L nixos "${disk}${part_suffix}2"
+    mkswap -L swap "${disk}${part_suffix}3"
+    swapon "${disk}${part_suffix}3"
+
+    echo "Mounting..."
+    mount /dev/disk/by-label/nixos /mnt
+    mkdir -p /mnt/boot
+    mount /dev/disk/by-label/boot /mnt/boot
+    echo "✓ Partitioned and mounted."
   else
-    echo "Exiting. Re-run nixos-bootstrap when /mnt is ready."
-    exit 0
+    if confirm "Have you partitioned and mounted /mnt manually and are ready to continue?"; then
+      if ! mountpoint -q /mnt; then
+        echo "ERROR: /mnt is still not a mountpoint. Please mount it and re-run nixos-bootstrap."
+        exit 1
+      fi
+      echo "✓ /mnt is now mounted."
+    else
+      echo "Exiting. Re-run nixos-bootstrap when /mnt is ready."
+      exit 0
+    fi
   fi
 }
 
@@ -260,15 +300,13 @@ build_instructions() {
   live_ip=$(ip -4 addr show scope global | awk '/inet/{print $2}' | cut -d/ -f1 | head -1)
   local scp_block=""
   if [[ "$REPO_WRITABLE" == "true" ]]; then
-    scp_block="  # Pull the new host files and pubkey from this live machine
-  # (check connectivity first: ssh nixos@${live_ip} 'echo ok')
+    scp_block="  # Pull the new host files from this live machine using kitty's transfer protocol.
+  # Connect first: ssh -o IdentityAgent=none -o PubkeyAuthentication=no nixos@${live_ip}
+  # Then in your existing terminal (no separate SSH session needed):
   mkdir -p nixos/hosts/${HOSTNAME}
-  scp nixos@${live_ip}:/home/nixos/nix-config/nixos/hosts/${HOSTNAME}/hardware-configuration.nix \\
-      nixos/hosts/${HOSTNAME}/hardware-configuration.nix
-  scp nixos@${live_ip}:/home/nixos/nix-config/nixos/hosts/${HOSTNAME}/configuration.nix \\
-      nixos/hosts/${HOSTNAME}/configuration.nix
-  scp nixos@${live_ip}:/home/nixos/bootstrap-${HOSTNAME}/ssh_host_ed25519_key.pub \\
-      nixos/hosts/${HOSTNAME}/ssh_host_ed25519_key.pub"
+  kitten transfer --direction=receive \\
+      nixos@${live_ip}:/home/nixos/bootstrap-${HOSTNAME}/ \\
+      nixos/hosts/${HOSTNAME}/"
   else
     scp_block="  # Copy files from USB/transfer
   mkdir -p nixos/hosts/${HOSTNAME}
@@ -353,6 +391,14 @@ print_instructions() {
 
 main() {
   header "NixOS Bootstrap Helper"
+
+  if [[ "$EUID" -ne 0 ]]; then
+    echo "ERROR: nixos-bootstrap must be run as root."
+    echo "  Run: sudo -i"
+    echo "  Then: nixos-bootstrap"
+    exit 1
+  fi
+
   check_or_guide_mount
   get_hostname
   generate_hardware_config

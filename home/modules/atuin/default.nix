@@ -15,6 +15,7 @@ _: {
         "just"
         "mise"
         "elf"
+        "wherehouse"
 
         # defaults
         "apt"

@@ -8,7 +8,7 @@
   home = {
     username = "jsquats";
     homeDirectory = "/home/jsquats";
-    stateVersion = "25.05";
+
     shell.enableZshIntegration = true;
 
     packages = [];

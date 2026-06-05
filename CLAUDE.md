@@ -179,3 +179,15 @@ Use these slash commands for guided workflows:
 |---|---|---|
 | Secrets, agenix, `.age` files, SSH module, git signing, host prep | `docs/references/secrets-sop.md` | agenix workflow, rekeying, SSH matchBlocks |
 | GitHub Actions permissions errors, CI matrix outputs, `build-hosts.yaml` callers, autodeploy, `force-with-lease` on CI | `docs/references/ci-github-actions-sop.md` | permissions ceiling, shared workflow gate pattern |
+
+---
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues (`gh` CLI); VCS uses `jj` not `git`. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context repo — one `CONTEXT.md` and `docs/adr/` at the root. See `docs/agents/domain.md`.

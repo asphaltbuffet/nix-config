@@ -74,7 +74,6 @@ in {
   home = {
     username = "grue";
     homeDirectory = "/home/grue";
-    stateVersion = "25.05";
   };
 
   programs = {

@@ -7,9 +7,6 @@
 #
 # Project-level entries are merged on top of these global defaults.
 {
-  # ── LSP / codebase navigation ──────────────────────────────────────────
-  "gopls-lsp@claude-plugins-official" = true;
-
   # ── Workflow / skills ──────────────────────────────────────────────────
   "superpowers@claude-plugins-official" = false;
   "code-review@claude-plugins-official" = true;
