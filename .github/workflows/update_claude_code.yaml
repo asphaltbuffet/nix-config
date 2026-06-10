@@ -1,0 +1,107 @@
+name: "update claude-code"
+# Flow: run updater → commit changed default.nix → build hosts (pushes to Cachix) → open PR.
+# Runs daily; exits early if claude-code is already at the latest version.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Every day at 09:00 UTC (05:00 EDT / ~06:00 EST) — after the flake-lock
+    # update window so the two workflows don't race for the same branch slot.
+    - cron: '0 9 * * *'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  update:
+    name: "update claude-code binary"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      branch: ${{ steps.push.outputs.branch }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run claude-code updater
+        run: nix run .#update-claude-code -- "$GITHUB_WORKSPACE"
+
+      - name: Push update branch
+        id: push
+        run: |
+          branch="claude-code-update-$(date +%Y%m%d)"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add pkgs/claude-code/default.nix
+          if git diff --cached --quiet; then
+            echo "claude-code is already up to date — nothing to do." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git commit -m "chore: update claude-code"
+          git fetch origin "$branch" || true
+          git push origin "$branch" --force-with-lease
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: "build hosts (caches claude-code)"
+    needs: update
+    if: needs.update.outputs.branch != ''
+    uses: ./.github/workflows/build-hosts.yaml
+    with:
+      ref: ${{ needs.update.outputs.branch }}
+      publish-pages: false
+      upload-store-path-for-diff: false
+    secrets:
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      CACHIX_SIGNING_KEY: ${{ secrets.CACHIX_SIGNING_KEY }}
+
+  open-pr:
+    name: "open pull request"
+    needs: [update, build]
+    if: needs.update.outputs.branch != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Create or update pull request
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
+          BRANCH: ${{ needs.update.outputs.branch }}
+        run: |
+          body="Automated update of \`pkgs/claude-code\` to the latest version published on npm.
+
+          The new binary has been built and pushed to Cachix — no local build required after merge."
+
+          existing_url=$(gh pr list \
+            --head "$BRANCH" \
+            --base main \
+            --json url \
+            --jq '.[0].url' 2>/dev/null || true)
+
+          if [ -n "$existing_url" ]; then
+            echo "PR already exists: $existing_url — updating body"
+            gh pr edit "$existing_url" --body "$body"
+            echo "url=$existing_url" >> "$GITHUB_OUTPUT"
+          else
+            pr_url=$(gh pr create \
+              --title "chore: update claude-code" \
+              --body "$body" \
+              --head "$BRANCH" \
+              --base main)
+            echo "url=$pr_url" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Enable auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
+        run: gh pr merge "${{ steps.pr.outputs.url }}" --auto --rebase

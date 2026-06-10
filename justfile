@@ -65,10 +65,11 @@ test host=hostname:
 # Maintenance
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Update flake.lock to latest versions
+# Update flake.lock and local packages to latest versions
 [group('maintenance')]
 update:
     nix flake update
+    nix run {{ flake }}#update-claude-code -- {{ flake }}
 
 # Remove old generations and garbage collect
 [group('maintenance')]

@@ -71,12 +71,16 @@
           };
         };
       })
+      (final: _prev: {
+        claude-code = final.callPackage ./pkgs/claude-code {};
+      })
     ];
 
-    mkPkgs = system:
+    mkPkgs = system: extraOverlays:
       import nixpkgs {
         inherit system;
         config.allowUnfree = true;
+        overlays = extraOverlays;
       };
 
     mkHost = hostname: system:
@@ -131,13 +135,16 @@
       hostnames
     );
 
-    packages = forAllSystems (system: {
+    packages = forAllSystems (system: let
+      pkgs = mkPkgs system overlays;
+    in {
       installer = mkInstaller system;
+      update-claude-code = pkgs.claude-code.passthru.updater;
     });
 
     # Development shell for working on this config
     devShells = forAllSystems (system: let
-      pkgs = mkPkgs system;
+      pkgs = mkPkgs system [];
     in {
       default = import ./shell.nix {inherit pkgs system agenix;};
     });
