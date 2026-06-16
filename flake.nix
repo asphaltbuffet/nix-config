@@ -4,6 +4,14 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
+    # TEMP PIN: mullvad-vpn 2026.3 (GUI) fails to build upstream — the version
+    # bump (nixpkgs 8fddae52a) changed no buildInputs, so autoPatchelf can't
+    # resolve a newly-bundled library. CLI in nixpkgs is still 2026.2, and the
+    # CLI->2026.3 bump (NixOS/nixpkgs#531992) is still open. Pin to the commit
+    # just before the breaking GUI bump to keep the working 2026.2 GUI.
+    # Remove this input + the mullvad-vpn overlay once 2026.3 builds upstream.
+    nixpkgs-mullvad.url = "github:NixOS/nixpkgs/5e8ae2614b01c6252c34fc522085a974ec13cb8c";
+
     agenix = {
       url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -73,6 +81,14 @@
       })
       (final: _prev: {
         claude-code = final.callPackage ./pkgs/claude-code {};
+      })
+      # TEMP: pin mullvad-vpn to 2026.2 — 2026.3 fails to build upstream.
+      # See the nixpkgs-mullvad input above. Remove with that input.
+      (final: _prev: {
+        inherit ((import inputs.nixpkgs-mullvad {
+            inherit (final.stdenv.hostPlatform) system;
+            config.allowUnfree = true;
+          })) mullvad-vpn;
       })
     ];
 
