@@ -1,11 +1,13 @@
 # nixos/profiles/gaming.nix
-_: {
+{pkgs, ...}: {
   programs.steam = {
     enable = true;
 
     remotePlay.openFirewall = true;
     dedicatedServer.openFirewall = true;
     localNetworkGameTransfers.openFirewall = false;
+
+    extraCompatPackages = [pkgs.proton-ge-bin];
   };
 
   programs.gamemode.enable = true;
