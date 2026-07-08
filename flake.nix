@@ -85,10 +85,13 @@
       # TEMP: pin mullvad-vpn to 2026.2 — 2026.3 fails to build upstream.
       # See the nixpkgs-mullvad input above. Remove with that input.
       (final: _prev: {
-        inherit ((import inputs.nixpkgs-mullvad {
+        inherit
+          ((import inputs.nixpkgs-mullvad {
             inherit (final.stdenv.hostPlatform) system;
             config.allowUnfree = true;
-          })) mullvad-vpn;
+          }))
+          mullvad-vpn
+          ;
       })
     ];
 
