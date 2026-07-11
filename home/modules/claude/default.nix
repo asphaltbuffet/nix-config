@@ -118,11 +118,18 @@
     };
   };
 
-  # Before home-manager's writeBoundary runs, rotate any existing .hm-bak to a
-  # timestamped name so the backup slot is free for this switch. This preserves
-  # prior backups (useful for recovering settings) while preventing the
-  # "would be clobbered" error on repeated switches.
-  home.activation.rotateClaudeSettingsBackup = lib.hm.dag.entryBefore ["writeBoundary"] ''
+  # Rotate any existing .hm-bak to a timestamped name so the backup slot is free
+  # for this switch. This preserves prior backups (useful for recovering
+  # settings) while preventing the "would be clobbered" error on repeated
+  # switches.
+  #
+  # Must run *before* checkLinkTargets, not just before writeBoundary: the
+  # collision check that emits "would be clobbered" is itself anchored
+  # entryBefore ["writeBoundary"], making it a sibling of this script. Sharing
+  # the writeBoundary anchor leaves their relative order unspecified, so the
+  # check could inspect the stale .hm-bak before we rotate it away. Anchoring
+  # to checkLinkTargets makes the dependency explicit and guaranteed.
+  home.activation.rotateClaudeSettingsBackup = lib.hm.dag.entryBefore ["checkLinkTargets"] ''
     bak="$HOME/.claude/settings.json.hm-bak"
     if [ -f "$bak" ]; then
       mv "$bak" "$bak.$(date +%Y%m%d-%H%M%S)"
