@@ -8,7 +8,7 @@
 # Project-level entries are merged on top of these global defaults.
 {
   # ── Workflow / skills ──────────────────────────────────────────────────
-  "superpowers@claude-plugins-official" = false;
+  "superpowers@claude-plugins-official" = true;
   "code-review@claude-plugins-official" = true;
   "code-simplifier@claude-plugins-official" = false;
   "claude-md-management@claude-plugins-official" = true;

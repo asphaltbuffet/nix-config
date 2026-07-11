@@ -8,7 +8,6 @@
 
 - `fd` over `find`
 - `rg` over `grep`
-- `sd` over `sed` (for in-place substitution)
 - `jq` for JSON processing
 
 ## Code Navigation (Serena MCP)
