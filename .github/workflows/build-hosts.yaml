@@ -50,9 +50,66 @@ jobs:
           hosts=$(basename -a nixos/hosts/*/ | jq -Rnc '[inputs]')
           echo "hosts=$hosts" >> "$GITHUB_OUTPUT"
 
+  # Prime the shared closure into Cachix before the matrix fans out.
+  # All hosts share ~80% of their derivations (13.6k of 17k). Without this,
+  # every matrix job races to build that shared base on a cold cache in
+  # parallel — ~4x redundant work. Building one host first (bunyip: smallest
+  # closure, covers 81-87% of every other host) pushes the shared base to
+  # Cachix so the matrix jobs substitute it instead of rebuilding it.
+  prime:
+    name: "prime shared cache (bunyip)"
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Store cache is keyed on flake.lock only (not per-host) so repeat prime
+      # runs at the same lock stay warm. Cachix carries the paths across runs
+      # regardless; this just speeds up the prime job itself.
+      - name: Restore Nix store cache
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-${{ runner.os }}-prime-${{ hashFiles('flake.lock') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-prime-
+          gc-max-store-size: 2000000000
+
+      - name: Install Cachix
+        uses: cachix/cachix-action@v15
+        with:
+          name: nix-config-grue
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          signingKey: ${{ secrets.CACHIX_SIGNING_KEY }}
+
+      - name: Build bunyip to prime the shared closure
+        run: |
+          # cachix-action's post-build hook pushes every newly built path to
+          # the cache automatically; the matrix jobs then substitute them.
+          nix build \
+            ".#nixosConfigurations.bunyip.config.system.build.toplevel" \
+            --no-link
+
   build:
     name: "build ${{ matrix.host }}"
-    needs: generate-matrix
+    needs: [generate-matrix, prime]
     runs-on: ubuntu-latest
     permissions:
       contents: read
