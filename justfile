@@ -97,6 +97,28 @@ lint:
     deadnix {{ flake }}
     just --check --fmt --unstable 1> /dev/null
 
+# Check for evaluation warnings (deprecations, conflicts) for a host
+[group('dev')]
+[no-exit-message]
+warnings host=hostname:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # Evaluation warnings (lib.warn: renamed options, keybind conflicts, etc.)
+    # are emitted on stderr during Nix eval — statix/deadnix don't catch them,
+    # and `nh`/`nix build`'s progress UI scrolls past them. Plain `nix eval`
+    # prints them cleanly. Evaluating toplevel covers the system config and
+    # every home-manager user.
+    attr="nixosConfigurations.{{ host }}.config.system.build.toplevel.outPath"
+    warns=$(nix eval --raw "{{ flake }}#${attr}" 2>&1 >/dev/null | grep 'evaluation warning:' || true)
+    if [[ -n "$warns" ]]; then
+        echo "$warns"
+        count=$(echo "$warns" | wc -l)
+        echo ""
+        echo "✗ {{ host }}: $count evaluation warning(s) found"
+        exit 1
+    fi
+    echo "✓ {{ host }}: no evaluation warnings"
+
 # Show flake inputs and their versions
 [group('dev')]
 inputs:
