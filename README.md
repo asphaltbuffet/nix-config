@@ -10,14 +10,17 @@ NixOS and home-manager configuration for personal systems.
 ├── justfile                  # Build commands (run `just help`)
 │
 ├── nixos/
-│   ├── hosts/                # Per-host configurations
-│   │   ├── wendigo/          # ThinkPad T14 #1
-│   │   ├── kushtaka/         # ThinkPad T14 #2
-│   │   └── snallygaster/     # ThinkPad X1 Carbon
+│   ├── hosts/                # Per-host configurations (auto-discovered)
+│   │   ├── wendigo/          # ThinkPad T14
+│   │   ├── kushtaka/         # ThinkPad T14
+│   │   ├── snallygaster/     # ThinkPad X1 Carbon
+│   │   └── bunyip/           # Headless home-lab server
 │   ├── profiles/             # Shared system profiles
 │   │   ├── base.nix          # All systems
+│   │   ├── server.nix        # Headless server overlay (no GUI)
 │   │   ├── gaming.nix        # Steam, gamemode
 │   │   └── laptop/           # Laptop-specific (KDE, power mgmt)
+│   ├── installer/            # Bootable ISO + nixos-bootstrap helper
 │   └── common/               # Shared modules
 │       ├── users.nix         # User definitions
 │       ├── tailscale.nix     # VPN configuration
@@ -214,8 +217,13 @@ with age to SSH public keys and stored as `.age` files in the repo.
 
 **Adding a secret:**
 1. Encrypt: `nix shell "github:ryantm/agenix" --command agenix -e secrets/<path>.age`
-2. Add to `secrets.nix` (recipients) and `home/modules/agenix/default.nix` (env var mapping)
-3. Commit and `just switch`
+2. Add the file → recipient mapping to `secrets/secrets.nix`
+3. For a *user* secret exposed as an env var, add a `{secret, env}` entry to the
+   `secretEnvs` list in `home/users/<name>.nix` — the `age.secrets` declaration
+   and the shell export are derived from it automatically
+4. Commit and `just switch`
+
+See [`docs/references/secrets-sop.md`](docs/references/secrets-sop.md) for the full workflow.
 
 **Adding a new host:**
 1. Create SSH keypair in 1Password (`Service` vault, item `host-<hostname>`)
