@@ -10,6 +10,13 @@
     configPath = "${config.xdg.configHome}/starship/starship.toml";
 
     settings = {
+      # Cap how long any single filesystem/VCS scan may block. On NFS-backed
+      # paths (see nixos/common/nas.nix — /home/grue/nas) an unbounded scan can
+      # stall the prompt for seconds while the automount remounts. If a scan
+      # exceeds these budgets Starship renders without that segment.
+      scan_timeout = 30; # ms — directory/VCS discovery
+      command_timeout = 100; # ms — external commands (jj, `starship module ...`)
+
       # Left prompt: dir → jj (or git fallbacks) → newline → prompt char
       # ''${ is Nix's escape for a literal ${ inside ''...'' strings
       format = ''$env_var$all''${custom.jj}''${custom.git_branch}''${custom.git_commit}$line_break$character'';
@@ -54,10 +61,14 @@
       };
 
       custom = {
-        # jj VCS — shown only inside jj repos
+        # jj VCS — shown only inside jj repos.
+        # `IN_JJ_REPO` is precomputed once per prompt by the zsh precmd hook
+        # (see home/modules/zsh) so neither this module nor the git fallbacks
+        # below re-run `jj root` — that walk hits the filesystem (NFS on the NAS)
+        # and previously ran 5× per prompt.
         jj = {
           description = "The current jj status";
-          when = "jj --ignore-working-copy root";
+          when = ''[ "$IN_JJ_REPO" = "1" ]'';
           symbol = "🥋 ";
           command = ''
             jj log --revisions @ --no-graph --ignore-working-copy --color always --limit 1 --template '
@@ -84,28 +95,28 @@
 
         # Git fallbacks — only shown in pure-git repos (not jj-colocated)
         git_branch = {
-          when = "! jj --ignore-working-copy root";
+          when = ''[ "$IN_JJ_REPO" != "1" ]'';
           command = "starship module git_branch";
           style = "";
           description = "Only show git_branch if not in a jj repo";
         };
 
         git_commit = {
-          when = "! jj --ignore-working-copy root";
+          when = ''[ "$IN_JJ_REPO" != "1" ]'';
           command = "starship module git_commit";
           style = "";
           description = "Only show git_commit if not in a jj repo";
         };
 
         git_status = {
-          when = "! jj --ignore-working-copy root";
+          when = ''[ "$IN_JJ_REPO" != "1" ]'';
           command = "starship module git_status";
           style = "";
           description = "Only show git_status if not in a jj repo";
         };
 
         git_metrics = {
-          when = "! jj --ignore-working-copy root";
+          when = ''[ "$IN_JJ_REPO" != "1" ]'';
           command = "starship module git_metrics";
           style = "";
           description = "Only show git_metrics if not in a jj repo";

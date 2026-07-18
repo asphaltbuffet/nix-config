@@ -11,6 +11,27 @@
     };
 
     initContent = ''
+      # Compute jj-repo membership ONCE per prompt for the starship modules.
+      # The starship jj module and its four git fallbacks all key off
+      # $IN_JJ_REPO (a string compare, no I/O) instead of each shelling out to
+      # `jj root` — which walks $PWD up the tree and hits the filesystem. Under
+      # the NFS-backed NAS paths (see nixos/common/nas.nix) that walk can block
+      # on an automount remount, so skip the probe there entirely.
+      _set_in_jj_repo() {
+        case "$PWD" in
+          /home/grue/nas/*|/home/grue/nas|/nas/*|/nas)
+            IN_JJ_REPO=0 ;;
+          *)
+            if jj --ignore-working-copy root >/dev/null 2>&1; then
+              IN_JJ_REPO=1
+            else
+              IN_JJ_REPO=0
+            fi ;;
+        esac
+      }
+      autoload -Uz add-zsh-hook
+      add-zsh-hook precmd _set_in_jj_repo
+
       # Set NIXOS_REBOOT_PENDING if the running kernel differs from the current config.
       # Used by the starship prompt and the login message below.
       if [[ "$(readlink /run/booted-system/kernel)" != "$(readlink /run/current-system/kernel)" ]]; then
