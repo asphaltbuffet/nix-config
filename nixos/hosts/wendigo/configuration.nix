@@ -4,12 +4,17 @@
     ../../profiles/laptop/t14.nix
 
     ../../common/users.nix
+    ../../common/netmon.nix
 
     ../../profiles/base.nix
     ../../profiles/gaming.nix
   ];
 
   networking.hostName = "wendigo"; # Define your hostname.
+
+  # Home-network health sampler. Only runs on the home network (guarded by the
+  # default gateway matching services.netmon.homeGateway); silent when roaming.
+  services.netmon.enable = true;
 
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
