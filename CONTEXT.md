@@ -23,19 +23,19 @@ A single-tool home-manager configuration. Lives in `home/modules/<tool>/default.
 _Avoid_: plugin, package config, dotfiles
 
 **cli role**:
-The `home/roles/cli.nix` role holding the shell/command-line foundation every login wants — zsh, git, starship, atuin, fzf and core CLI tools — with no graphical or desktop applications. The `base` role imports it and adds the desktop app suite; kiosk-style users (e.g. the arcade cabinet) import `cli` directly instead of `base`.
+The `home/roles/cli.nix` role holding the shell/command-line foundation every login wants — zsh, git, starship, atuin, fzf and core CLI tools — with no graphical or desktop applications. The `desktop` role imports it and adds the desktop app suite; kiosk-style users (e.g. the arcade cabinet) import `cli` directly instead of `desktop`.
 _Avoid_: shell role, base-shell
 
-**base role**:
-The `home/roles/base.nix` role: the `cli` role plus the desktop daily-driver applications (browser, password manager, chat, media). The baseline for a person's workstation login, not for a kiosk.
-_Avoid_: default role
+**desktop role**:
+The `home/roles/desktop.nix` role: the `cli` role plus the desktop daily-driver applications (browser, password manager, chat, media). The baseline for a person's workstation login, not for a kiosk. Named `desktop` (not `base`) because `cli` is the actual foundation it builds on, and to avoid colliding with `nixos/profiles/base.nix`.
+_Avoid_: base role (renamed), default role
 
 **Arcade profile**:
 The `nixos/profiles/arcade.nix` profile that turns a host into an arcade cabinet. Holds only system machinery (graphics, session autologin, audio, SSH access) — never the emulator or front-end applications themselves.
 _Avoid_: arcade config, cabinet profile
 
 **Arcade role**:
-The `home/roles/arcade.nix` role holding the arcade cabinet's applications — the attract-mode front-end, a RetroArch build carrying one libretro core per console (NES, SNES, Game Boy, Genesis, Atari 2600), standalone MAME for arcade, and the matchbox window manager. Composed atop the `cli` role (not `base`) so the cabinet login gets a shell without the desktop app suite. The user-facing counterpart to the arcade profile.
+The `home/roles/arcade.nix` role holding the arcade cabinet's applications — the attract-mode front-end, a RetroArch build carrying one libretro core per console (NES, SNES, Game Boy, Genesis, Atari 2600), standalone MAME for arcade, and the matchbox window manager. Composed atop the `cli` role (not `desktop`) so the cabinet login gets a shell without the desktop app suite. The user-facing counterpart to the arcade profile.
 _Avoid_: emulation role, mame role
 
 **Core**:

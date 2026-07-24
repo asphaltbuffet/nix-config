@@ -1,6 +1,6 @@
 # home/roles/cli.nix
 # Shell / command-line foundation. Every login wants this; it contains no
-# graphical or desktop applications. The `base` role imports it and adds the
+# graphical or desktop applications. The `desktop` role imports it and adds the
 # desktop app suite; kiosk users (e.g. the arcade cabinet) import `cli` directly.
 {
   pkgs,

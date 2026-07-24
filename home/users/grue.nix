@@ -61,7 +61,7 @@ in {
   imports = [
     inputs.agenix.homeManagerModules.default
 
-    ../roles/base.nix
+    ../roles/desktop.nix
     ../roles/admin.nix
     ../roles/dev.nix
     ../roles/player.nix
