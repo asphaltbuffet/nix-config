@@ -1,7 +1,7 @@
 # home/users/jsquats.nix
 {...}: {
   imports = [
-    ../roles/base.nix
+    ../roles/desktop.nix
     ../roles/player.nix
   ];
 

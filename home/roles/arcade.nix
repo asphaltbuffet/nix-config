@@ -1,6 +1,6 @@
 # home/roles/arcade.nix
 # Arcade cabinet applications and X session. Imported by the machine-local
-# `arcade` user. Composed atop the `cli` role (NOT `base`) so the kiosk login
+# `arcade` user. Composed atop the `cli` role (NOT `desktop`) so the kiosk login
 # gets a shell without the desktop app suite.
 #
 # ROMs are out-of-band content at ~/roms/<system>/ (see ADR-0010) — this role

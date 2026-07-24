@@ -36,7 +36,7 @@ NixOS and home-manager configuration for personal systems.
 │   │   └── sukey.nix         # Additional user
 │   ├── roles/                # Composable role sets
 │   │   ├── cli.nix           # Shell foundation, CLI tools (no GUI)
-│   │   ├── base.nix          # cli + desktop apps (browser, chat, media)
+│   │   ├── desktop.nix       # cli + desktop apps (browser, chat, media)
 │   │   ├── admin.nix         # Network/sysadmin tools
 │   │   ├── dev.nix           # Development tools
 │   │   ├── player.nix        # Gaming tools
@@ -355,7 +355,7 @@ Users import roles to compose their environment:
 | Role | Description |
 |------|-------------|
 | `cli` | Shell foundation, fonts, CLI tools — no GUI (for kiosks/headless) |
-| `base` | `cli` plus desktop apps (browser, password manager, chat, media) |
+| `desktop` | `cli` plus desktop apps (browser, password manager, chat, media) |
 | `admin` | Network tools, system monitoring |
 | `dev` | Development tools, editors, git config |
 | `player` | Gaming tools (mangohud, etc.) |
@@ -367,7 +367,7 @@ Example user configuration:
 # home/users/example.nix
 {pkgs, ...}: {
   imports = [
-    ../roles/base.nix
+    ../roles/desktop.nix
     ../roles/dev.nix
   ];
 

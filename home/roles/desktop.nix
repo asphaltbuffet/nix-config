@@ -1,4 +1,4 @@
-# home/roles/base.nix
+# home/roles/desktop.nix
 # The `cli` shell foundation plus the desktop daily-driver applications.
 # Baseline for a person's workstation login — not for a kiosk (see cli.nix).
 {pkgs, ...}: {
