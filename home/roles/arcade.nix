@@ -25,7 +25,7 @@ in {
     pkgs.attract-mode
     retroarchWithCores
     pkgs.mame
-    pkgs.matchbox-window-manager
+    pkgs.matchbox
   ];
 
   # X session: start a featherweight WM in the background (handles focus/
@@ -35,7 +35,7 @@ in {
     executable = true;
     text = ''
       #!/bin/sh
-      ${pkgs.matchbox-window-manager}/bin/matchbox-window-manager &
+      ${pkgs.matchbox}/bin/matchbox-window-manager &
       exec ${pkgs.attract-mode}/bin/attract
     '';
   };
