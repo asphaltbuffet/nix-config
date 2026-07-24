@@ -3,20 +3,10 @@
 # Do NOT import laptop/ with this profile — they are mutually exclusive.
 {...}: {
   imports = [
+    ../common/ssh-hardened.nix
     ../common/tailscale-subnet-router.nix
     ../common/monitoring.nix
   ];
-
-  # Harden SSH for server use
-  services.openssh = {
-    enable = true;
-    settings = {
-      PasswordAuthentication = false;
-      KbdInteractiveAuthentication = false;
-      PermitRootLogin = "no";
-      X11Forwarding = false;
-    };
-  };
 
   # CUPS print server — serve printers to the network via mDNS/Bonjour
   services = {
