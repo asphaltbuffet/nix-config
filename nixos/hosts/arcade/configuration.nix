@@ -2,6 +2,7 @@
   imports = [
     ./hardware-configuration.nix
 
+    # Brings the cross-host users to SSH in for admin/rescue.
     ../../common/users.nix
 
     ../../profiles/base.nix
