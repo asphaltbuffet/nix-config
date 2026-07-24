@@ -2,6 +2,10 @@
   imports = [
     ./hardware-configuration.nix
 
+    # Brings the cross-host users (grue et al). Intentional on a kiosk: the
+    # arcade user has no password/authorized keys, so grue's key from here is
+    # the only way to SSH in for admin/rescue. Trade-off: this also builds the
+    # other users' home-manager generations into the closure — accepted.
     ../../common/users.nix
 
     ../../profiles/base.nix
