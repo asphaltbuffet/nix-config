@@ -1,7 +1,7 @@
 # /home/users/sukey.nix
 {...}: {
   imports = [
-    ../roles/base.nix
+    ../roles/desktop.nix
   ];
 
   home = {
