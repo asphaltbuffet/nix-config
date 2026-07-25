@@ -14,15 +14,18 @@ NixOS and home-manager configuration for personal systems.
 │   │   ├── wendigo/          # ThinkPad T14
 │   │   ├── kushtaka/         # ThinkPad T14
 │   │   ├── snallygaster/     # ThinkPad X1 Carbon
-│   │   └── bunyip/           # Headless home-lab server
+│   │   ├── bunyip/           # Headless home-lab server
+│   │   └── arcade/           # Arcade cabinet (attract-mode kiosk)
 │   ├── profiles/             # Shared system profiles
 │   │   ├── base.nix          # All systems
 │   │   ├── server.nix        # Headless server overlay (no GUI)
 │   │   ├── gaming.nix        # Steam, gamemode
+│   │   ├── arcade.nix        # Arcade kiosk (graphics, audio, autologin, bare-X)
 │   │   └── laptop/           # Laptop-specific (KDE, power mgmt)
 │   ├── installer/            # Bootable ISO + nixos-bootstrap helper
 │   └── common/               # Shared modules
-│       ├── users.nix         # User definitions
+│       ├── users.nix         # Cross-host user definitions
+│       ├── ssh-hardened.nix  # Baseline SSH hardening (server + arcade)
 │       ├── tailscale.nix     # VPN configuration
 │       └── ...
 │
@@ -32,10 +35,12 @@ NixOS and home-manager configuration for personal systems.
 │   │   ├── jsquats.nix       # Secondary user
 │   │   └── sukey.nix         # Additional user
 │   ├── roles/                # Composable role sets
-│   │   ├── base.nix          # Core CLI tools, shell config
+│   │   ├── cli.nix           # Shell foundation, CLI tools (no GUI)
+│   │   ├── desktop.nix       # cli + desktop apps (browser, chat, media)
 │   │   ├── admin.nix         # Network/sysadmin tools
 │   │   ├── dev.nix           # Development tools
-│   │   └── player.nix        # Gaming tools
+│   │   ├── player.nix        # Gaming tools
+│   │   └── arcade.nix        # attract-mode, RetroArch, MAME, matchbox
 │   └── modules/              # Per-tool configurations
 │       ├── zsh/
 │       ├── vim/
@@ -184,6 +189,11 @@ Then sign in to 1Password — API keys will be available in new shells immediate
 1. Create `home/users/<username>.nix` with role imports
 2. Add user definition to `nixos/common/users.nix`
 3. Add `home-manager.users.<username>` mapping
+
+> Users in `common/users.nix` exist on **every** host. For a user that should
+> exist on only one host (e.g. the `arcade` kiosk login), define the user and
+> its `home-manager.users.<name>` mapping in that host's `configuration.nix`
+> instead.
 
 ## SSH Key Management
 
@@ -344,10 +354,12 @@ Users import roles to compose their environment:
 
 | Role | Description |
 |------|-------------|
-| `base` | Core utilities, shell, fonts, CLI tools |
+| `cli` | Shell foundation, fonts, CLI tools — no GUI (for kiosks/headless) |
+| `desktop` | `cli` plus desktop apps (browser, password manager, chat, media) |
 | `admin` | Network tools, system monitoring |
 | `dev` | Development tools, editors, git config |
 | `player` | Gaming tools (mangohud, etc.) |
+| `arcade` | Arcade cabinet: attract-mode, RetroArch, MAME, matchbox |
 
 Example user configuration:
 
@@ -355,7 +367,7 @@ Example user configuration:
 # home/users/example.nix
 {pkgs, ...}: {
   imports = [
-    ../roles/base.nix
+    ../roles/desktop.nix
     ../roles/dev.nix
   ];
 

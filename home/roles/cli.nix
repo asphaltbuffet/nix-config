@@ -1,12 +1,13 @@
-# home/roles/base.nix
+# home/roles/cli.nix
+# Shell / command-line foundation. Every login wants this; it contains no
+# graphical or desktop applications. The `desktop` role imports it and adds the
+# desktop app suite; kiosk users (e.g. the arcade cabinet) import `cli` directly.
 {
   pkgs,
   lib,
   inputs,
   ...
 }: {
-  #### Core imports ####
-  # Pull in your shared app modules so every user gets consistent configs
   imports = [
     inputs.nix-index-database.homeModules.nix-index
 
@@ -19,29 +20,18 @@
     ../modules/vim
     ../modules/zoxide
     ../modules/zsh
-    ../modules/firefox
     ../modules/wishlist
-
-    # GUI stuff
-    ../modules/1password
-    ../modules/kitty
-    ../modules/mullvad
-    ../modules/signal
   ];
 
-  #### Home-Manager essentials ####
   xdg.enable = true;
   fonts.fontconfig.enable = true;
 
   programs = {
     home-manager.enable = true;
-    # Provides fast command-not-found via pre-built indexes
-    # comma lets you run any command temporarily: , cowsay hello
     nix-index-database.comma.enable = true;
     fzf.enable = true;
   };
 
-  #### Common CLI / UX tools ####
   home = {
     packages = with pkgs; [
       bat
@@ -54,13 +44,8 @@
       wget
       xh
       zip
-
-      # GUI stuff
-      discord
-      vlc
     ];
 
-    #### Default environment setup ####
     sessionVariables = {
       EDITOR = lib.mkDefault "nvim";
       LANG = "en_US.UTF-8";
