@@ -119,7 +119,7 @@ jobs:
           mkdir -p /tmp/diffs
           touch /tmp/diffs/raw-all.txt
 
-          for host in wendigo kushtaka snallygaster; do
+          for host in wendigo kushtaka snallygaster arcade; do
             new_path=$(cat "/tmp/new-store-paths/new-store-path-${host}" 2>/dev/null || true)
             if [ -z "$new_path" ]; then
               echo "Skipping $host — no new store path artifact found"
