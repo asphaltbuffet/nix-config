@@ -173,7 +173,7 @@
 
     # Checks for `nix flake check`
     checks = forAllSystems (system: {
-      formatting = (mkPkgs system).runCommand "check-formatting" {} ''
+      formatting = (mkPkgs system []).runCommand "check-formatting" {} ''
         ${alejandra.defaultPackage.${system}}/bin/alejandra --check ${self} > $out
       '';
     });
