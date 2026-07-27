@@ -17,6 +17,15 @@
   # NVIDIA would additionally need hardware.nvidia + videoDrivers; deferred.
   hardware.graphics.enable = true;
 
+  # ROM library drive (ext4, internal HDD). nofail so a dead/absent drive
+  # never hangs cabinet boot — attract-mode just shows empty lists instead.
+  # rompaths in home/roles/arcade.nix reference /mnt/roms/<system>.
+  fileSystems."/mnt/roms" = {
+    device = "/dev/disk/by-uuid/5f92cc77-57b8-40ee-836b-4be51b0755c7";
+    fsType = "ext4";
+    options = ["nofail"];
+  };
+
   # Audio. The cabinet has no Plasma desktop to pull PipeWire in implicitly
   # (unlike the laptop hosts), so configure it explicitly here.
   security.rtkit.enable = true;
