@@ -8,7 +8,28 @@
 # ADR-0010 (config/content boundary).
 #
 # Do NOT import server.nix or laptop/ — this is a standalone host type.
-{...}: {
+{pkgs, ...}: let
+  # Rebuild attract-mode romlists to match what's on the ROM drive. Loops the
+  # drive's per-system folders (the source of truth for "what ROMs exist") and
+  # builds each; the folder name matches the emulator .cfg name by convention
+  # (mkEmulatorCfg sets rompath /mnt/roms/<name>). A folder with no ROMs or no
+  # emulator config is a harmless no-op. NOTE: a `mame` folder triggers an
+  # expensive `mame -listxml` scan — accepted. writeShellApplication gives us
+  # set -euo pipefail + build-time shellcheck and puts `attract` on PATH.
+  romlistBuilder = pkgs.writeShellApplication {
+    name = "arcade-romlists";
+    runtimeInputs = [pkgs.attract-mode];
+    text = ''
+      shopt -s nullglob
+      for dir in /mnt/roms/*/; do
+        name=''${dir%/}
+        name=''${name##*/}
+        echo "Building romlist: $name"
+        attract --build-romlist "$name" || echo "  (build failed for $name, continuing)"
+      done
+    '';
+  };
+in {
   imports = [
     ../common/ssh-hardened.nix
   ];
@@ -19,11 +40,27 @@
 
   # ROM library drive (ext4, internal HDD). nofail so a dead/absent drive
   # never hangs cabinet boot — attract-mode just shows empty lists instead.
-  # rompaths in home/roles/arcade.nix reference /mnt/roms/<system>.
+  # rompaths in home/roles/arcade/ reference /mnt/roms/<system>.
   fileSystems."/mnt/roms" = {
     device = "/dev/disk/by-uuid/5f92cc77-57b8-40ee-836b-4be51b0755c7";
     fsType = "ext4";
     options = ["nofail"];
+  };
+
+  # Rebuild attract-mode romlists from /mnt/roms at boot, and on demand via
+  # `systemctl start arcade-romlists`. Runs as arcade after the ROM drive
+  # mounts. See romlistBuilder above.
+  systemd.services.arcade-romlists = {
+    description = "Rebuild attract-mode romlists from /mnt/roms";
+    after = ["mnt-roms.mount"];
+    wants = ["mnt-roms.mount"];
+    wantedBy = ["multi-user.target"];
+    serviceConfig = {
+      Type = "oneshot";
+      User = "arcade";
+      Group = "arcade";
+      ExecStart = "${romlistBuilder}/bin/arcade-romlists";
+    };
   };
 
   # Audio. The cabinet has no Plasma desktop to pull PipeWire in implicitly
