@@ -313,29 +313,31 @@ in {
       }
     ];
 
-    home.packages = [cfg.package buildRomlists];
+    home = {
+      packages = [cfg.package buildRomlists];
 
-    home.file =
-      lib.optionalAttrs (cfg.manageConfig == true) {
-        ".attract/attract.cfg".text = attractCfgText;
-      }
-      // lib.mapAttrs' (name: def:
-        lib.nameValuePair ".attract/emulators/${name}.cfg" {
-          text = mkEmulatorCfg def;
-        })
-      cfg.emulators;
+      file =
+        lib.optionalAttrs (cfg.manageConfig == true) {
+          ".attract/attract.cfg".text = attractCfgText;
+        }
+        // lib.mapAttrs' (name: def:
+          lib.nameValuePair ".attract/emulators/${name}.cfg" {
+            text = mkEmulatorCfg def;
+          })
+        cfg.emulators;
 
-    # Seed mode: write attract.cfg once and leave it writable, so attract-mode's
-    # own configuration UI can persist changes to it.
-    home.activation = lib.mkIf (cfg.manageConfig == "seed") {
-      seedAttractCfg = lib.hm.dag.entryAfter ["writeBoundary"] ''
-        attractCfg="${config.home.homeDirectory}/.attract/attract.cfg"
-        if [ ! -e "$attractCfg" ]; then
-          run mkdir -p "${config.home.homeDirectory}/.attract"
-          run cp ${pkgs.writeText "attract.cfg.seed" attractCfgText} "$attractCfg"
-          run chmod u+rw "$attractCfg"
-        fi
-      '';
+      # Seed mode: write attract.cfg once and leave it writable, so attract-mode's
+      # own configuration UI can persist changes to it.
+      activation = lib.mkIf (cfg.manageConfig == "seed") {
+        seedAttractCfg = lib.hm.dag.entryAfter ["writeBoundary"] ''
+          attractCfg="${config.home.homeDirectory}/.attract/attract.cfg"
+          if [ ! -e "$attractCfg" ]; then
+            run mkdir -p "${config.home.homeDirectory}/.attract"
+            run cp ${pkgs.writeText "attract.cfg.seed" attractCfgText} "$attractCfg"
+            run chmod u+rw "$attractCfg"
+          fi
+        '';
+      };
     };
   };
 }
