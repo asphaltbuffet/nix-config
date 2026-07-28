@@ -6,5 +6,5 @@ This keeps the flake reproducible and free of copyrighted, multi-gigabyte game f
 
 ## Consequences
 
-- attract-mode rewrites its own top-level `attract.cfg` at runtime, so that file must not be a read-only Nix-store symlink. Manage the static emulator-definition files declaratively; seed or leave writable the mutable `attract.cfg`.
+- ~~attract-mode rewrites its own top-level `attract.cfg` at runtime, so that file must not be a read-only Nix-store symlink. Manage the static emulator-definition files declaratively; seed or leave writable the mutable `attract.cfg`.~~ **Superseded by ADR-0013**: the premise is false — only the configure UI writes `attract.cfg`; runtime state goes to `attract.am`. The file is now Nix-managed.
 - The `arcade` **user** needs no secrets, but the **host** is not secret-free: enabling `system.autoDeploy.enable` pulls in the `hcPingKey` system secret (via `base.nix` → `common/agenix.nix`). The host must therefore be an agenix recipient in `secrets/secrets.nix` (`allHosts`) and be rekeyed, or activation fails at deploy time even though the config evaluates and builds cleanly. Don't conflate "the user has no secrets" with "the host has no secrets."
