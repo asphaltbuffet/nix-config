@@ -10,3 +10,8 @@ result-*
 
 docs/summaries/
 docs/superpowers/
+.superpowers/
+
+# Python bytecode (scripts/arcade-media-sync.py)
+__pycache__/
+*.pyc
