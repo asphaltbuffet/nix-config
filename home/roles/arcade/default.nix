@@ -1,4 +1,4 @@
-# home/roles/arcade.nix
+# home/roles/arcade/default.nix
 # Arcade cabinet applications and X session. Imported by the machine-local
 # `arcade` user. Composed atop the `cli` role (NOT `desktop`) so the kiosk login
 # gets a shell without the desktop app suite.
@@ -71,10 +71,10 @@
   # renderer, not as hand-maintained whitespace. attract-mode REWRITES this
   # file at runtime, so it is seeded once by the activation script below and
   # owned by attract-mode thereafter (ADR-0010).
-  attractCfgSeed = import ./arcade/attract-cfg.nix {inherit lib emulators;};
+  attractCfgSeed = import ./attract-cfg.nix {inherit lib emulators;};
 in {
   imports = [
-    ./cli.nix
+    ../cli.nix
   ];
 
   home = {

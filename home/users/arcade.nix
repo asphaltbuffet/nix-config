@@ -1,7 +1,7 @@
 # /home/users/arcade.nix
 {...}: {
   imports = [
-    ../roles/arcade.nix
+    ../roles/arcade
   ];
 
   home = {

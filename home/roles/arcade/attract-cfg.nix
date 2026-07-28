@@ -5,7 +5,7 @@
 # renderer (the only place a literal tab lives) rather than hand-maintained
 # as invisible whitespace in a multi-line string.
 #
-# Consumed by home/roles/arcade.nix, which seeds this content once (attract-
+# Consumed by home/roles/arcade/default.nix, which seeds this content once (attract-
 # mode owns the file thereafter — see ADR-0010). Displays are generated from
 # the `emulators` attrset the role already defines, so the system list has a
 # single source of truth.
