@@ -18,6 +18,7 @@
   lib,
   emulators,
 }: let
+  media = import ./media.nix;
   # Emit one "<header>\n\t<key>\t<value>...\n" block. The literal tab (\t)
   # lives ONLY here.
   renderSection = {
@@ -186,9 +187,9 @@
         ]
         ++ map (slot: {
           name = "artwork";
-          value = "${slot}\t/mnt/roms/media/${name}/${slot}";
+          value = "${slot}\t${media.root}/${name}/${slot}";
         })
-        def.artworkSlots;
+        media.systems.${name}.slots;
     })
     emulators;
 

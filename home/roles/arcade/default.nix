@@ -31,19 +31,12 @@
   # `core` is the .so inside retroarchWithCores; the rompath is /mnt/roms/<name>
   # (the on-drive folder). RetroArch takes a full ROM path, hence
   # `[romfilename]`.
-  #
-  # `mediaSystem` is the HyperSpin source folder this system's art comes from
-  # (it differs from both our attr name and the display label — see the media
-  # design spec). `artworkSlots` are the attract-mode artwork slots the cosmo
-  # layout for this system requests.
   mkRetroArchEmulator = {
     core,
     romext,
     system,
-    mediaSystem,
-    artworkSlots ? ["wheel" "snap" "boxart" "cartart"],
   }: {
-    inherit romext system mediaSystem artworkSlots;
+    inherit romext system;
     executable = "${retroarchWithCores}/bin/retroarch";
     args = ''-L ${retroarchWithCores}/lib/retroarch/cores/${core} "[romfilename]"'';
   };
@@ -56,35 +49,26 @@
       core = "mesen_libretro.so";
       romext = ".nes;.zip";
       system = "Nintendo Entertainment System";
-      mediaSystem = "Nintendo Entertainment System";
     };
     snes = mkRetroArchEmulator {
       core = "snes9x_libretro.so";
       romext = ".sfc;.smc;.zip";
       system = "Super Nintendo Entertainment System";
-      mediaSystem = "Super Nintendo Entertainment System";
     };
     gameboy = mkRetroArchEmulator {
       core = "mgba_libretro.so";
       romext = ".gb;.gbc;.zip";
       system = "Nintendo Game Boy";
-      mediaSystem = "Gameboy";
-      # Box art only — the library has no Game Boy cartridge scans.
-      artworkSlots = ["wheel" "snap" "boxart"];
     };
     genesis = mkRetroArchEmulator {
       core = "genesis_plus_gx_libretro.so";
       romext = ".md;.gen;.bin;.zip";
       system = "Sega Genesis";
-      mediaSystem = "Sega Genesis";
     };
     atari2600 = mkRetroArchEmulator {
       core = "stella_libretro.so";
       romext = ".a26;.bin;.zip";
       system = "Atari 2600";
-      mediaSystem = "Atari 2600";
-      # Cover art only — the library has no Atari 2600 cartridge scans.
-      artworkSlots = ["wheel" "snap" "boxart"];
     };
 
     # Standalone MAME, not a libretro core (see CONTEXT.md "Core").
@@ -107,10 +91,6 @@
       args = ''-rompath ${mameRomPath} "[name]"'';
       romext = ".7z;<DIR>";
       system = "MAME";
-      mediaSystem = "MAME";
-      # No marquee/flyer: HyperSpin's MAME/Images has only Wheel, plus genre
-      # headers (Special) and one Pointer (Other). See the media design spec.
-      artworkSlots = ["wheel" "snap"];
       infoSource = "listxml";
     };
   };
@@ -121,15 +101,12 @@
   #
   # `info_source` is optional and emitted only when the entry sets it, so the
   # RetroArch files stay byte-identical to what the cabinet already has.
-  # `...` tolerates the media metadata fields (`mediaSystem`, `artworkSlots`)
-  # that other consumers read; they are not part of an emulator .cfg.
   mkEmulatorCfg = name: {
     executable,
     args,
     romext,
     system,
     infoSource ? null,
-    ...
   }:
     ''
       executable           ${executable}
