@@ -46,6 +46,19 @@
     xserver = {
       enable = true;
       displayManager.startx.enable = true;
+
+      # Never blank the cabinet display. A bare X session has no desktop
+      # environment to manage display power (unlike the laptop hosts, where
+      # Plasma owns this), so X's built-in screensaver and DPMS defaults apply
+      # unopposed: all three DPMS levels fire at 600s, and DPMS "off" stops
+      # driving the output entirely — the monitor reports "No Input", not a
+      # black screen. Zero disables each timer.
+      serverFlagsSection = ''
+        Option "BlankTime"   "0"
+        Option "StandbyTime" "0"
+        Option "SuspendTime" "0"
+        Option "OffTime"     "0"
+      '';
     };
   };
 }
