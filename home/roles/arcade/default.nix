@@ -69,6 +69,8 @@
       romext = ".gb;.gbc;.zip";
       system = "Nintendo Game Boy";
       mediaSystem = "Gameboy";
+      # Box art only — the library has no Game Boy cartridge scans.
+      artworkSlots = ["wheel" "snap" "boxart"];
     };
     genesis = mkRetroArchEmulator {
       core = "genesis_plus_gx_libretro.so";
@@ -81,6 +83,8 @@
       romext = ".a26;.bin;.zip";
       system = "Atari 2600";
       mediaSystem = "Atari 2600";
+      # Cover art only — the library has no Atari 2600 cartridge scans.
+      artworkSlots = ["wheel" "snap" "boxart"];
     };
 
     # Standalone MAME, not a libretro core (see CONTEXT.md "Core").
