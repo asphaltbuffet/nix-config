@@ -21,9 +21,16 @@
     runtimeInputs = [pkgs.attract-mode];
     text = ''
       shopt -s nullglob
+      romlists="$HOME/.attract/romlists"
       for dir in /mnt/roms/*/; do
         name=''${dir%/}
         name=''${name##*/}
+        # attract --build-romlist refuses to overwrite an existing romlist and
+        # writes <name>1.txt/<name>2.txt instead — which the displays (which
+        # reference <name>) never see. Remove the canonical file and any stale
+        # numbered orphans first so the rebuild produces the authoritative
+        # <name>.txt every run (idempotent).
+        rm -f "$romlists/$name.txt" "$romlists/$name"[0-9]*.txt
         echo "Building romlist: $name"
         attract --build-romlist "$name" || echo "  (build failed for $name, continuing)"
       done
