@@ -1,0 +1,220 @@
+# home/modules/attract-mode/default.nix
+#
+# Interface module for attract-mode (ADR-0014): declares programs.attract-mode
+# rather than setting someone else's options, because home-manager has no
+# upstream module for it. Written to upstream conventions so it can be
+# contributed; keep it free of any assumption about a particular machine.
+#
+# Scope is deliberately partial — emulators, displays, the displays menu, input
+# map, and general/sound settings. Filters, screensaver, and intro params are
+# unimplemented; the option types are shaped so they can be added later without
+# breaking changes.
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
+  cfg = config.programs.attract-mode;
+
+  emulatorType = lib.types.submodule {
+    options = {
+      executable = lib.mkOption {
+        type = lib.types.str;
+        description = "Program attract-mode runs to launch a game.";
+        example = "/run/current-system/sw/bin/mame";
+      };
+      args = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = ''
+          Arguments passed to {option}`executable`. attract-mode substitutes its
+          own bracketed tokens here, such as `[romfilename]` and `[name]`; they
+          are literal text as far as Nix is concerned.
+        '';
+        example = ''-L /path/core.so "[romfilename]"'';
+      };
+      romPath = lib.mkOption {
+        type = lib.types.str;
+        description = "Directory attract-mode scans for this system's ROMs.";
+      };
+      romExt = lib.mkOption {
+        type = lib.types.str;
+        description = ''
+          Semicolon-separated file extensions to treat as ROMs. `<DIR>` matches
+          directories, for systems whose games are folders rather than archives.
+        '';
+        example = ".zip;.7z";
+      };
+      system = lib.mkOption {
+        type = lib.types.str;
+        description = ''
+          Name attract-mode shows for this system. Note this is not purely
+          cosmetic: layouts commonly resolve per-system artwork by this name, so
+          changing it can silently break art lookup for that system.
+        '';
+      };
+      infoSource = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = ''
+          Metadata source attract-mode consults when building a romlist, e.g.
+          `listxml` to shell out to MAME for real titles. Omitted when null.
+        '';
+      };
+      artwork = lib.mkOption {
+        type = lib.types.attrsOf lib.types.str;
+        default = {};
+        description = ''
+          Artwork slot name to search path. Paths are absolute; this module
+          imposes no directory convention.
+        '';
+        example = lib.literalExpression ''{ wheel = "/srv/media/nes/wheel"; }'';
+      };
+    };
+  };
+
+  displayType = lib.types.submodule {
+    options = {
+      layout = lib.mkOption {
+        type = lib.types.str;
+        description = "Layout (theme) used to render this display.";
+      };
+      romlist = lib.mkOption {
+        type = lib.types.str;
+        description = ''
+          Romlist this display shows, by name. Romlists are built on the target
+          machine with `attract --build-romlist`; this module never generates
+          them.
+        '';
+      };
+      artwork = lib.mkOption {
+        type = lib.types.attrsOf lib.types.str;
+        default = {};
+        description = "Artwork slot name to search path, absolute.";
+      };
+      extraSettings = lib.mkOption {
+        type = lib.types.attrsOf lib.types.str;
+        default = {};
+        description = "Additional key/value lines emitted in this display's section.";
+      };
+    };
+  };
+in {
+  options.programs.attract-mode = {
+    enable = lib.mkEnableOption "attract-mode, a graphical front-end for emulators";
+
+    package = lib.mkPackageOption pkgs "attract-mode" {};
+
+    manageConfig = lib.mkOption {
+      type = lib.types.either lib.types.bool (lib.types.enum ["seed"]);
+      default = true;
+      description = ''
+        How `attract.cfg` is owned. `true` writes it as a read-only store
+        symlink rewritten on every activation, so this module's options are the
+        single source of truth. `"seed"` writes it once if absent and leaves it
+        writable thereafter. `false` writes it not at all, leaving attract-mode
+        to generate its own on first run — use this to manage the file by some
+        other means.
+
+        Only attract-mode's own configuration UI (the `configure` action, Tab by
+        default) writes `attract.cfg`; runtime state lives in a separate file,
+        `attract.am`, which this module never touches. So the only thing `true`
+        costs is that settings changed through that UI do not persist. Choose
+        `"seed"` if you rely on it.
+
+        This does not affect `emulators/*.cfg`, which are always managed.
+      '';
+    };
+
+    settings = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.attrsOf lib.types.str);
+      default = {};
+      description = ''
+        Top-level `attract.cfg` sections, as section name to key/value pairs.
+      '';
+      example = lib.literalExpression ''
+        {
+          general.selection_max_step = "128";
+          sound.sound_volume = "100";
+        }
+      '';
+    };
+
+    inputMap = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.either lib.types.str (lib.types.listOf lib.types.str));
+      default = {};
+      description = ''
+        Action name to input binding(s). An action may have several bindings, so
+        the value may be a list; attract-mode's file format repeats the key,
+        which this module emits for you.
+
+        The names `default` and `map` are reserved by attract-mode for command
+        fallbacks and joystick naming, and are rejected here.
+      '';
+      example = lib.literalExpression ''
+        {
+          up = [ "Up" "Joy0 Up" ];
+          configure = "Tab";
+        }
+      '';
+    };
+
+    displaysMenu = lib.mkOption {
+      type = lib.types.nullOr (lib.types.attrsOf lib.types.str);
+      default = null;
+      description = ''
+        Settings for the displays menu — the wheel listing configured displays.
+        Null omits the section entirely.
+      '';
+      example = lib.literalExpression ''{ layout = "mytheme-systems"; }'';
+    };
+
+    emulators = lib.mkOption {
+      type = lib.types.attrsOf emulatorType;
+      default = {};
+      description = ''
+        Emulator definitions, keyed by name. Each renders to one
+        `~/.attract/emulators/<name>.cfg`. These files are always managed by
+        this module, regardless of {option}`manageConfig`.
+      '';
+    };
+
+    displays = lib.mkOption {
+      type = lib.types.attrsOf displayType;
+      default = {};
+      description = ''
+        Displays, keyed by name. A display is a view — a romlist, a layout, and
+        artwork — and is independent of an emulator: several displays may share
+        one romlist, and a romlist may span several emulators.
+      '';
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = !(cfg.inputMap ? "default") && !(cfg.inputMap ? "map");
+        message = ''
+          programs.attract-mode.inputMap: "default" and "map" are reserved by
+          attract-mode for command fallbacks and joystick naming, and cannot be
+          used as action names.
+        '';
+      }
+      {
+        # These sections are generated from their own options. Emitting them
+        # from `settings` too would write a second section with the same header,
+        # and attract-mode's parser would silently keep one and discard the
+        # other.
+        assertion = !(lib.any (s: cfg.settings ? ${s}) ["input_map" "displays_menu" "display"]);
+        message = ''
+          programs.attract-mode.settings: "input_map", "displays_menu", and
+          "display" are generated from the inputMap, displaysMenu, and displays
+          options. Set those instead of writing the sections by hand.
+        '';
+      }
+    ];
+
+    home.packages = [cfg.package];
+  };
+}
