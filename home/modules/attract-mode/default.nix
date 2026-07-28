@@ -100,6 +100,104 @@
       };
     };
   };
+  r = import ./render.nix {inherit lib;};
+
+  # input_map's file format repeats the action name once per binding; the
+  # option models that as a list value, so expand it back out here.
+  inputMapPairs = lib.flatten (lib.mapAttrsToList (
+      action: binding:
+        map (b: {
+          name = action;
+          value = b;
+        }) (lib.toList binding)
+    )
+    cfg.inputMap);
+
+  # A display's artwork lines and any extra settings, after its layout/romlist.
+  displayPairs = d:
+    [
+      {
+        name = "layout";
+        value = d.layout;
+      }
+      {
+        name = "romlist";
+        value = d.romlist;
+      }
+    ]
+    ++ lib.mapAttrsToList (slot: path: {
+      name = "artwork";
+      value = "${slot}\t${path}";
+    })
+    d.artwork
+    ++ lib.mapAttrsToList (k: v: {
+      name = k;
+      value = v;
+    })
+    d.extraSettings;
+
+  sections =
+    lib.mapAttrsToList (name: kv: {
+      header = name;
+      pairs =
+        lib.mapAttrsToList (k: v: {
+          name = k;
+          value = v;
+        })
+        kv;
+    })
+    cfg.settings
+    ++ lib.optional (cfg.inputMap != {}) {
+      header = "input_map";
+      pairs = inputMapPairs;
+    }
+    ++ lib.optional (cfg.displaysMenu != null) {
+      header = "displays_menu";
+      pairs =
+        lib.mapAttrsToList (k: v: {
+          name = k;
+          value = v;
+        })
+        cfg.displaysMenu;
+    }
+    ++ lib.mapAttrsToList (name: d: {
+      header = "display";
+      inherit name;
+      pairs = displayPairs d;
+    })
+    cfg.displays;
+
+  attractCfgText =
+    r.header
+    + "\n\n"
+    + lib.concatStringsSep "\n" (map r.cfgSection sections);
+
+  mkEmulatorCfg = def:
+    r.header
+    + "\n"
+    + lib.concatStringsSep "\n" (
+      [
+        (r.emuLine "executable" def.executable)
+        (r.emuLine "args" def.args)
+        (r.emuLine "rompath" def.romPath)
+        (r.emuLine "romext" def.romExt)
+        (r.emuLine "system" def.system)
+      ]
+      ++ lib.optional (def.infoSource != null) (r.emuLine "info_source" def.infoSource)
+      ++ lib.mapAttrsToList r.emuArtworkLine def.artwork
+    )
+    + "\n";
+
+  # Build every configured romlist. attract-mode's --build-romlist takes several
+  # emulators but writes them to ONE romlist, so this must loop rather than pass
+  # the whole list at once.
+  buildRomlists = pkgs.writeShellScriptBin "attract-build-romlists" ''
+    set -euo pipefail
+    for emu in ${lib.escapeShellArgs (lib.attrNames cfg.emulators)}; do
+      echo "Building romlist: $emu"
+      ${cfg.package}/bin/attract --build-romlist "$emu"
+    done
+  '';
 in {
   options.programs.attract-mode = {
     enable = lib.mkEnableOption "attract-mode, a graphical front-end for emulators";
@@ -215,6 +313,29 @@ in {
       }
     ];
 
-    home.packages = [cfg.package];
+    home.packages = [cfg.package buildRomlists];
+
+    home.file =
+      lib.optionalAttrs (cfg.manageConfig == true) {
+        ".attract/attract.cfg".text = attractCfgText;
+      }
+      // lib.mapAttrs' (name: def:
+        lib.nameValuePair ".attract/emulators/${name}.cfg" {
+          text = mkEmulatorCfg def;
+        })
+      cfg.emulators;
+
+    # Seed mode: write attract.cfg once and leave it writable, so attract-mode's
+    # own configuration UI can persist changes to it.
+    home.activation = lib.mkIf (cfg.manageConfig == "seed") {
+      seedAttractCfg = lib.hm.dag.entryAfter ["writeBoundary"] ''
+        attractCfg="${config.home.homeDirectory}/.attract/attract.cfg"
+        if [ ! -e "$attractCfg" ]; then
+          run mkdir -p "${config.home.homeDirectory}/.attract"
+          run cp ${pkgs.writeText "attract.cfg.seed" attractCfgText} "$attractCfg"
+          run chmod u+rw "$attractCfg"
+        fi
+      '';
+    };
   };
 }
