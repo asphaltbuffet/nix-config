@@ -147,22 +147,48 @@
         }
       ];
     }
-  ];
-
-  # One display per emulator, generated from the shared `emulators` attrset.
-  displaySections =
-    lib.mapAttrsToList (name: def: {
-      header = "display ${def.system}";
+    {
+      # System-selection wheel. attract-mode generates the entries from the
+      # configured displays, so no synthetic romlist is needed.
+      header = "displays_menu";
       pairs = [
         {
           name = "layout";
-          value = "Attrac-Man";
-        }
-        {
-          name = "romlist";
-          value = name;
+          value = "cosmo-systems";
         }
       ];
+    }
+  ];
+
+  # Cosmo layout per display. MAME gets the arcade layout; every console gets
+  # the snes-n64 layout, which requests box/cart art instead of marquee/flyer.
+  layoutFor = name:
+    if name == "mame"
+    then "cosmo-arcade"
+    else "cosmo-snes-n64";
+
+  # One display per emulator, generated from the shared `emulators` attrset.
+  # `artwork` lines point at the out-of-band media tree (ADR-0010) — the paths
+  # are declared here but the files arrive via the sync script.
+  displaySections =
+    lib.mapAttrsToList (name: def: {
+      header = "display ${def.system}";
+      pairs =
+        [
+          {
+            name = "layout";
+            value = layoutFor name;
+          }
+          {
+            name = "romlist";
+            value = name;
+          }
+        ]
+        ++ map (slot: {
+          name = "artwork";
+          value = "${slot}\t/mnt/roms/media/${name}/${slot}";
+        })
+        def.artworkSlots;
     })
     emulators;
 
