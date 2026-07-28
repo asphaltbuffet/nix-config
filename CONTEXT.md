@@ -19,8 +19,12 @@ A reusable home-manager-level bundle of user tools and settings imported by a us
 _Avoid_: profile (reserved for the NixOS layer), preset
 
 **Module**:
-A single-tool home-manager configuration. Lives in `home/modules/<tool>/default.nix`. Imported from roles, never directly from user files.
+A single-tool home-manager configuration. Lives in `home/modules/<tool>/default.nix`. Imported from roles, never directly from user files. Most modules are thin *config-setters* — they set values against option interfaces home-manager already defines upstream, and declare no options of their own. An [[Interface module]] is the exception.
 _Avoid_: plugin, package config, dotfiles
+
+**Interface module**:
+A module that *declares* its own `programs.<tool>.*` options rather than setting someone else's — written because home-manager has no upstream module for that tool. Held to upstream conventions (`enable`, `package`, typed submodules, no assumptions about the author's own setup) so it can be contributed to home-manager, after which the local copy is deleted and the option path stays identical. `programs.attract-mode` is the first.
+_Avoid_: custom module, option module
 
 **cli role**:
 The `home/roles/cli.nix` role holding the shell/command-line foundation every login wants — zsh, git, starship, atuin, fzf and core CLI tools — with no graphical or desktop applications. The `desktop` role imports it and adds the desktop app suite; kiosk-style users (e.g. the arcade cabinet) import `cli` directly instead of `desktop`.
@@ -43,8 +47,24 @@ A libretro emulator plugin loaded by RetroArch to emulate one console. The arcad
 _Avoid_: emulator (reserve for the standalone kind, e.g. MAME), plugin
 
 **Emulator definition**:
-One entry in the arcade role's `emulators` attrset, describing how attract-mode launches a system: an executable, its arguments, a ROM path, and the file extensions to scan. Holds both kinds — RetroArch cores (built by the `mkRetroArchEmulator` helper) and standalone MAME — because attract-mode has no core/emulator distinction; it only wants a command to run. Renders to one `~/.attract/emulators/<name>.cfg`.
+One entry in `programs.attract-mode.emulators`, describing how attract-mode launches a system: an executable, its arguments, a ROM path, and the file extensions to scan. Holds both kinds — RetroArch cores (built by the arcade role's `mkRetroArchEmulator` helper) and standalone MAME — because attract-mode has no core/emulator distinction; it only wants a command to run. Renders to one `~/.attract/emulators/<name>.cfg`. Contains *only* fields attract-mode itself understands; media-sync metadata is keyed separately by the same names (see [[Media mapping]]).
 _Avoid_: emulator (the attrset key is `emulators`, but an entry is a *definition* — the emulator itself is the program), core (only some entries are cores)
+
+**attract-mode config format**:
+Not one format but two. `attract.cfg` uses a bare section header (`display` + tab + name) followed by tab-indented `key`-padded-to-20 + space + value lines, with filter contents doubly indented. `emulators/<name>.cfg` has no leading indent, pads keys to 20, and writes artwork as `artwork` padded to 10 + slot padded to 15 + path. Padding is a minimum, not a truncation. The parser treats spaces and tabs interchangeably, so the widths are cosmetic — matched only so Nix-written files diff cleanly against attract-mode-written ones.
+_Avoid_: ini, tab-indented format (only one of the two is tab-indented)
+
+**Display**:
+One browsable view in attract-mode: a romlist to show, a layout to render it with, artwork paths, and optional filters. Independent of an [[Emulator definition]] — a display references a romlist by name, so several displays may share one emulator (e.g. "All" and "Favourites"), a display may span several, and an emulator may have no display. The arcade role happens to generate one display per emulator, but that 1:1 is the role's convention, not attract-mode's rule.
+_Avoid_: system, screen, view, menu (the *displays menu* is the wheel that lists displays, not a display itself)
+
+**Media mapping**:
+The arcade role's separate, sync-side record of where each system's artwork comes from — the HyperSpin source folder and its per-slot `ArtworkN` subpaths. Keyed by the same names as the emulator definitions but deliberately *not* merged into them: it describes an out-of-band content library (ADR-0012), not anything attract-mode reads.
+_Avoid_: media config, artwork definition
+
+**Managed config** / **Seeded config**:
+Two modes in which this flake can own an application's config file. *Managed* means Nix owns the file outright — it is a read-only store symlink, rewritten on every activation, and the Nix option is the single source of truth. *Seeded* means Nix writes the file once if absent and the application owns it thereafter; the Nix options describe only the initial state. Most tools here are managed; seeding is reserved for applications that rewrite their own config at runtime.
+_Avoid_: templated, bootstrapped, initial config
 
 **Romlist**:
 attract-mode's index of the games available for one system, at `~/.attract/romlists/<name>.txt`. Built on the cabinet with `attract --build-romlist <name>` by scanning the emulator definition's rompath — never generated by the flake, because it is derived from ROMs, which are content (ADR-0010). For MAME, attract-mode additionally runs `mame -listxml` to attach real titles and metadata, triggered by the `info_source` field.
