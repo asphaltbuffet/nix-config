@@ -76,6 +76,32 @@
     	selection_max_step	128
     	confirm_favourites	yes
 
+    sound
+    	sound_volume	100
+    	ambient_volume	100
+    	movie_volume	100
+
+    input_map
+    	up	Up
+    	up	Joy0 Up
+    	down	Down
+    	down	Joy0 Down
+    	left	Left
+    	left	Joy0 Left
+    	right	Right
+    	right	Joy0 Right
+    	select	Return
+    	select	Joy0 Button0
+    	back	Escape
+    	back	Joy0 Button1
+    	exit	LControl+Escape
+    	exit	Joy0 Button7
+    	configure	Tab
+    	prev_display	LControl+Left
+    	next_display	LControl+Right
+    	prev_letter	LShift+Up
+    	next_letter	LShift+Down
+
     ${lib.concatStringsSep "\n" (lib.mapAttrsToList (name: def: ''
         display ${def.system}
         	layout	Attrac-Man
