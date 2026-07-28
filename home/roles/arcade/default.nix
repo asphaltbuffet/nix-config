@@ -1,4 +1,4 @@
-# home/roles/arcade.nix
+# home/roles/arcade/default.nix
 # Arcade cabinet applications and X session. Imported by the machine-local
 # `arcade` user. Composed atop the `cli` role (NOT `desktop`) so the kiosk login
 # gets a shell without the desktop app suite.
@@ -66,26 +66,15 @@
     system               ${system}
   '';
 
-  # Initial attract.cfg — one display per emulator. attract-mode REWRITES this
-  # file at runtime (last-selected display, settings), so it must NOT be a
-  # read-only symlink; it is seeded once by the activation script below and
-  # thereafter owned by attract-mode (ADR-0010).
-  attractCfgSeed = ''
-    # Seeded once by home-manager; attract-mode owns this file thereafter.
-    general
-    	selection_max_step	128
-    	confirm_favourites	yes
-
-    ${lib.concatStringsSep "\n" (lib.mapAttrsToList (name: def: ''
-        display ${def.system}
-        	layout	Attrac-Man
-        	romlist	${name}
-      '')
-      emulators)}
-  '';
+  # Initial attract.cfg content, rendered from structured data (see
+  # ./arcade/attract-cfg.nix) so attract-mode's tab-indented format lives in a
+  # renderer, not as hand-maintained whitespace. attract-mode REWRITES this
+  # file at runtime, so it is seeded once by the activation script below and
+  # owned by attract-mode thereafter (ADR-0010).
+  attractCfgSeed = import ./attract-cfg.nix {inherit lib emulators;};
 in {
   imports = [
-    ./cli.nix
+    ../cli.nix
   ];
 
   home = {
