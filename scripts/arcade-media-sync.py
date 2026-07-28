@@ -15,7 +15,6 @@ Matching is two-tier: exact ROM-stem match first, then normalized-title match
 coverage per system.
 """
 import argparse
-import collections
 import os
 import re
 import shutil
@@ -35,7 +34,7 @@ SYSTEMS = {
         "wheel": "Images/Wheel",
         "snap": "Video",
         "boxart": "Images/Artwork2",
-        "cartart": "Images/Artwork2",
+        "cartart": "Images/Artwork3",
     }),
     "snes": ("snes", ["Super Nintendo Entertainment System"], {
         "wheel": "Images/Wheel",
@@ -46,14 +45,24 @@ SYSTEMS = {
     "genesis": ("genesis", ["Sega Genesis"], {
         "wheel": "Images/Wheel",
         "snap": "Video",
+        "boxart": "Images/Artwork3",
+        # Genesis is the one system with real cartridge scans, not a second
+        # box variant. Verified by inspection.
+        "cartart": "Images/Artwork4",
     }),
     "gameboy": ("gameboy", ["Gameboy", "Gameboy Color"], {
         "wheel": "Images/Wheel",
         "snap": "Video",
+        # GB and GBC number their box art differently (Artwork2 vs Artwork4),
+        # so this slot lists both — each source folder contributes whichever
+        # subpath it actually has. No cartridge scans exist for either.
+        "boxart": ["Images/Artwork2", "Images/Artwork4"],
     }),
     "atari2600": ("atari2600", ["Atari 2600"], {
         "wheel": "Images/Wheel",
         "snap": "Video",
+        # Cover art only; no cartridge scans in this library.
+        "boxart": "Images/Artwork3",
     }),
 }
 
@@ -70,10 +79,19 @@ def normalize(s):
 
 
 def build_index(names):
-    """Map normalized title -> first source name with that title."""
+    """Map normalized title -> first source name with that title.
+
+    Names that normalize to "" are skipped. A name beginning with `(` or `[`
+    (e.g. "[Aladdin] Dizzy the Adventurer (USA)") collapses to the empty
+    string, and storing that would make it a wildcard that silently answers
+    every other empty-normalizing lookup with the wrong game's art.
+    """
     idx = {}
     for n in names:
-        idx.setdefault(normalize(n), n)
+        key = normalize(n)
+        if not key:
+            continue
+        idx.setdefault(key, n)
     return idx
 
 
@@ -81,7 +99,10 @@ def match(rom_stem, exact_set, norm_index):
     """Exact stem match first, then normalized title. None if neither hits."""
     if rom_stem in exact_set:
         return rom_stem
-    return norm_index.get(normalize(rom_stem))
+    key = normalize(rom_stem)
+    if not key:
+        return None
+    return norm_index.get(key)
 
 
 def listdir(d):
@@ -89,21 +110,37 @@ def listdir(d):
 
 
 def stems_with_paths(dirs, exts=None):
-    """{stem: fullpath} across several source dirs; first dir wins ties."""
+    """{stem: fullpath} across several source dirs; first dir wins ties.
+
+    `exts` is an ORDERED preference list, best first: where a stem exists in
+    several formats, the earliest-ranked extension wins. This is what keeps
+    .mp4 ahead of legacy .flv — roughly half the console Video dirs carry both,
+    and relying on directory order would pick arbitrarily.
+    """
     out = {}
+    rank = {}
     for d in dirs:
         for fn in listdir(d):
             stem, ext = os.path.splitext(fn)
-            if exts and ext.lower() not in exts:
+            ext = ext.lower()
+            if exts and ext not in exts:
                 continue
-            out.setdefault(stem, os.path.join(d, fn))
+            r = exts.index(ext) if exts else 0
+            if stem in out and rank[stem] <= r:
+                continue
+            out[stem] = os.path.join(d, fn)
+            rank[stem] = r
     return out
 
 
 def sync_slot(system, rom_dir, media_dirs, slot, subpath, dry_run):
-    src_dirs = [os.path.join(m, subpath) for m in media_dirs]
+    # A slot's subpath is normally one string, but may be a list when source
+    # folders disagree on their ArtworkN numbering (see gameboy above). Build
+    # the cross product and let stems_with_paths skip the ones that don't exist.
+    subpaths = [subpath] if isinstance(subpath, str) else subpath
+    src_dirs = [os.path.join(m, sp) for m in media_dirs for sp in subpaths]
     exts = VIDEO_EXTS if slot == "snap" else (".png",)
-    art = stems_with_paths(src_dirs, set(exts))
+    art = stems_with_paths(src_dirs, exts)
     if not art:
         print("  %-8s SKIP (no source)" % slot)
         return
