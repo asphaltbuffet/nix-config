@@ -8,35 +8,7 @@
 # ADR-0010 (config/content boundary).
 #
 # Do NOT import server.nix or laptop/ — this is a standalone host type.
-{pkgs, ...}: let
-  # Rebuild attract-mode romlists to match what's on the ROM drive. Loops the
-  # drive's per-system folders (the source of truth for "what ROMs exist") and
-  # builds each; the folder name matches the emulator .cfg name by convention
-  # (mkEmulatorCfg sets rompath /mnt/roms/<name>). A folder with no ROMs or no
-  # emulator config is a harmless no-op. NOTE: a `mame` folder triggers an
-  # expensive `mame -listxml` scan — accepted. writeShellApplication gives us
-  # set -euo pipefail + build-time shellcheck and puts `attract` on PATH.
-  romlistBuilder = pkgs.writeShellApplication {
-    name = "arcade-romlists";
-    runtimeInputs = [pkgs.attract-mode];
-    text = ''
-      shopt -s nullglob
-      romlists="$HOME/.attract/romlists"
-      for dir in /mnt/roms/*/; do
-        name=''${dir%/}
-        name=''${name##*/}
-        # attract --build-romlist refuses to overwrite an existing romlist and
-        # writes <name>1.txt/<name>2.txt instead — which the displays (which
-        # reference <name>) never see. Remove the canonical file and any stale
-        # numbered orphans first so the rebuild produces the authoritative
-        # <name>.txt every run (idempotent).
-        rm -f "$romlists/$name.txt" "$romlists/$name"[0-9]*.txt
-        echo "Building romlist: $name"
-        attract --build-romlist "$name" || echo "  (build failed for $name, continuing)"
-      done
-    '';
-  };
-in {
+{...}: {
   imports = [
     ../common/ssh-hardened.nix
   ];
@@ -52,22 +24,6 @@ in {
     device = "/dev/disk/by-uuid/5f92cc77-57b8-40ee-836b-4be51b0755c7";
     fsType = "ext4";
     options = ["nofail"];
-  };
-
-  # Rebuild attract-mode romlists from /mnt/roms at boot, and on demand via
-  # `systemctl start arcade-romlists`. Runs as arcade after the ROM drive
-  # mounts. See romlistBuilder above.
-  systemd.services.arcade-romlists = {
-    description = "Rebuild attract-mode romlists from /mnt/roms";
-    after = ["mnt-roms.mount"];
-    wants = ["mnt-roms.mount"];
-    wantedBy = ["multi-user.target"];
-    serviceConfig = {
-      Type = "oneshot";
-      User = "arcade";
-      Group = "arcade";
-      ExecStart = "${romlistBuilder}/bin/arcade-romlists";
-    };
   };
 
   # Audio. The cabinet has no Plasma desktop to pull PipeWire in implicitly

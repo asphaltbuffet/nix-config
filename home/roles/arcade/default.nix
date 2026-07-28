@@ -22,49 +22,102 @@
       stella # Atari 2600
     ]);
 
-  # Per-system emulator definitions. core = the libretro .so filename inside
-  # retroarchWithCores; the rompath is /mnt/roms/<name> (the on-drive folder).
+  # MAME's ROM directory. Referenced twice below, for two different consumers:
+  # attract-mode scans it to build the romlist, and MAME itself searches it to
+  # resolve a clone's parent set. Not redundancy — one source, two readers.
+  mameRomPath = "/mnt/roms/mame";
+
+  # Build a RetroArch-backed emulator definition from a libretro core filename.
+  # `core` is the .so inside retroarchWithCores; the rompath is /mnt/roms/<name>
+  # (the on-drive folder). RetroArch takes a full ROM path, hence
+  # `[romfilename]`.
+  mkRetroArchEmulator = {
+    core,
+    romext,
+    system,
+  }: {
+    inherit romext system;
+    executable = "${retroarchWithCores}/bin/retroarch";
+    args = ''-L ${retroarchWithCores}/lib/retroarch/cores/${core} "[romfilename]"'';
+  };
+
+  # Per-system emulator definitions. Each entry carries its own executable and
+  # args, so RetroArch cores and standalone emulators (MAME) share one renderer
+  # — attract-mode has no core/emulator distinction, it just wants a command.
   emulators = {
-    nes = {
+    nes = mkRetroArchEmulator {
       core = "mesen_libretro.so";
       romext = ".nes;.zip";
       system = "Nintendo Entertainment System";
     };
-    snes = {
+    snes = mkRetroArchEmulator {
       core = "snes9x_libretro.so";
       romext = ".sfc;.smc;.zip";
       system = "Super Nintendo";
     };
-    gameboy = {
+    gameboy = mkRetroArchEmulator {
       core = "mgba_libretro.so";
       romext = ".gb;.gbc;.zip";
       system = "Game Boy";
     };
-    genesis = {
+    genesis = mkRetroArchEmulator {
       core = "genesis_plus_gx_libretro.so";
       romext = ".md;.gen;.bin;.zip";
       system = "Sega Genesis";
     };
-    atari2600 = {
+    atari2600 = mkRetroArchEmulator {
       core = "stella_libretro.so";
       romext = ".a26;.bin;.zip";
       system = "Atari 2600";
     };
+
+    # Standalone MAME, not a libretro core (see CONTEXT.md "Core").
+    #
+    # `args` passes MAME the short name (`[name]`) plus an explicit -rompath,
+    # NOT a full file path: this is a split set where clones are separate
+    # archives, and MAME must be able to *search* rompath to find a clone's
+    # parent. Passing a full path works for parents and fails silently for
+    # clones — the worst failure mode.
+    #
+    # `<DIR>` in romext exposes the CHD-based games, which are directories
+    # (e.g. NAOMI/Atomiswave GD-ROM titles) rather than archives.
+    #
+    # `system Arcade` and `info_source listxml` match attract-mode's own
+    # generated template. info_source is what makes attract-mode shell out to
+    # `mame -listxml` for real titles and metadata when building the romlist;
+    # the `system` value is a display label, not the trigger.
+    mame = {
+      executable = "${pkgs.mame}/bin/mame";
+      args = ''-rompath ${mameRomPath} "[name]"'';
+      romext = ".7z;<DIR>";
+      system = "Arcade";
+      infoSource = "listxml";
+    };
   };
 
-  # Render one attract-mode emulator .cfg. `[romfilename]` is attract-mode's
-  # own token (literal, not Nix) — substituted with the selected ROM at launch.
+  # Render one attract-mode emulator .cfg from a definition. Bracketed tokens
+  # in `args` (`[romfilename]`, `[name]`) are attract-mode's own — literal here,
+  # substituted with the selected ROM at launch.
+  #
+  # `info_source` is optional and emitted only when the entry sets it, so the
+  # RetroArch files stay byte-identical to what the cabinet already has.
   mkEmulatorCfg = name: {
-    core,
+    executable,
+    args,
     romext,
     system,
-  }: ''
-    executable           ${retroarchWithCores}/bin/retroarch
-    args                 -L ${retroarchWithCores}/lib/retroarch/cores/${core} "[romfilename]"
-    rompath              /mnt/roms/${name}
-    romext               ${romext}
-    system               ${system}
-  '';
+    infoSource ? null,
+  }:
+    ''
+      executable           ${executable}
+      args                 ${args}
+      rompath              /mnt/roms/${name}
+      romext               ${romext}
+      system               ${system}
+    ''
+    + lib.optionalString (infoSource != null) ''
+      info_source          ${infoSource}
+    '';
 
   # Initial attract.cfg content, rendered from structured data (see
   # ./arcade/attract-cfg.nix) so attract-mode's tab-indented format lives in a
