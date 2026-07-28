@@ -39,6 +39,7 @@ This document uses **progressive disclosure** to optimize LLM working efficiency
 |---|---|---|
 | Adding/editing secrets, `.age` files, agenix, SSH module, git signing | `docs/references/secrets-sop.md` | agenix workflow, rekeying, SSH matchBlocks, host prep |
 | Editing GitHub Actions workflows, CI permissions errors, matrix outputs, force-push on CI | `docs/references/ci-github-actions-sop.md` | permissions ceiling, build-hosts.yaml callers, autodeploy |
+| MAME games fail to boot, "ROM needs redump", auditing or re-cutting the arcade ROM set | `docs/references/mame-rom-recut.md` | version-locked ROM sets, `-verifyroms` audit, rebuild + swap |
 
 ---
 
@@ -179,6 +180,7 @@ Use these slash commands for guided workflows:
 |---|---|---|
 | Secrets, agenix, `.age` files, SSH module, git signing, host prep | `docs/references/secrets-sop.md` | agenix workflow, rekeying, SSH matchBlocks |
 | GitHub Actions permissions errors, CI matrix outputs, `build-hosts.yaml` callers, autodeploy, `force-with-lease` on CI | `docs/references/ci-github-actions-sop.md` | permissions ceiling, shared workflow gate pattern |
+| MAME ROM audit/re-cut, arcade games failing to boot, version-locked ROM sets | `docs/references/mame-rom-recut.md` | `-verifyroms` audit, rebuild + swap, ADR-0011 boundary |
 
 ---
 
