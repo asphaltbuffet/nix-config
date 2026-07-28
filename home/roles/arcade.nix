@@ -66,49 +66,12 @@
     system               ${system}
   '';
 
-  # Initial attract.cfg — one display per emulator. attract-mode REWRITES this
-  # file at runtime (last-selected display, settings), so it must NOT be a
-  # read-only symlink; it is seeded once by the activation script below and
-  # thereafter owned by attract-mode (ADR-0010).
-  attractCfgSeed = ''
-    # Seeded once by home-manager; attract-mode owns this file thereafter.
-    general
-    	selection_max_step	128
-    	confirm_favourites	yes
-
-    sound
-    	sound_volume	100
-    	ambient_volume	100
-    	movie_volume	100
-
-    input_map
-    	up	Up
-    	up	Joy0 Up
-    	down	Down
-    	down	Joy0 Down
-    	left	Left
-    	left	Joy0 Left
-    	right	Right
-    	right	Joy0 Right
-    	select	Return
-    	select	Joy0 Button0
-    	back	Escape
-    	back	Joy0 Button1
-    	exit	LControl+Escape
-    	exit	Joy0 Button7
-    	configure	Tab
-    	prev_display	LControl+Left
-    	next_display	LControl+Right
-    	prev_letter	LShift+Up
-    	next_letter	LShift+Down
-
-    ${lib.concatStringsSep "\n" (lib.mapAttrsToList (name: def: ''
-        display ${def.system}
-        	layout	Attrac-Man
-        	romlist	${name}
-      '')
-      emulators)}
-  '';
+  # Initial attract.cfg content, rendered from structured data (see
+  # ./arcade/attract-cfg.nix) so attract-mode's tab-indented format lives in a
+  # renderer, not as hand-maintained whitespace. attract-mode REWRITES this
+  # file at runtime, so it is seeded once by the activation script below and
+  # owned by attract-mode thereafter (ADR-0010).
+  attractCfgSeed = import ./arcade/attract-cfg.nix {inherit lib emulators;};
 in {
   imports = [
     ./cli.nix
