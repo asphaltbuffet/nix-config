@@ -129,6 +129,22 @@
     })
     d.extraSettings;
 
+  # `menu_layout` and `startup_mode` are settings inside `general`, not sections
+  # of their own — attract-mode's only top-level sections are display, sound,
+  # input_map, general, plugin, saver_config, layout_config, intro_config and
+  # menu_config (FeSettings::otherSettingStrings). Emitting an unknown header
+  # does not start a section; the parser stays in whatever section preceded it
+  # and misreads the keys that follow.
+  generalExtra =
+    lib.optionalAttrs (cfg.menuLayout != null) {menu_layout = cfg.menuLayout;}
+    // lib.optionalAttrs (cfg.startupMode != null) {startup_mode = cfg.startupMode;};
+
+  settingsWithGeneral =
+    cfg.settings
+    // lib.optionalAttrs (generalExtra != {}) {
+      general = (cfg.settings.general or {}) // generalExtra;
+    };
+
   sections =
     lib.mapAttrsToList (name: kv: {
       header = name;
@@ -139,19 +155,10 @@
         })
         kv;
     })
-    cfg.settings
+    settingsWithGeneral
     ++ lib.optional (cfg.inputMap != {}) {
       header = "input_map";
       pairs = inputMapPairs;
-    }
-    ++ lib.optional (cfg.displaysMenu != null) {
-      header = "displays_menu";
-      pairs =
-        lib.mapAttrsToList (k: v: {
-          name = k;
-          value = v;
-        })
-        cfg.displaysMenu;
     }
     ++ lib.mapAttrsToList (name: d: {
       header = "display";
@@ -181,16 +188,40 @@
     )
     + "\n";
 
-  # Build every configured romlist. attract-mode's --build-romlist takes several
-  # emulators but writes them to ONE romlist, so this must loop rather than pass
-  # the whole list at once.
-  buildRomlists = pkgs.writeShellScriptBin "attract-build-romlists" ''
-    set -euo pipefail
-    for emu in ${lib.escapeShellArgs (lib.attrNames cfg.emulators)}; do
-      echo "Building romlist: $emu"
-      ${cfg.package}/bin/attract --build-romlist "$emu"
-    done
-  '';
+  # Rebuild every configured romlist.
+  #
+  # Two attract-mode behaviours shape this script. First, --build-romlist takes
+  # several emulator names but merges them into ONE romlist, so it must be
+  # called once per emulator rather than with the whole list. Second, it never
+  # overwrites: given an existing nes.txt it writes nes1.txt, then nes2.txt, and
+  # so on. Since a display references its romlist by bare name, re-running
+  # without deleting first accumulates junk and refreshes nothing — hence the rm.
+  #
+  # writeShellApplication (see ADR-0008) shellchecks at build time and seals
+  # PATH to runtimeInputs, so `attract` resolves without interpolating a store
+  # path into the script body.
+  buildRomlists = pkgs.writeShellApplication {
+    name = "attract-build-romlists";
+    runtimeInputs = [cfg.package];
+    text = ''
+      romlists="''${HOME}/.attract/romlists"
+      mkdir -p "$romlists"
+
+      for emu in ${lib.escapeShellArgs (lib.attrNames cfg.emulators)}; do
+        echo "==> $emu"
+
+        # Drop the current list and any numbered leftovers from earlier runs.
+        rm -f "$romlists/$emu.txt"
+        rm -f "$romlists/$emu"[0-9]*.txt
+
+        attract --build-romlist "$emu"
+      done
+
+      echo
+      echo "Romlists in $romlists:"
+      ls -1 "$romlists"
+    '';
+  };
 in {
   options.programs.attract-mode = {
     enable = lib.mkEnableOption "attract-mode, a graphical front-end for emulators";
@@ -251,14 +282,26 @@ in {
       '';
     };
 
-    displaysMenu = lib.mkOption {
-      type = lib.types.nullOr (lib.types.attrsOf lib.types.str);
+    menuLayout = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
       default = null;
       description = ''
-        Settings for the displays menu — the wheel listing configured displays.
-        Null omits the section entirely.
+        Layout used for the displays menu — the wheel listing configured
+        displays. Emitted as `menu_layout` in the `general` section, which is
+        where attract-mode reads it from; there is no `displays_menu` section.
+        Null leaves attract-mode's default.
       '';
-      example = lib.literalExpression ''{ layout = "mytheme-systems"; }'';
+      example = "mytheme-systems";
+    };
+
+    startupMode = lib.mkOption {
+      type = lib.types.nullOr (lib.types.enum ["default" "launch_last_game" "displays_menu"]);
+      default = null;
+      description = ''
+        What attract-mode shows on launch. `default` resumes the last
+        selection, `launch_last_game` relaunches it, and `displays_menu` opens
+        the displays menu. Null leaves attract-mode's default (`default`).
+      '';
     };
 
     emulators = lib.mkOption {
@@ -297,11 +340,35 @@ in {
         # from `settings` too would write a second section with the same header,
         # and attract-mode's parser would silently keep one and discard the
         # other.
-        assertion = !(lib.any (s: cfg.settings ? ${s}) ["input_map" "displays_menu" "display"]);
+        assertion = !(lib.any (s: cfg.settings ? ${s}) ["input_map" "display"]);
         message = ''
-          programs.attract-mode.settings: "input_map", "displays_menu", and
-          "display" are generated from the inputMap, displaysMenu, and displays
-          options. Set those instead of writing the sections by hand.
+          programs.attract-mode.settings: "input_map" and "display" are
+          generated from the inputMap and displays options. Set those instead of
+          writing the sections by hand.
+        '';
+      }
+      {
+        # attract-mode recognises a fixed set of top-level section names. An
+        # unrecognised one does NOT start a new section — the parser keeps
+        # appending to the previous one and misreads its keys, which surfaces as
+        # a confusing "Unrecognized ... command" error about the wrong section.
+        assertion = lib.all (s:
+          lib.elem s [
+            "display"
+            "sound"
+            "input_map"
+            "general"
+            "plugin"
+            "saver_config"
+            "layout_config"
+            "intro_config"
+            "menu_config"
+          ]) (lib.attrNames cfg.settings);
+        message = ''
+          programs.attract-mode.settings: unknown section name. attract-mode
+          accepts only display, sound, input_map, general, plugin, saver_config,
+          layout_config, intro_config and menu_config. Anything else is not
+          treated as a section header and will corrupt the section before it.
         '';
       }
     ];
