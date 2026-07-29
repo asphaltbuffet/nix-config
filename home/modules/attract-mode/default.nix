@@ -88,11 +88,6 @@
           them.
         '';
       };
-      artwork = lib.mkOption {
-        type = lib.types.attrsOf lib.types.str;
-        default = {};
-        description = "Artwork slot name to search path, absolute.";
-      };
       extraSettings = lib.mkOption {
         type = lib.types.attrsOf lib.types.str;
         default = {};
@@ -113,7 +108,10 @@
     )
     cfg.inputMap);
 
-  # A display's artwork lines and any extra settings, after its layout/romlist.
+  # A display's settings. Note attract-mode accepts only layout, romlist,
+  # in_cycle, in_menu and filter here (FeDisplayInfo::indexStrings) — artwork is
+  # NOT a display setting. It is resolved from the emulator
+  # (FeEmulatorInfo::get_artwork), so it lives on `emulators`, not here.
   displayPairs = d:
     [
       {
@@ -125,11 +123,6 @@
         value = d.romlist;
       }
     ]
-    ++ lib.mapAttrsToList (slot: path: {
-      name = "artwork";
-      value = "${slot}\t${path}";
-    })
-    d.artwork
     ++ lib.mapAttrsToList (k: v: {
       name = k;
       value = v;

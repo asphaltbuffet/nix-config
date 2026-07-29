@@ -150,6 +150,9 @@ in {
       general = {
         selection_max_step = "128";
         confirm_favourites = "yes";
+        # Boot to the system wheel rather than resuming whichever display was
+        # last open (attract-mode's default is "default" = show last selection).
+        startup_mode = "displays_menu";
       };
       sound = {
         sound_volume = "100";
@@ -177,11 +180,15 @@ in {
 
     displaysMenu.layout = "cosmo-systems";
 
+    # Artwork belongs on the EMULATOR, not the display: attract-mode resolves it
+    # via FeEmulatorInfo::get_artwork, so paths declared only on a display are
+    # never consulted and every lookup silently returns nothing.
     emulators = lib.mapAttrs (name: def:
       {
         inherit (def) executable args system;
         romPath = "/mnt/roms/${name}";
         romExt = def.romext;
+        artwork = artworkFor name;
       }
       // lib.optionalAttrs (def ? infoSource) {inherit (def) infoSource;})
     emulators;
@@ -195,7 +202,6 @@ in {
       lib.nameValuePair def.system {
         layout = layoutFor name;
         romlist = name;
-        artwork = artworkFor name;
       })
     emulators;
   };
