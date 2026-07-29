@@ -100,16 +100,25 @@
   # Expand a system's slot list into the absolute paths the module wants. The
   # module imposes no directory convention, so this cabinet's convention
   # (<root>/<system>/<slot>) lives here.
-  artworkFor = name:
-    lib.genAttrs media.systems.${name}.slots
-    (slot: "${media.root}/${name}/${slot}");
+  #
+  # Retrorama reads only the `snap` and `flyer` artwork slots. Box art is synced
+  # under `boxart`, so point `flyer` at that same directory rather than syncing
+  # 20GB a second time under another name. MAME has no box art, so it keeps
+  # `snap` alone and its flyer panel stays empty.
+  artworkFor = name: let
+    base =
+      lib.genAttrs media.systems.${name}.slots
+      (slot: "${media.root}/${name}/${slot}");
+  in
+    base
+    // lib.optionalAttrs (lib.elem "boxart" media.systems.${name}.slots) {
+      flyer = "${media.root}/${name}/boxart";
+    };
 
-  # Cosmo layout per display: MAME gets the arcade layout, consoles get the
-  # snes-n64 layout, which requests box/cart art rather than marquee/flyer.
-  layoutFor = name:
-    if name == "mame"
-    then "cosmo-arcade"
-    else "cosmo-snes-n64";
+  # Retrorama is one layout for every display; which system's assets it uses
+  # comes from a per-display `system` option (see displays below), not from
+  # separate layout directories the way cosmo worked.
+  retroramaLayout = "retrorama";
 in {
   imports = [
     ../cli.nix
@@ -198,10 +207,16 @@ in {
     # emulator's short name (e.g. "mame"): the module renders `display\t<key>`
     # verbatim, and that string is the join key art lookup depends on
     # (ADR-0012) — it must come out as "MAME", not "mame".
+    # `system` is a Retrorama layout option declared per_display, which
+    # attract-mode stores as a plain key inside the display section
+    # (FeDisplayInfo::process_setting routes unrecognised keys to
+    # m_layout_per_display_params, and FeDisplayInfo::save writes them back
+    # there) — so it belongs in extraSettings, not a layout_config section.
     displays = lib.mapAttrs' (name: def:
       lib.nameValuePair def.system {
-        layout = layoutFor name;
+        layout = retroramaLayout;
         romlist = name;
+        extraSettings.system = media.systems.${name}.retroramaSystem;
       })
     emulators;
   };
