@@ -150,9 +150,6 @@ in {
       general = {
         selection_max_step = "128";
         confirm_favourites = "yes";
-        # Boot to the system wheel rather than resuming whichever display was
-        # last open (attract-mode's default is "default" = show last selection).
-        startup_mode = "displays_menu";
       };
       sound = {
         sound_volume = "100";
@@ -178,7 +175,10 @@ in {
       next_letter = "LShift+Down";
     };
 
-    displaysMenu.layout = "cosmo-systems";
+    # Boot to the system wheel rather than resuming whichever display was last
+    # open, and render that wheel with cosmo's systems layout.
+    startupMode = "displays_menu";
+    menuLayout = "cosmo-systems";
 
     # Artwork belongs on the EMULATOR, not the display: attract-mode resolves it
     # via FeEmulatorInfo::get_artwork, so paths declared only on a display are
