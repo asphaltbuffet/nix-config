@@ -207,16 +207,18 @@ in {
     # emulator's short name (e.g. "mame"): the module renders `display\t<key>`
     # verbatim, and that string is the join key art lookup depends on
     # (ADR-0012) — it must come out as "MAME", not "mame".
-    # `system` is a Retrorama layout option declared per_display, which
-    # attract-mode stores as a plain key inside the display section
-    # (FeDisplayInfo::process_setting routes unrecognised keys to
-    # m_layout_per_display_params, and FeDisplayInfo::save writes them back
-    # there) — so it belongs in extraSettings, not a layout_config section.
+    # Retrorama's `system` is a layout option declared per_display. Such options
+    # live inside the display section, but NOT under their own name — a display
+    # accepts only layout, romlist, in_cycle, in_menu, filter and global_filter.
+    # They go through the literal key `param`, whose value carries the option
+    # name and its value space-separated (FeScriptConfigurable::process_setting,
+    # indexString = "param"). Writing `system Arcade` directly earns
+    # "Unrecognized display setting" on every config load.
     displays = lib.mapAttrs' (name: def:
       lib.nameValuePair def.system {
         layout = retroramaLayout;
         romlist = name;
-        extraSettings.system = media.systems.${name}.retroramaSystem;
+        extraSettings.param = "system ${media.systems.${name}.retroramaSystem}";
       })
     emulators;
   };
