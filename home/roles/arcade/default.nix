@@ -31,12 +31,20 @@
   # `core` is the .so inside retroarchWithCores; the rompath is /mnt/roms/<name>
   # (the on-drive folder). RetroArch takes a full ROM path, hence
   # `[romfilename]`.
+  #
+  # `infoSource = "thegamesdb.net"` is what makes `attract --scrape-art <emu>`
+  # do anything: the scraper is dispatched on info_source, and the empty default
+  # hits `case None: break;` — no scraper, no error, no output. Scanning a plain
+  # directory of ROMs yields only Name/Title/Emulator, so without this the
+  # Players, Year, Manufacturer and Overview fields stay blank and any layout
+  # panel bound to them renders empty.
   mkRetroArchEmulator = {
     core,
     romext,
     system,
   }: {
     inherit romext system;
+    infoSource = "thegamesdb.net";
     executable = "${retroarchWithCores}/bin/retroarch";
     args = ''-L ${retroarchWithCores}/lib/retroarch/cores/${core} "[romfilename]"'';
   };
