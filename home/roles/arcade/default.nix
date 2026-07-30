@@ -184,10 +184,17 @@ in {
       next_letter = "LShift+Down";
     };
 
-    # Boot to the system wheel rather than resuming whichever display was last
-    # open, and render that wheel with cosmo's systems layout.
+    # Boot to the system selector rather than resuming whichever display was
+    # last open.
+    #
+    # The displays menu is rendered by its own layout, and Retrorama ships none —
+    # its layout.nut assumes a game list and has no menu handling. `Cools` is
+    # bundled with attract-mode, declares a 320x240 layout size (so attract-mode
+    # scales it to fit rather than distorting, unlike cosmo's unset dimensions),
+    # and reads the `wheel` and `snap` slots — which is what ~/.attract/menu-art
+    # holds for the six systems.
     startupMode = "displays_menu";
-    menuLayout = "cosmo-systems";
+    menuLayout = "Cools";
 
     # Artwork belongs on the EMULATOR, not the display: attract-mode resolves it
     # via FeEmulatorInfo::get_artwork, so paths declared only on a display are
