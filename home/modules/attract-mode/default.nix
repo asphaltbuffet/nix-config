@@ -89,9 +89,19 @@
         '';
       };
       extraSettings = lib.mkOption {
-        type = lib.types.attrsOf lib.types.str;
+        type = lib.types.attrsOf (lib.types.either lib.types.str (lib.types.listOf lib.types.str));
         default = {};
-        description = "Additional key/value lines emitted in this display's section.";
+        description = ''
+          Additional key/value lines emitted in this display's section. A value
+          may be a list, in which case the key is repeated once per element —
+          needed for keys attract-mode allows more than once, such as `param`,
+          which carries one layout option per line.
+        '';
+        example = lib.literalExpression ''
+          {
+            param = [ "system Arcade" "gameListElements 26" ];
+          }
+        '';
       };
     };
   };
@@ -123,11 +133,14 @@
         value = d.romlist;
       }
     ]
-    ++ lib.mapAttrsToList (k: v: {
-      name = k;
-      value = v;
-    })
-    d.extraSettings;
+    ++ lib.flatten (lib.mapAttrsToList (
+        k: v:
+          map (one: {
+            name = k;
+            value = one;
+          }) (lib.toList v)
+      )
+      d.extraSettings);
 
   # `menu_layout` and `startup_mode` are settings inside `general`, not sections
   # of their own — attract-mode's only top-level sections are display, sound,
