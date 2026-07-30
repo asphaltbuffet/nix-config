@@ -225,7 +225,13 @@ in {
       lib.nameValuePair def.system {
         layout = retroramaLayout;
         romlist = name;
-        extraSettings.param = "system ${media.systems.${name}.retroramaSystem}";
+        extraSettings.param = [
+          "system ${media.systems.${name}.retroramaSystem}"
+          # The layout draws rows from y=390 at 23px each, and the panel runs to
+          # roughly y=1000; the default 20 rows stop at 850 and leave a visible
+          # gap. 26 rows reach 988.
+          "gameListElements 26"
+        ];
       })
     emulators;
   };
