@@ -397,6 +397,32 @@ in {
         '';
       }
       {
+        # The placeholder is substituted only by the renderAttractCfg
+        # activation script, which runs solely under manageConfig = true. In
+        # seed mode the template is copied verbatim, so the literal
+        # placeholder would land in attract.cfg and every scrape would fail
+        # with a 403 — and seed mode never rewrites the file, so it would stay
+        # broken.
+        assertion = !(cfg.manageConfig == "seed" && cfg.thegamesdbKeyFile != null);
+        message = ''
+          programs.attract-mode: thegamesdbKeyFile requires manageConfig = true.
+          Under manageConfig = "seed" the config is written once and never
+          rewritten, so the key placeholder would never be substituted.
+        '';
+      }
+      {
+        # keyTemplateParts assumes the placeholder occurs exactly once, emitted
+        # by generalExtra. A hand-written occurrence in `settings` would split
+        # the template into three parts and leave a literal placeholder in the
+        # rendered file.
+        assertion = !(lib.any (kv: lib.any (v: lib.hasInfix keyPlaceholder v) (lib.attrValues kv)) (lib.attrValues cfg.settings));
+        message = ''
+          programs.attract-mode.settings: the string ${keyPlaceholder} is
+          reserved for the thegamesdbKeyFile substitution and must not appear
+          in a setting value.
+        '';
+      }
+      {
         # These sections are generated from their own options. Emitting them
         # from `settings` too would write a second section with the same header,
         # and attract-mode's parser would silently keep one and discard the
@@ -489,16 +515,31 @@ in {
               # Written to a temp file then moved: `run` skips execution under
               # --dry-run but a `>` redirection is applied by the shell
               # regardless, which would truncate the live config.
-              # 0600 deliberately, unlike the 0444 a store symlink would give
-              # or the u+rw of seed mode: this copy carries the API key.
-              tmp=$(mktemp "${config.home.homeDirectory}/.attract/.attract.cfg.XXXXXX")
-              run --silence ${pkgs.coreutils}/bin/chmod 0600 "$tmp"
-              {
-                cat ${pkgs.writeText "attract.cfg.head" keyTemplateHead}
-                tr -d '\n' < "$keyFile"
-                cat ${pkgs.writeText "attract.cfg.tail" keyTemplateTail}
-              } > "$tmp"
-              run ${pkgs.coreutils}/bin/mv -f "$tmp" "$attractCfg"
+              #
+              # The whole block is therefore skipped under --dry-run rather
+              # than relying on `run`: mktemp and the redirection are not
+              # commands `run` can wrap, so a dry run would otherwise create a
+              # temp file holding the real key and never move or remove it.
+              if [ -n "$DRY_RUN_CMD" ]; then
+                echo "would write $attractCfg with the thegamesdb key substituted"
+              else
+                # 0600 deliberately, unlike the 0444 a store symlink would give
+                # or the u+rw of seed mode: this copy carries the API key.
+                # mktemp already creates 0600; set it explicitly so the
+                # guarantee does not rest on the ambient umask.
+                tmp=$(mktemp "${config.home.homeDirectory}/.attract/.attract.cfg.XXXXXX")
+                # Activation runs under `set -eu`, so a failure mid-write would
+                # otherwise abort with the key left behind in $tmp.
+                trap 'rm -f "$tmp"' EXIT
+                ${pkgs.coreutils}/bin/chmod 0600 "$tmp"
+                {
+                  cat ${pkgs.writeText "attract.cfg.head" keyTemplateHead}
+                  tr -d '\n' < "$keyFile"
+                  cat ${pkgs.writeText "attract.cfg.tail" keyTemplateTail}
+                } > "$tmp"
+                ${pkgs.coreutils}/bin/mv -f "$tmp" "$attractCfg"
+                trap - EXIT
+              fi
             else
               echo "attract-mode: key file $keyFile not readable; leaving attract.cfg untouched" >&2
             fi
