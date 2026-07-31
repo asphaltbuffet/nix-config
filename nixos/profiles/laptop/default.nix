@@ -38,7 +38,10 @@
     #### VPN ####
     mullvad-vpn = {
       enable = true;
-      package = pkgs.mullvad-vpn; # includes GUI + CLI (default is CLI-only pkgs.mullvad)
+      gui = {
+        enable = true;
+        package = pkgs.mullvad-vpn; # GUI-only; daemon comes from the default package (pkgs.mullvad)
+      };
       enableEarlyBootBlocking = true; # block traffic before network stack initializes, preventing boot-time leaks
     };
 

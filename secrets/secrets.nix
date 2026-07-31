@@ -12,6 +12,10 @@ let
 in {
   # ── System secrets ──────────────────────────────────────────────────────
   "hcPingKey.age".publicKeys = allHosts;
+
+  # thegamesdb.net scraper API key. Only the cabinet needs it; encrypted to
+  # `grue` too so it can be edited without the cabinet's host key.
+  "arcade/thegamesdbKey.age".publicKeys = [grue arcade];
   "grafanaKey.age".publicKeys = allHosts;
 
   # ── User secrets: grue ──────────────────────────────────────────────────

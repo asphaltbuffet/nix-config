@@ -148,9 +148,24 @@
   # menu_config (FeSettings::otherSettingStrings). Emitting an unknown header
   # does not start a section; the parser stays in whatever section preceded it
   # and misreads the keys that follow.
+  # The key itself must never be interpolated here: this text becomes a Nix
+  # store file, which is world-readable. A placeholder is rendered instead and
+  # replaced at activation from a file only readable on the target machine.
+  keyPlaceholder = "@THEGAMESDB_KEY@";
+
+  # attractCfgText split on the placeholder, so activation can assemble the
+  # real file by concatenating head + key + tail. Splitting here rather than
+  # substituting there keeps the key out of any command line and away from
+  # sed's replacement syntax. Guaranteed to yield exactly two parts: the
+  # placeholder is emitted once, only when thegamesdbKeyFile is set.
+  keyTemplateParts = lib.splitString keyPlaceholder attractCfgText;
+  keyTemplateHead = lib.head keyTemplateParts;
+  keyTemplateTail = lib.concatStringsSep keyPlaceholder (lib.tail keyTemplateParts);
+
   generalExtra =
     lib.optionalAttrs (cfg.menuLayout != null) {menu_layout = cfg.menuLayout;}
-    // lib.optionalAttrs (cfg.startupMode != null) {startup_mode = cfg.startupMode;};
+    // lib.optionalAttrs (cfg.startupMode != null) {startup_mode = cfg.startupMode;}
+    // lib.optionalAttrs (cfg.thegamesdbKeyFile != null) {thegamesdb_key = keyPlaceholder;};
 
   settingsWithGeneral =
     cfg.settings
@@ -317,6 +332,39 @@ in {
       '';
     };
 
+    thegamesdbKeyFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = null;
+      example = lib.literalExpression ''config.age.secrets."arcade/thegamesdbKey".path'';
+      description = ''
+        Path to a file containing the thegamesdb.net API key, read at
+        activation time and substituted into `attract.cfg` as
+        `thegamesdb_key`. Intended for an agenix secret path under
+        `/run/agenix`, so the key stays encrypted in the repository.
+
+        Required for any emulator using `infoSource = "thegamesdb.net"`: the
+        key attract-mode ships with is a shared project key that upstream has
+        revoked, so scraping without your own fails with `403 Invalid API key
+        was provided`, which surfaces as `Error parsing json, text:` with an
+        empty body during `--build-romlist`. Register at
+        <https://thegamesdb.net/>.
+
+        Setting this forces `attract.cfg` to be written at activation rather
+        than symlinked from the Nix store: the secret is only readable on the
+        target machine, and interpolating it at evaluation time would publish
+        it to the world-readable store. The rendered template still comes from
+        this module, so the file remains fully declarative — see ADR-0013.
+
+        attract-mode offers no other injection point: it reads no relevant
+        environment variables (`getenv` is used only for `HOME`), performs no
+        variable expansion in config values, and its config parser is a flat
+        line reader with no `include` directive.
+
+        Emulators using `infoSource = "listxml"` (MAME) are unaffected; that
+        scraper shells out to the local emulator rather than the network.
+      '';
+    };
+
     emulators = lib.mkOption {
       type = lib.types.attrsOf emulatorType;
       default = {};
@@ -390,7 +438,11 @@ in {
       packages = [cfg.package buildRomlists];
 
       file =
-        lib.optionalAttrs (cfg.manageConfig == true) {
+        # A secret in the config forces activation-time writing: home.file
+        # content becomes a world-readable store path, so the key would be
+        # published. renderAttractCfg below writes the same rendered template
+        # with the placeholder substituted.
+        lib.optionalAttrs (cfg.manageConfig == true && cfg.thegamesdbKeyFile == null) {
           ".attract/attract.cfg".text = attractCfgText;
         }
         // lib.mapAttrs' (name: def:
@@ -399,18 +451,59 @@ in {
           })
         cfg.emulators;
 
-      # Seed mode: write attract.cfg once and leave it writable, so attract-mode's
-      # own configuration UI can persist changes to it.
-      activation = lib.mkIf (cfg.manageConfig == "seed") {
-        seedAttractCfg = lib.hm.dag.entryAfter ["writeBoundary"] ''
-          attractCfg="${config.home.homeDirectory}/.attract/attract.cfg"
-          if [ ! -e "$attractCfg" ]; then
-            run mkdir -p "${config.home.homeDirectory}/.attract"
-            run cp ${pkgs.writeText "attract.cfg.seed" attractCfgText} "$attractCfg"
-            run chmod u+rw "$attractCfg"
-          fi
-        '';
-      };
+      activation =
+        # Seed mode: write attract.cfg once and leave it writable, so
+        # attract-mode's own configuration UI can persist changes to it.
+        lib.optionalAttrs (cfg.manageConfig == "seed") {
+          seedAttractCfg = lib.hm.dag.entryAfter ["writeBoundary"] ''
+            attractCfg="${config.home.homeDirectory}/.attract/attract.cfg"
+            if [ ! -e "$attractCfg" ]; then
+              run mkdir -p "${config.home.homeDirectory}/.attract"
+              run cp ${pkgs.writeText "attract.cfg.seed" attractCfgText} "$attractCfg"
+              run chmod u+rw "$attractCfg"
+            fi
+          '';
+        }
+        # Managed mode with a secret: rewrite attract.cfg on every activation,
+        # substituting the key from a file readable only on this machine. The
+        # file is still fully declarative — the template comes from this
+        # module and any manual edit is overwritten on the next activation,
+        # matching manageConfig = true semantics (ADR-0013).
+        #
+        # Anchored after checkLinkTargets rather than writeBoundary: sibling
+        # scripts sharing an anchor have unspecified relative order, and this
+        # must run after home.file links are in place.
+        // lib.optionalAttrs (cfg.manageConfig == true && cfg.thegamesdbKeyFile != null) {
+          renderAttractCfg = lib.hm.dag.entryAfter ["checkLinkTargets" "writeBoundary"] ''
+            attractCfg="${config.home.homeDirectory}/.attract/attract.cfg"
+            keyFile="${toString cfg.thegamesdbKeyFile}"
+            if [ -r "$keyFile" ]; then
+              run mkdir -p "${config.home.homeDirectory}/.attract"
+
+              # Assemble by concatenation rather than substitution. The two
+              # halves are split on the placeholder at eval time, so the key
+              # is never a command argument (it would otherwise be visible in
+              # /proc/*/cmdline) and never passed through sed, whose
+              # replacement text would mangle a key containing & | or \.
+              #
+              # Written to a temp file then moved: `run` skips execution under
+              # --dry-run but a `>` redirection is applied by the shell
+              # regardless, which would truncate the live config.
+              # 0600 deliberately, unlike the 0444 a store symlink would give
+              # or the u+rw of seed mode: this copy carries the API key.
+              tmp=$(mktemp "${config.home.homeDirectory}/.attract/.attract.cfg.XXXXXX")
+              run --silence ${pkgs.coreutils}/bin/chmod 0600 "$tmp"
+              {
+                cat ${pkgs.writeText "attract.cfg.head" keyTemplateHead}
+                tr -d '\n' < "$keyFile"
+                cat ${pkgs.writeText "attract.cfg.tail" keyTemplateTail}
+              } > "$tmp"
+              run ${pkgs.coreutils}/bin/mv -f "$tmp" "$attractCfg"
+            else
+              echo "attract-mode: key file $keyFile not readable; leaving attract.cfg untouched" >&2
+            fi
+          '';
+        };
     };
   };
 }
