@@ -23,6 +23,16 @@
     shell = pkgs.zsh;
   };
 
+  # thegamesdb.net scraper key. Owned by `arcade` because the home-manager
+  # activation script for that user reads it to render attract.cfg; root-owned
+  # 0400 (the default in common/agenix.nix) would be unreadable there.
+  age.secrets."arcade/thegamesdbKey" = {
+    file = ../../../secrets/arcade/thegamesdbKey.age;
+    owner = "arcade";
+    group = "arcade";
+    mode = "0400";
+  };
+
   home-manager.users.arcade = import ../../../home/users/arcade.nix;
 
   # Before changing this value read the documentation for this option

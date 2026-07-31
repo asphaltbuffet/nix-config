@@ -7,6 +7,7 @@
 # role describes how to launch them, never the ROM files themselves.
 {
   config,
+  osConfig,
   pkgs,
   lib,
   ...
@@ -203,6 +204,16 @@ in {
     # holds for the six systems.
     startupMode = "displays_menu";
     menuLayout = "Cools";
+
+    # Scraper API key, read at activation from /run/agenix so it stays
+    # encrypted in the repo. Without it the console emulators' thegamesdb.net
+    # scraper fails with 403 (attract-mode's built-in key was revoked
+    # upstream), surfacing as "Error parsing json, text:" on --build-romlist.
+    #
+    # No null fallback: this role is only ever evaluated as part of the
+    # cabinet's NixOS config, and silently omitting the key would restore
+    # exactly the broken-scraper behaviour this fixes, with no diagnostic.
+    thegamesdbKeyFile = osConfig.age.secrets."arcade/thegamesdbKey".path;
 
     # Artwork belongs on the EMULATOR, not the display: attract-mode resolves it
     # via FeEmulatorInfo::get_artwork, so paths declared only on a display are
