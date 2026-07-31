@@ -69,24 +69,20 @@ At this point you have a factual answer to "how much of my set actually works", 
 
 ## Step 3 — rebuild into a clean set
 
-The rebuild tool of choice on Linux is **RomVault** (cross-platform, scriptable) or **ROMBa**. Neither is in nixpkgs; run RomVault via `nix-shell -p mono` or fetch a static ROMBa build. If you prefer to stay entirely within nixpkgs, MAME's own `-romident` plus a shell loop can do a reduced version of the job.
+**Use igir.** It is in nixpkgs (this repo's `nix develop` provides it), and unlike a copy loop it reorganizes split/merged/non-merged topology — which is most of what a re-cut actually is. This supersedes the RomVault/ROMBa suggestion and the `cp -n` loop that previously lived here. See `docs/adr/0016-igir-curates-roms-runbook-on-nas.md`.
 
-The minimal, dependency-free rebuild — copy forward only what verified good:
+The runnable invocation lives with the data, not in this repo:
 
-```bash
-mkdir -p "$WORK/roms"
-while read -r name; do
-  # archives
-  [ -f "$SRC/$name.7z" ]  && cp -n "$SRC/$name.7z"  "$WORK/roms/"
-  [ -f "$SRC/$name.zip" ] && cp -n "$SRC/$name.zip" "$WORK/roms/"
-  # CHD directories
-  [ -d "$SRC/$name" ]     && cp -rn "$SRC/$name"    "$WORK/roms/"
-done < "$WORK/good.txt"
-```
+    /nas/public/arcade-curated/README.md
 
-This yields a set containing exactly the games current MAME can run. It is smaller and duller than a full set, but nothing in it fails at the cabinet.
+That runbook is the authoritative copy. Two points from it matter enough to repeat here:
 
-Note the split-set caveat: a clone verifies good only when its parent is present, so `good.txt` already accounts for parent availability — copying by name as above preserves both.
+- **`--input-checksum-quick` is effectively mandatory** for a MAME-sized 7z set. igir's default computes SHA1, forcing decompression of every ROM member; on this 371 GB / 8,869-archive set that ran 16+ hours without finishing. Reading the CRC32 that 7z already stores in each archive header — the field MAME DATs match on — completes the same audit in ~20 minutes.
+- **The DAT must come from the MAME the cabinet actually runs** (Step 1 above). Sets are version-locked, so a mismatched DAT invalidates the entire rebuild.
+
+A rebuild produces a set containing exactly the games current MAME can run. It is smaller and duller than a full set, but nothing in it fails at the cabinet. For reference, the 2026-07-30 run cut 9,158 files to 3,205, carrying 3,738 verified games out of the 42,650 machines MAME 0.287 knows.
+
+Note the split-set caveat: a clone verifies good only when its parent is present. `--merge-roms split` handles this correctly; a name-based copy loop preserved it only by accident.
 
 ## Step 4 — verify the rebuilt set
 

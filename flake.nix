@@ -93,6 +93,16 @@
           mullvad-vpn
           ;
       })
+      # nixpkgs builds attract-mode without libcurl, so its built-in scrapers
+      # fail at runtime with "frontend compiled without libcurl support".
+      # attract's Makefile auto-detects libcurl via `pkg-config --exists`
+      # (Makefile:299) and only then defines -DUSE_LIBCURL, so adding curl to
+      # buildInputs is sufficient — no makeFlag needed.
+      (_final: prev: {
+        attract-mode = prev.attract-mode.overrideAttrs (old: {
+          buildInputs = old.buildInputs ++ [prev.curl];
+        });
+      })
     ];
 
     mkPkgs = system: extraOverlays:

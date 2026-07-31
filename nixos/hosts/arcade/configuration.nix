@@ -19,7 +19,7 @@
     uid = 2005;
     group = "arcade";
     description = "arcade";
-    extraGroups = ["audio" "video"];
+    extraGroups = ["audio" "video" "games"];
     shell = pkgs.zsh;
   };
 
