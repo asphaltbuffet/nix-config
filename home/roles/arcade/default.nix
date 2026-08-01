@@ -56,12 +56,16 @@
   emulators = {
     nes = mkRetroArchEmulator {
       core = "mesen_libretro.so";
-      romext = ".nes;.zip";
+      # Mesen also accepts .fds, .unf and .unif (verified from the core's own
+      # retro_get_system_info). .fds additionally needs a Famicom Disk System
+      # BIOS on the cabinet, which nothing here provides — scanning it only
+      # lists the games.
+      romext = ".nes;.fds;.unf;.unif;.zip";
       system = "Nintendo Entertainment System";
     };
     snes = mkRetroArchEmulator {
       core = "snes9x_libretro.so";
-      romext = ".sfc;.smc;.zip";
+      romext = ".sfc;.smc;.swc;.fig;.bs;.zip";
       system = "Super Nintendo Entertainment System";
     };
     gameboy = mkRetroArchEmulator {
@@ -71,7 +75,14 @@
     };
     genesis = mkRetroArchEmulator {
       core = "genesis_plus_gx_libretro.so";
-      romext = ".md;.gen;.bin;.zip";
+      # Deliberately narrower than the core. Genesis Plus GX also accepts
+      # .sms/.gg/.sg (Master System, Game Gear, SG-1000) and .cue/.iso/.chd
+      # (Sega CD) — but this is the "Sega Genesis" system: one display, one
+      # romlist, one Retrorama asset folder. Scanning those would fold four
+      # consoles into it, and Sega CD needs a BIOS nothing here configures.
+      # Adding them is a lineup change (emulators + media.nix + romlist),
+      # not an extension change.
+      romext = ".md;.gen;.smd;.bin;.zip";
       system = "Sega Genesis";
     };
     atari2600 = mkRetroArchEmulator {
