@@ -39,6 +39,7 @@ This document uses **progressive disclosure** to optimize LLM working efficiency
 |---|---|---|
 | Adding/editing secrets, `.age` files, agenix, SSH module, git signing | `docs/references/secrets-sop.md` | agenix workflow, rekeying, SSH matchBlocks, host prep |
 | Editing GitHub Actions workflows, CI permissions errors, matrix outputs, force-push on CI | `docs/references/ci-github-actions-sop.md` | permissions ceiling, build-hosts.yaml callers, autodeploy |
+| Deploy "succeeded" but nothing changed, empty agenix secret, scraper says system not recognized | `docs/references/deploy-stale-cache-sop.md` | flake registry TTL needs `--refresh`; 0-byte secrets decrypt silently; scraper cache poisons permanently |
 | MAME games fail to boot, "ROM needs redump", auditing or re-cutting the arcade ROM set | `docs/references/mame-rom-recut.md` | version-locked ROM sets, `-verifyroms` audit, rebuild + swap |
 | igir, 1G1R, ROM curation, DAT auditing, No-Intro/Redump/TOSEC, `arcade-curated` | `docs/adr/0016-igir-curates-roms-runbook-on-nas.md` | igir supersedes the copy loop; runbook lives on the NAS; igir cannot write CHD; MAME needs `--input-checksum-quick` |
 
@@ -181,6 +182,7 @@ Use these slash commands for guided workflows:
 |---|---|---|
 | Secrets, agenix, `.age` files, SSH module, git signing, host prep | `docs/references/secrets-sop.md` | agenix workflow, rekeying, SSH matchBlocks |
 | GitHub Actions permissions errors, CI matrix outputs, `build-hosts.yaml` callers, autodeploy, `force-with-lease` on CI | `docs/references/ci-github-actions-sop.md` | permissions ceiling, shared workflow gate pattern |
+| Deploy no-op, generation older than the commit, 0-byte `/run/agenix` secret, thegamesdb "system identifier(s) not recognized" | `docs/references/deploy-stale-cache-sop.md` | `--refresh` on `github:` flakes; check a second secret to prove decryption works; fix credential before clearing caches |
 | MAME ROM audit/re-cut, arcade games failing to boot, version-locked ROM sets | `docs/references/mame-rom-recut.md` | `-verifyroms` audit, rebuild + swap, ADR-0011 boundary |
 | igir, 1G1R, ROM curation, DAT auditing, No-Intro/Redump/TOSEC, `arcade-curated` | `docs/adr/0016-igir-curates-roms-runbook-on-nas.md` | runbook on the NAS not in repo; no CHD writing; `--input-checksum-quick` for MAME |
 

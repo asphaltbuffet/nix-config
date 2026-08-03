@@ -148,6 +148,7 @@ in {
     ../cli.nix
     ../../modules/attract-mode
     ../../modules/mame
+    ../../modules/retroarch
   ];
 
   home = {
@@ -179,7 +180,66 @@ in {
     # Standalone MAME for arcade. No extraArgs yet — the wrapper exists so that
     # the -ctrlr flag and the file it names can be derived from one value when
     # control config lands (ADR-0017); a mismatch there is fatal, not degraded.
-    mame.enable = true;
+    mame = {
+      enable = true;
+
+      # Hide the USB console pads from MAME. They are for the RetroArch
+      # systems; MAME should only ever see the panel.
+      #
+      # This is not a preference — it protects the mapping below. SDL sorts
+      # recognised game controllers ahead of plain joysticks, and the Retrolink
+      # has an SDL mapping while the Xin-Mo does not. Verified on the cabinet:
+      # hot-plugging the pads appends them as devices 3 and 4, but rebooting
+      # with them attached makes them 1 and 2 and pushes the panel to 3 and 4 —
+      # at which point every JOYCODE_1/2 binding here silently drives the pads
+      # and the panel goes dead, with no error.
+      ignoreDevices = ["0x0079/0x0011"]; # Retrolink SNES Controller
+
+      # Xin-Mo dual-arcade encoder: two devices, so JOYCODE_1_* and JOYCODE_2_*
+      # address the two players. Button order follows the kernel's BTN_* order,
+      # which on this panel runs left-to-right along the top row then the
+      # bottom: BTN_TRIGGER..BTN_TOP are 1-4, BTN_TOP2..BTN_BASE2 are 5-8, then
+      # Select (9) and Start (10).
+      #
+      # The joystick reports ABS_X/ABS_Y with range +/-1 — digital, not analog —
+      # so it needs the _SWITCH axis codes rather than analog ones.
+      #
+      # Only the `default` scope is populated. MAME's own per-driver defaults
+      # are sensible for most of the set, and scopes accumulate, so per-family
+      # rules can be added to bySourceFile as real play turns up games that
+      # want something different.
+      controls.default.ports = let
+        # Columns 1-3 of both rows are the conventional six-button fighting
+        # layout. Column 4 of each row (buttons 4 and 8) is deliberately left
+        # out of the game ports and used for UI below.
+        player = n: {
+          "P${n}_JOYSTICK_UP" = "JOYCODE_${n}_YAXIS_UP_SWITCH";
+          "P${n}_JOYSTICK_DOWN" = "JOYCODE_${n}_YAXIS_DOWN_SWITCH";
+          "P${n}_JOYSTICK_LEFT" = "JOYCODE_${n}_XAXIS_LEFT_SWITCH";
+          "P${n}_JOYSTICK_RIGHT" = "JOYCODE_${n}_XAXIS_RIGHT_SWITCH";
+          "P${n}_BUTTON1" = "JOYCODE_${n}_BUTTON1";
+          "P${n}_BUTTON2" = "JOYCODE_${n}_BUTTON2";
+          "P${n}_BUTTON3" = "JOYCODE_${n}_BUTTON3";
+          "P${n}_BUTTON4" = "JOYCODE_${n}_BUTTON5";
+          "P${n}_BUTTON5" = "JOYCODE_${n}_BUTTON6";
+          "P${n}_BUTTON6" = "JOYCODE_${n}_BUTTON7";
+        };
+      in
+        player "1"
+        // player "2"
+        // {
+          START1 = "JOYCODE_1_BUTTON10";
+          START2 = "JOYCODE_2_BUTTON10";
+          COIN1 = "JOYCODE_1_BUTTON9";
+          COIN2 = "JOYCODE_2_BUTTON9";
+
+          # The cabinet has no keyboard, so MAME's keyboard-only UI defaults
+          # (Tab, Esc) are unreachable. The reserved right-hand column of P1's
+          # panel drives the menu instead.
+          UI_MENU = "JOYCODE_1_BUTTON4";
+          UI_CANCEL = "JOYCODE_1_BUTTON8";
+        };
+    };
 
     # The cabinet's console lineup, derived from `emulators` so it is stated
     # once. Which consoles exist is the role's call; how each core is packaged
