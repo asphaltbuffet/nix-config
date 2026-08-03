@@ -46,9 +46,33 @@ _Avoid_: emulation role, mame role
 A libretro emulator plugin loaded by RetroArch to emulate one console. The arcade cabinet's five consoles are cores in a single `retroarch` build; arcade emulation is standalone MAME, not a core.
 _Avoid_: emulator (reserve for the standalone kind, e.g. MAME), plugin
 
+**Core name**:
+A core's self-reported display name, returned as `library_name` from `retro_get_system_info` — `Mesen`, `Snes9x`, `mGBA`, `Genesis Plus GX`, `Stella`. Distinct from the core's library filename (`mesen_libretro.so`) and from the arcade role's short key (`nes`), and derivable from neither: the casing is irregular and one contains spaces. RetroArch names a core's remap directory and file by this string, so it is what a [[Core remap]] path is built from. Read from the `.so`, never guessed.
+_Avoid_: display name (overloaded), library name (the C field, not the concept), core (the plugin itself)
+
+**Core remap**:
+A RetroArch `.rmp` file at `remaps/<Core name>/<Core name>.rmp` that reassigns libretro's abstract pad buttons for one core — the per-system half of [[Control configuration]]. Resolution is first-match-wins across game, content-dir, then core scope, so a core remap always applies but is *replaced* wholesale by a narrower file rather than merged with one. Requires `remap_save_on_exit` and `input_remap_sort_by_controller_enable` both off, or RetroArch overwrites the file or reads a different path.
+_Avoid_: remap file (ambiguous across the three scopes), controller config (that is MAME's term)
+
 **Emulator definition**:
 One entry in `programs.attract-mode.emulators`, describing how attract-mode launches a system: an executable, its arguments, a ROM path, and the file extensions to scan. Holds both kinds — RetroArch cores (built by the arcade role's `mkRetroArchEmulator` helper) and standalone MAME — because attract-mode has no core/emulator distinction; it only wants a command to run. Renders to one `~/.attract/emulators/<name>.cfg`. Contains *only* fields attract-mode itself understands; media-sync metadata is keyed separately by the same names (see [[Media mapping]]).
 _Avoid_: emulator (the attrset key is `emulators`, but an entry is a *definition* — the emulator itself is the program), core (only some entries are cores)
+
+**Control configuration**:
+The declarative mapping from cabinet inputs to in-emulator actions, authored in Nix and rendered to each emulator's own format. Two halves with deliberately different granularity: consoles are configured per system as a [[Core remap]], because a pad layout is fixed across a console's library; MAME is configured per [[Control scope]], because arcade games range from one button to six plus a trackball. Covers only the virtual-pad-to-emulator and emulator-to-game layers — how the cabinet's encoder board presents itself as a gamepad is out of scope and handled once at the device level.
+_Avoid_: keybinds, input config (attract-mode's own `inputMap` is a separate thing), controller mapping
+
+**Control scope**:
+The breadth at which one MAME control mapping applies. MAME's controller-config loader matches a `<system name="...">` block at five levels — `default`, source file (`cps2.cpp`, every game on that driver), parent set (`sf2`, that set and all its clones), BIOS root, and a single set — and resolves precedence itself at runtime. The Nix interface names the useful ones explicitly (`bySourceFile`, `byParent`, `bySet`) so intent is readable, but the sections describe MAME's matching rather than implementing it. Source-file scope is the workhorse: most cabinet control config is one rule per driver family, with per-set entries as exceptions.
+_Avoid_: system (collides with the attract-mode display label, the Retrorama layout parameter, and MAME's own XML attribute), game (wrong for source-file and parent scope), level
+
+**Controller config file**:
+The single MAME XML file naming every [[Control scope]], selected with `-ctrlr` and found on `ctrlrpath`. MAME reads it and never writes it — unlike `cfg/<set>.cfg`, which MAME rewrites on every exit and which therefore stays unmanaged. Loaded before both `default.cfg` and the per-set file, so MAME's own saved settings still win; managing it takes nothing away from the cabinet. A `-ctrlr` naming a file that cannot be opened is a fatal error, not a degradation, so the flag and the file are derived from one Nix value.
+_Avoid_: ctrlr file (fine in prose, but name the concept), cfg file (that is the one MAME owns), remap (RetroArch's term)
+
+**Port mapping**:
+The value of one [[Control scope]]: an attrset of MAME port type (`P1_BUTTON3`, `START1`, `UI_MENU`) to an input sequence string (`KEYCODE_C`, `JOYCODE_1_BUTTON2`, or an `OR`-joined combination). Renders to `<port type="..."><newseq type="standard">...</newseq></port>`. Scopes accumulate rather than replace — a broad scope sets the family's layout and a narrow one need only state its differences — which is the opposite of how a [[Core remap]] resolves. MAME's `<remap origcode= newcode=>` wholesale-substitution form is deliberately unimplemented; the option is a submodule so it can be added without a breaking change.
+_Avoid_: binding, keymap, button map
 
 **attract-mode config format**:
 Not one format but two. `attract.cfg` uses a bare section header (`display` + tab + name) followed by tab-indented `key`-padded-to-20 + space + value lines, with filter contents doubly indented. `emulators/<name>.cfg` has no leading indent, pads keys to 20, and writes artwork as `artwork` padded to 10 + slot padded to 15 + path. Padding is a minimum, not a truncation. The parser treats spaces and tabs interchangeably, so the widths are cosmetic — matched only so Nix-written files diff cleanly against attract-mode-written ones.
