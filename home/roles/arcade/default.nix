@@ -12,16 +12,11 @@
   lib,
   ...
 }: let
-  # One RetroArch build carrying exactly the five console cores. Verify core
-  # attr names with `nix search nixpkgs libretro` if any fails to evaluate.
-  retroarchWithCores = pkgs.retroarch.withCores (cores:
-    with cores; [
-      mesen # NES
-      snes9x # SNES
-      mgba # Game Boy / GBA
-      genesis-plus-gx # Sega Genesis
-      stella # Atari 2600
-    ]);
+  # The RetroArch build carrying this cabinet's console cores, assembled by
+  # home-manager's own programs.retroarch from the `cores` set below. Read back
+  # here (rather than built locally) so the emulator definitions and the
+  # installed package can never diverge.
+  retroarchWithCores = config.programs.retroarch.finalPackage;
 
   # MAME's ROM directory. Referenced twice below, for two different consumers:
   # attract-mode scans it to build the romlist, and MAME itself searches it to
@@ -39,15 +34,24 @@
   # directory of ROMs yields only Name/Title/Emulator, so without this the
   # Players, Year, Manufacturer and Overview fields stay blank and any layout
   # panel bound to them renders empty.
+  # `core` is the nixpkgs `libretro.<attr>` name, which drives both
+  # `cores.<attr>.enable` and the -L path — but the two are not spelled the
+  # same. nixpkgs hyphenates (`genesis-plus-gx`) while the installed library
+  # underscores (`genesis_plus_gx_libretro.so`), hence the substitution.
+  #
+  # A core has a *third* name, the `library_name` it reports at runtime
+  # ("Genesis Plus GX", "Snes9x", "mGBA"). It is derivable from neither of the
+  # others — irregular casing, and one contains spaces — and is not needed
+  # here; it names the remap directory and belongs to the retroarch module.
   mkRetroArchEmulator = {
     core,
     romext,
     system,
   }: {
-    inherit romext system;
+    inherit core romext system;
     infoSource = "thegamesdb.net";
     executable = "${retroarchWithCores}/bin/retroarch";
-    args = ''-L ${retroarchWithCores}/lib/retroarch/cores/${core} "[romfilename]"'';
+    args = ''-L ${retroarchWithCores}/lib/retroarch/cores/${lib.replaceStrings ["-"] ["_"] core}_libretro.so "[romfilename]"'';
   };
 
   # Per-system emulator definitions. Each entry carries its own executable and
@@ -55,7 +59,7 @@
   # — attract-mode has no core/emulator distinction, it just wants a command.
   emulators = {
     nes = mkRetroArchEmulator {
-      core = "mesen_libretro.so";
+      core = "mesen";
       # Mesen also accepts .fds, .unf and .unif (verified from the core's own
       # retro_get_system_info). .fds additionally needs a Famicom Disk System
       # BIOS on the cabinet, which nothing here provides — scanning it only
@@ -64,17 +68,17 @@
       system = "Nintendo Entertainment System";
     };
     snes = mkRetroArchEmulator {
-      core = "snes9x_libretro.so";
+      core = "snes9x";
       romext = ".sfc;.smc;.swc;.fig;.bs;.zip";
       system = "Super Nintendo Entertainment System";
     };
     gameboy = mkRetroArchEmulator {
-      core = "mgba_libretro.so";
+      core = "mgba";
       romext = ".gb;.gbc;.zip";
       system = "Nintendo Game Boy";
     };
     genesis = mkRetroArchEmulator {
-      core = "genesis_plus_gx_libretro.so";
+      core = "genesis-plus-gx";
       # Deliberately narrower than the core. Genesis Plus GX also accepts
       # .sms/.gg/.sg (Master System, Game Gear, SG-1000) and .cue/.iso/.chd
       # (Sega CD) — but this is the "Sega Genesis" system: one display, one
@@ -86,7 +90,7 @@
       system = "Sega Genesis";
     };
     atari2600 = mkRetroArchEmulator {
-      core = "stella_libretro.so";
+      core = "stella";
       romext = ".a26;.bin;.zip";
       system = "Atari 2600";
     };
@@ -107,7 +111,7 @@
     # `mame -listxml` for real titles and metadata when building the romlist;
     # the `system` value is a display label, not the trigger.
     mame = {
-      executable = "${pkgs.mame}/bin/mame";
+      executable = "${config.programs.mame.finalPackage}/bin/mame";
       args = ''-rompath ${mameRomPath} "[name]"'';
       romext = ".7z;<DIR>";
       system = "MAME";
@@ -143,15 +147,15 @@ in {
   imports = [
     ../cli.nix
     ../../modules/attract-mode
+    ../../modules/mame
   ];
 
   home = {
-    # attract-mode itself is installed by programs.attract-mode; listing it here
-    # too would collide in the profile if its `package` option were ever
-    # overridden.
+    # attract-mode, RetroArch and MAME are each installed by their own module
+    # (programs.attract-mode / programs.retroarch / programs.mame). Listing any
+    # of them here too would collide in the profile if its `package` option were
+    # ever overridden.
     packages = [
-      retroarchWithCores
-      pkgs.mame
       pkgs.matchbox
     ];
 
@@ -171,106 +175,123 @@ in {
     };
   };
 
-  programs.attract-mode = {
-    enable = true;
-    manageConfig = true;
+  programs = {
+    # Standalone MAME for arcade. No extraArgs yet — the wrapper exists so that
+    # the -ctrlr flag and the file it names can be derived from one value when
+    # control config lands (ADR-0017); a mismatch there is fatal, not degraded.
+    mame.enable = true;
 
-    settings = {
-      general = {
-        selection_max_step = "128";
-        confirm_favourites = "yes";
-      };
-      sound = {
-        sound_volume = "100";
-        ambient_volume = "100";
-        movie_volume = "100";
-      };
+    # The cabinet's console lineup, derived from `emulators` so it is stated
+    # once. Which consoles exist is the role's call; how each core is packaged
+    # is home-manager's.
+    retroarch = {
+      enable = true;
+      cores =
+        lib.mapAttrs' (_: def: lib.nameValuePair def.core {enable = true;})
+        (lib.filterAttrs (_: def: def ? core) emulators);
     };
 
-    # Keyboard plus first-joystick defaults, to be remapped to real cabinet
-    # hardware through attract-mode's own configure menu.
-    inputMap = {
-      up = ["Up" "Joy0 Up"];
-      down = ["Down" "Joy0 Down"];
-      left = ["Left" "Joy0 Left"];
-      right = ["Right" "Joy0 Right"];
-      select = ["Return" "Joy0 Button0"];
-      back = ["Escape" "Joy0 Button1"];
-      exit = ["LControl+Escape" "Joy0 Button7"];
-      configure = "Tab";
-      prev_display = "LControl+Left";
-      next_display = "LControl+Right";
-      prev_letter = "LShift+Up";
-      next_letter = "LShift+Down";
+    attract-mode = {
+      enable = true;
+      manageConfig = true;
+
+      settings = {
+        general = {
+          selection_max_step = "128";
+          confirm_favourites = "yes";
+        };
+        sound = {
+          sound_volume = "100";
+          ambient_volume = "100";
+          movie_volume = "100";
+        };
+      };
+
+      # Keyboard plus first-joystick defaults, to be remapped to real cabinet
+      # hardware through attract-mode's own configure menu.
+      inputMap = {
+        up = ["Up" "Joy0 Up"];
+        down = ["Down" "Joy0 Down"];
+        left = ["Left" "Joy0 Left"];
+        right = ["Right" "Joy0 Right"];
+        select = ["Return" "Joy0 Button0"];
+        back = ["Escape" "Joy0 Button1"];
+        exit = ["LControl+Escape" "Joy0 Button7"];
+        configure = "Tab";
+        prev_display = "LControl+Left";
+        next_display = "LControl+Right";
+        prev_letter = "LShift+Up";
+        next_letter = "LShift+Down";
+      };
+
+      # Boot to the system selector rather than resuming whichever display was
+      # last open.
+      #
+      # The displays menu is rendered by its own layout, and Retrorama ships none —
+      # its layout.nut assumes a game list and has no menu handling. `Cools` is
+      # bundled with attract-mode, declares a 320x240 layout size (so attract-mode
+      # scales it to fit rather than distorting, unlike cosmo's unset dimensions),
+      # and reads the `wheel` and `snap` slots — which is what ~/.attract/menu-art
+      # holds for the six systems.
+      startupMode = "displays_menu";
+      menuLayout = "Cools";
+
+      # Scraper API key, read at activation from /run/agenix so it stays
+      # encrypted in the repo. Without it the console emulators' thegamesdb.net
+      # scraper fails with 403 (attract-mode's built-in key was revoked
+      # upstream), surfacing as "Error parsing json, text:" on --build-romlist.
+      #
+      # No null fallback: this role is only ever evaluated as part of the
+      # cabinet's NixOS config, and silently omitting the key would restore
+      # exactly the broken-scraper behaviour this fixes, with no diagnostic.
+      thegamesdbKeyFile = osConfig.age.secrets."arcade/thegamesdbKey".path;
+
+      # Artwork belongs on the EMULATOR, not the display: attract-mode resolves it
+      # via FeEmulatorInfo::get_artwork, so paths declared only on a display are
+      # never consulted and every lookup silently returns nothing.
+      emulators = lib.mapAttrs (name: def:
+        {
+          inherit (def) executable args system;
+          romPath = "/mnt/roms/${name}";
+          romExt = def.romext;
+          artwork = artworkFor name;
+        }
+        // lib.optionalAttrs (def ? infoSource) {inherit (def) infoSource;})
+      emulators;
+
+      # One display per emulator is this cabinet's convention, not attract-mode's.
+      # Keyed by the emulator's `system` label (e.g. "MAME") rather than the
+      # emulator's short name (e.g. "mame"): the module renders `display\t<key>`
+      # verbatim, and that string is the join key art lookup depends on
+      # (ADR-0012) — it must come out as "MAME", not "mame".
+      # Retrorama's `system` is a layout option declared per_display. Such options
+      # live inside the display section, but NOT under their own name — a display
+      # accepts only layout, romlist, in_cycle, in_menu, filter and global_filter.
+      # They go through the literal key `param`, whose value carries the option
+      # name and its value space-separated (FeScriptConfigurable::process_setting,
+      # indexString = "param"). Writing `system Arcade` directly earns
+      # "Unrecognized display setting" on every config load.
+      displays = lib.mapAttrs' (name: def:
+        lib.nameValuePair def.system {
+          layout = retroramaLayout;
+          romlist = name;
+          extraSettings.param = [
+            "system ${media.systems.${name}.retroramaSystem}"
+            # The layout draws rows from y=390 at 23px each, and the panel runs to
+            # roughly y=1000; the default 20 rows stop at 850 and leave a visible
+            # gap. 26 rows reach 988.
+            "gameListElements 26"
+          ];
+        })
+      emulators;
     };
 
-    # Boot to the system selector rather than resuming whichever display was
-    # last open.
-    #
-    # The displays menu is rendered by its own layout, and Retrorama ships none —
-    # its layout.nut assumes a game list and has no menu handling. `Cools` is
-    # bundled with attract-mode, declares a 320x240 layout size (so attract-mode
-    # scales it to fit rather than distorting, unlike cosmo's unset dimensions),
-    # and reads the `wheel` and `snap` slots — which is what ~/.attract/menu-art
-    # holds for the six systems.
-    startupMode = "displays_menu";
-    menuLayout = "Cools";
-
-    # Scraper API key, read at activation from /run/agenix so it stays
-    # encrypted in the repo. Without it the console emulators' thegamesdb.net
-    # scraper fails with 403 (attract-mode's built-in key was revoked
-    # upstream), surfacing as "Error parsing json, text:" on --build-romlist.
-    #
-    # No null fallback: this role is only ever evaluated as part of the
-    # cabinet's NixOS config, and silently omitting the key would restore
-    # exactly the broken-scraper behaviour this fixes, with no diagnostic.
-    thegamesdbKeyFile = osConfig.age.secrets."arcade/thegamesdbKey".path;
-
-    # Artwork belongs on the EMULATOR, not the display: attract-mode resolves it
-    # via FeEmulatorInfo::get_artwork, so paths declared only on a display are
-    # never consulted and every lookup silently returns nothing.
-    emulators = lib.mapAttrs (name: def:
-      {
-        inherit (def) executable args system;
-        romPath = "/mnt/roms/${name}";
-        romExt = def.romext;
-        artwork = artworkFor name;
-      }
-      // lib.optionalAttrs (def ? infoSource) {inherit (def) infoSource;})
-    emulators;
-
-    # One display per emulator is this cabinet's convention, not attract-mode's.
-    # Keyed by the emulator's `system` label (e.g. "MAME") rather than the
-    # emulator's short name (e.g. "mame"): the module renders `display\t<key>`
-    # verbatim, and that string is the join key art lookup depends on
-    # (ADR-0012) — it must come out as "MAME", not "mame".
-    # Retrorama's `system` is a layout option declared per_display. Such options
-    # live inside the display section, but NOT under their own name — a display
-    # accepts only layout, romlist, in_cycle, in_menu, filter and global_filter.
-    # They go through the literal key `param`, whose value carries the option
-    # name and its value space-separated (FeScriptConfigurable::process_setting,
-    # indexString = "param"). Writing `system Arcade` directly earns
-    # "Unrecognized display setting" on every config load.
-    displays = lib.mapAttrs' (name: def:
-      lib.nameValuePair def.system {
-        layout = retroramaLayout;
-        romlist = name;
-        extraSettings.param = [
-          "system ${media.systems.${name}.retroramaSystem}"
-          # The layout draws rows from y=390 at 23px each, and the panel runs to
-          # roughly y=1000; the default 20 rows stop at 850 and leave a visible
-          # gap. 26 rows reach 988.
-          "gameListElements 26"
-        ];
-      })
-    emulators;
+    # On the autologin tty (tty1) with no X yet, launch the graphical session.
+    # Guarded so SSH logins and other TTYs get a normal shell.
+    zsh.loginExtra = ''
+      if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
+        exec startx
+      fi
+    '';
   };
-
-  # On the autologin tty (tty1) with no X yet, launch the graphical session.
-  # Guarded so SSH logins and other TTYs get a normal shell.
-  programs.zsh.loginExtra = ''
-    if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
-      exec startx
-    fi
-  '';
 }
