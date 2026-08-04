@@ -193,7 +193,10 @@ in {
       # with them attached makes them 1 and 2 and pushes the panel to 3 and 4 —
       # at which point every JOYCODE_1/2 binding here silently drives the pads
       # and the panel goes dead, with no error.
-      ignoreDevices = ["0x0079/0x0011"]; # Retrolink SNES Controller
+      ignoreDevices = [
+        "0x0079/0x0011"
+        "0x0079/0x0006"
+      ]; # Retrolink SNES Controller
 
       # Xin-Mo dual-arcade encoder: two devices, so JOYCODE_1_* and JOYCODE_2_*
       # address the two players. Button order follows the kernel's BTN_* order,

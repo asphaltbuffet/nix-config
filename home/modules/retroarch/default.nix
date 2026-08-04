@@ -15,6 +15,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }: let
   cfg = config.programs.retroarch;
@@ -112,6 +113,23 @@ in {
     ./atari2600.nix
   ];
 
+  options.programs.retroarch.joypadAutoconfig = lib.mkOption {
+    type = lib.types.nullOr lib.types.package;
+    default = pkgs.retroarch-joypad-autoconfig or null;
+    defaultText = lib.literalExpression "pkgs.retroarch-joypad-autoconfig";
+    description = ''
+      Package supplying RetroArch's joypad autoconfig profiles, pointed at by
+      `joypad_autoconfig_dir`. Set to `null` to leave the setting alone.
+
+      RetroArch itself ships none, and without them a pad it has no built-in
+      SDL mapping for is left on a fallback assignment: buttons that should
+      differ can behave identically and others do nothing at all. Profiles map
+      a physical device onto the RetroPad, which is the layer *beneath*
+      {option}`remaps` — a remap cannot recover a button the pad never
+      delivered.
+    '';
+  };
+
   options.programs.retroarch.remaps = lib.mkOption {
     type = lib.types.attrsOf remapType;
     default = {};
@@ -126,27 +144,34 @@ in {
     '';
   };
 
-  config = lib.mkIf (cfg.enable && activeRemaps != {}) {
-    # Both settings are preconditions for a managed remap, not preferences.
-    # With remap_save_on_exit on, RetroArch overwrites the store symlink; with
-    # sort-by-controller on, it reads <core>/<device>.rmp and never sees these
-    # files at all. Either way the config silently stops applying.
-    # mkForce rather than a plain assignment: these are preconditions for a
-    # managed remap, not preferences, and a caller setting either to "true"
-    # would otherwise be an unresolvable merge conflict rather than a clear
-    # override. Asserting on them instead cannot work — this module is one of
-    # the definitions being merged, so it would only ever read back its own
-    # value.
-    programs.retroarch.settings = {
-      remap_save_on_exit = lib.mkForce "false";
-      input_remap_sort_by_controller_enable = lib.mkForce "false";
-      input_remapping_directory = lib.mkDefault remapDir;
-    };
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+    # Autoconfig applies whether or not any remap is declared: it is what maps
+    # a physical pad onto the RetroPad at all, and a device with no profile
+    # falls back to an assignment that can leave buttons indistinguishable or
+    # dead. Independent of remaps, which act one layer above it.
+    (lib.mkIf (cfg.joypadAutoconfig != null) {
+      programs.retroarch.settings.joypad_autoconfig_dir =
+        lib.mkDefault "${cfg.joypadAutoconfig}/share/libretro/autoconfig";
+    })
 
-    xdg.configFile = lib.mapAttrs' (_: r:
-      lib.nameValuePair
-      "${remapSubdir}/${r.coreName}/${r.coreName}.rmp"
-      {text = renderRemap r.buttons + "\n";})
-    activeRemaps;
-  };
+    (lib.mkIf (activeRemaps != {}) {
+      # mkForce rather than a plain assignment: these are preconditions for a
+      # managed remap, not preferences. With remap_save_on_exit on, RetroArch
+      # overwrites the store symlink; with sort-by-controller on, it reads
+      # <core>/<device>.rmp and never sees these files. Asserting instead
+      # cannot work — this module is one of the definitions being merged, so it
+      # would only ever read back its own value.
+      programs.retroarch.settings = {
+        remap_save_on_exit = lib.mkForce "false";
+        input_remap_sort_by_controller_enable = lib.mkForce "false";
+        input_remapping_directory = lib.mkDefault remapDir;
+      };
+
+      xdg.configFile = lib.mapAttrs' (_: r:
+        lib.nameValuePair
+        "${remapSubdir}/${r.coreName}/${r.coreName}.rmp"
+        {text = renderRemap r.buttons + "\n";})
+      activeRemaps;
+    })
+  ]);
 }
