@@ -1,0 +1,138 @@
+{
+  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+  "version": 4,
+  "console_title_template": "{{ .Folder }}",
+  "final_space": true,
+  "streaming": 100,
+  "blocks": [
+    {
+      "alignment": "left",
+      "type": "prompt",
+      "newline": true,
+      "segments": [
+        {
+          "background": "#3A3A3A",
+          "foreground": "#ffffff",
+          "style": "powerline",
+          "template": "{{ if .WSL }}WSL at{{ end }} {{.Icon}} ",
+          "type": "os"
+        },
+        {
+          "background": "#3A3A3A",
+          "foreground": "#ffffff",
+          "style": "powerline",
+          "template": " {{ if .SSHSession }}\ueba9 {{ end }}{{ .UserName }}@{{ .HostName }}",
+          "type": "session"
+        },
+        {
+          "background": "#458588",
+          "foreground": "#282828",
+          "powerline_symbol": "",
+          "style": "powerline",
+          "template": " {{ .Path }} ",
+          "type": "path",
+          "options": {
+            "style": "full"
+          }
+        },
+        {
+          "background": "#98971A",
+          "background_templates": [
+            "{{ if or (.Working.Changed) (.Staging.Changed) }}#FF9248{{ end }}",
+            "{{ if and (gt .Ahead 0) (gt .Behind 0) }}#ff4500{{ end }}",
+            "{{ if gt .Ahead 0 }}#B388FF{{ end }}",
+            "{{ if gt .Behind 0 }}#B388FF{{ end }}"
+          ],
+          "foreground": "#282828",
+          "leading_diamond": "",
+          "powerline_symbol": "",
+          "style": "powerline",
+          "template": " {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} ",
+          "trailing_diamond": "",
+          "type": "git",
+          "options": {
+            "branch_template": "{{ trunc 25 .Branch }}",
+            "fetch_status": true,
+            "branch_icon": " ",
+            "branch_identical_icon": "●",
+            "disable_with_jj": true
+          }
+        },
+        {
+          "type": "jujutsu",
+          "style": "powerline",
+          "powerline_symbol": "",
+          "foreground": "#282828",
+          "background": "#98971A",
+          "template": "  {{.ClosestBookmarks}} 󰁥<b>{{.ChangeIDPrefix}}</b><d>{{.ChangeIDRest}}</d>{{if .Working.Changed}}  {{ .Working.String }}{{ end }}",
+          "options": {
+            "fetch_status": true,
+            "change_id_min_len": 8,
+            "ignore_working_copy": true,
+            "fetch_ahead_counter": true,
+            "ahead_icon": "⇡"
+          }
+        },
+        {
+          "background": "#8ED1F7",
+          "foreground": "#111111",
+          "powerline_symbol": "",
+          "style": "powerline",
+          "template": "  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} ",
+          "type": "go",
+          "options": {
+            "fetch_version": true
+          }
+        },
+        {
+          "background": "#FFDE57",
+          "foreground": "#111111",
+          "powerline_symbol": "",
+          "style": "powerline",
+          "template": "  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} ",
+          "type": "python",
+          "options": {
+            "display_mode": "files",
+            "fetch_virtual_env": false
+          }
+        },
+        {
+          "background": "#ffff66",
+          "foreground": "#111111",
+          "powerline_symbol": "",
+          "style": "powerline",
+          "template": "  ",
+          "type": "root"
+        }
+      ]
+    },
+    {
+      "alignment": "right",
+      "type": "rprompt",
+      "segments": [
+        {
+          "type": "time",
+          "style": "plain",
+          "foreground": "#007ACC",
+          "options": {
+            "time_format": "15:04:05"
+          }
+        }
+      ]
+    },
+    {
+      "alignment": "left",
+      "type": "prompt",
+      "newline": true,
+      "segments": [
+        {
+          "type": "vimode",
+          "style": "plain",
+          "foreground": "#ffffff",
+          "template": "{{if eq .Mode \"normal\" }}󰅁 {{ else if eq .Mode \"insert\" }}󰅂 {{ else }}󰄾 {{ end }}"
+        }
+      ]
+    }
+  ]
+}
+

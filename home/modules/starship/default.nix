@@ -4,7 +4,7 @@
   ...
 }: {
   programs.starship = {
-    enable = true;
+    enable = false;
     enableZshIntegration = true;
 
     configPath = "${config.xdg.configHome}/starship/starship.toml";
