@@ -15,12 +15,13 @@
     ../modules/eza
     ../modules/fzf
     ../modules/git
-    ../modules/starship
+    ../modules/oh-my-posh
+    # ../modules/starship
     ../modules/tmux
     ../modules/vim
+    ../modules/wishlist
     ../modules/zoxide
     ../modules/zsh
-    ../modules/wishlist
   ];
 
   xdg.enable = true;

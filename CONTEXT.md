@@ -27,7 +27,7 @@ A module that *declares* its own `programs.<tool>.*` options rather than setting
 _Avoid_: custom module, option module
 
 **cli role**:
-The `home/roles/cli.nix` role holding the shell/command-line foundation every login wants — zsh, git, starship, atuin, fzf and core CLI tools — with no graphical or desktop applications. The `desktop` role imports it and adds the desktop app suite; kiosk-style users (e.g. the arcade cabinet) import `cli` directly instead of `desktop`.
+The `home/roles/cli.nix` role holding the shell/command-line foundation every login wants — zsh, git, oh-my-posh, atuin, fzf and core CLI tools — with no graphical or desktop applications. The `desktop` role imports it and adds the desktop app suite; kiosk-style users (e.g. the arcade cabinet) import `cli` directly instead of `desktop`.
 _Avoid_: shell role, base-shell
 
 **desktop role**:
