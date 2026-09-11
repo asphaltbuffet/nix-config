@@ -64,7 +64,7 @@
           "powerline_symbol": "",
           "foreground": "#282828",
           "background": "#98971A",
-          "template": "  {{.ClosestBookmarks}} 󰁥<b>{{.ChangeIDPrefix}}</b><d>{{.ChangeIDRest}}</d>{{if .Working.Changed}}  {{ .Working.String }}{{ end }}",
+          "template": "  {{.ClosestBookmarks}} ﹫<b>{{.ChangeIDPrefix}}</b><d>{{.ChangeIDRest}}</d>{{if .Working.Changed}}  {{ .Working.String }}{{ end }}",
           "options": {
             "fetch_status": true,
             "change_id_min_len": 8,
@@ -78,7 +78,7 @@
           "foreground": "#111111",
           "powerline_symbol": "",
           "style": "powerline",
-          "template": "  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} ",
+          "template": "  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} ",
           "type": "go",
           "options": {
             "fetch_version": true
@@ -89,7 +89,7 @@
           "foreground": "#111111",
           "powerline_symbol": "",
           "style": "powerline",
-          "template": "  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} ",
+          "template": "  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} ",
           "type": "python",
           "options": {
             "display_mode": "files",
@@ -129,7 +129,7 @@
           "type": "vimode",
           "style": "plain",
           "foreground": "#ffffff",
-          "template": "{{if eq .Mode \"normal\" }}󰅁 {{ else if eq .Mode \"insert\" }}󰅂 {{ else }}󰄾 {{ end }}"
+          "template": "{{if eq .Mode \"normal\" }} {{ else if eq .Mode \"insert\" }} {{ else }} {{ end }}"
         }
       ]
     }
