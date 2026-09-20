@@ -40,7 +40,8 @@
       "mcp__serena__search_for_pattern",
       "mcp__serena__write_memory",
       "mcp__plugin_claude-code-home-manager_serena__get_symbols_overview",
-      "mcp__plugin_claude-code-home-manager_serena__replace_content"
+      "mcp__plugin_claude-code-home-manager_serena__replace_content",
+      "mcp__plugin_hm_serena__initial_instructions"
     ]
   },
   "outputStyle": "Explanatory",
