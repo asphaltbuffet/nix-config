@@ -7,7 +7,6 @@
     agenix = {
       url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.home-manager.follows = "home-manager";
     };
 
     alejandra = {
@@ -82,6 +81,18 @@
       (_final: prev: {
         attract-mode = prev.attract-mode.overrideAttrs (old: {
           buildInputs = old.buildInputs ++ [prev.curl];
+        });
+      })
+      # GCC 16 added -Wsfinae-incomplete, which the legacy (Gen8–11) compute
+      # runtime trips under its -Werror build. The branch is frozen upstream,
+      # so downgrade just that warning. Drop once nixpkgs carries a fix.
+      (_final: prev: {
+        intel-compute-runtime-legacy1 = prev.intel-compute-runtime-legacy1.overrideAttrs (old: {
+          env =
+            (old.env or {})
+            // {
+              NIX_CFLAGS_COMPILE = toString [(old.env.NIX_CFLAGS_COMPILE or "") "-Wno-error=sfinae-incomplete"];
+            };
         });
       })
     ];

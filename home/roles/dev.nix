@@ -6,7 +6,6 @@
 }: {
   imports = [
     ../modules/claude
-    ../modules/crush
     ../modules/delta
     ../modules/direnv
     ../modules/gh
