@@ -1,5 +1,9 @@
 # nixos/profiles/laptop.nix
 {pkgs, ...}: {
+  imports = [
+    ../../common/vivaldi.nix
+  ];
+
   services = {
     #### Display server / desktop environment ####
     xserver = {

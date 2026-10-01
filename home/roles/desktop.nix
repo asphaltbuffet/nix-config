@@ -11,6 +11,7 @@
     ../modules/kitty
     ../modules/mullvad
     ../modules/signal
+    ../modules/vivaldi
   ];
 
   home.packages = with pkgs; [
