@@ -34,6 +34,14 @@ _Avoid_: shell role, base-shell
 The `home/roles/desktop.nix` role: the `cli` role plus the desktop daily-driver applications (browser, password manager, chat, media). The baseline for a person's workstation login, not for a kiosk. Named `desktop` (not `base`) because `cli` is the actual foundation it builds on, and to avoid colliding with `nixos/profiles/base.nix`.
 _Avoid_: base role (renamed), default role
 
+**Browser policy**:
+A browser setting enforced on a **Host** for every account, through the browser's enterprise-policy mechanism. The browser treats it as managed, and a locked policy can't be overridden in the browser's UI. Lives at the NixOS layer, one file per browser in `nixos/common/`.
+_Avoid_: system prefs, global settings
+
+**Browser preference**:
+A browser setting applied per login by the **desktop role**'s browser **Module**. It is a starting default the person may change, never an enforced rule. Anything that must stick across every account is a **Browser policy** instead.
+_Avoid_: user policy, profile settings
+
 **Arcade profile**:
 The `nixos/profiles/arcade.nix` profile that turns a host into an arcade cabinet. Holds only system machinery (graphics, session autologin, audio, SSH access) — never the emulator or front-end applications themselves.
 _Avoid_: arcade config, cabinet profile
