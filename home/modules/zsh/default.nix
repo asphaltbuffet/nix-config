@@ -1,14 +1,23 @@
 # home/modules/zsh/default.nix
-{config, ...}: {
+{
+  config,
+  osConfig,
+  lib,
+  ...
+}: {
   programs.zsh = {
     enable = true;
 
-    sessionVariables = {
-      EDITOR = "vim";
-      VISUAL = "vim";
-      DIRENV_LOG_FORMAT = ""; # silence direnv loading/export messages
-      SSH_AUTH_SOCK = "${config.home.homeDirectory}/.1password/agent.sock";
-    };
+    sessionVariables =
+      {
+        EDITOR = "vim";
+        VISUAL = "vim";
+        DIRENV_LOG_FORMAT = ""; # silence direnv loading/export messages
+      }
+      # Headless hosts keep sshd's forwarded agent socket (see home/modules/ssh)
+      // lib.optionalAttrs osConfig.services.desktopManager.plasma6.enable {
+        SSH_AUTH_SOCK = "${config.home.homeDirectory}/.1password/agent.sock";
+      };
 
     initContent = ''
       # Compute jj-repo membership ONCE per prompt for the starship modules.
