@@ -3,7 +3,7 @@ let
   wendigo = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDyrkGOX0lDcdIO5ehmjTzRhW9UEJwXRnFYAYbsFHz76";
   kushtaka = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKfVXEd5gyLbgYnmmi9yrGL8zQcU2v8iXioIlSsCzZ57";
   snallygaster = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFe7wihS5yWkQCZhkJI2YNFj+p6M1wLos+s+GBaCNTJG";
-  bunyip = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAI4cCl7D2/e7PEZ+aPQ4Qfx8EpJY/nwwhfV29CagP/O";
+  bunyip = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILgMwoEXAp/dvXtN+jehEy7ZdbwP1idOPLjvlFbNhb1J";
   arcade = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJNATQe0rKnGoCJAH2dRqX3c/YnbQqqTinuhYX5tf5cD";
   allHosts = [wendigo kushtaka snallygaster bunyip arcade];
 
