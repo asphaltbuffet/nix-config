@@ -13,25 +13,36 @@
 
   boot = {
     initrd = {
-      availableKernelModules = ["xhci_pci" "ehci_pci" "ahci" "usbhid" "usb_storage" "sd_mod" "sr_mod"];
+      availableKernelModules = ["xhci_pci" "ehci_pci" "ahci" "usbhid" "usb_storage" "sd_mod"];
       kernelModules = [];
     };
     kernelModules = [];
     extraModulePackages = [];
   };
 
-  fileSystems."/" = {
-    device = "/dev/disk/by-uuid/7dfd7957-0aad-45b8-96c1-a7046a56df53";
-    fsType = "ext4";
+  fileSystems = {
+    "/" = {
+      device = "/dev/disk/by-uuid/15304924-6ad9-4b21-946b-4872cfd3d0fe";
+      fsType = "ext4";
+    };
+
+    "/boot" = {
+      device = "/dev/disk/by-uuid/7DFA-6DC7";
+      fsType = "vfat";
+      options = ["fmask=0077" "dmask=0077"];
+    };
+
+    # Data disk (1.5 TB HDD); nofail so a dead disk doesn't block boot
+    "/srv" = {
+      device = "/dev/disk/by-uuid/e8658266-4a15-4d89-9153-ba0c708fd629";
+      fsType = "ext4";
+      options = ["nofail"];
+    };
   };
 
-  fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/8848-71BE";
-    fsType = "vfat";
-    options = ["fmask=0022" "dmask=0022"];
-  };
-
-  swapDevices = [];
+  swapDevices = [
+    {device = "/dev/disk/by-uuid/cdc34601-64e6-417c-90f1-34ffc701353c";}
+  ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
