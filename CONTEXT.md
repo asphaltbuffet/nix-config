@@ -10,6 +10,10 @@ NixOS and home-manager configuration for a personal fleet of machines, managed a
 A physical machine managed by this flake. Each host has a directory under `nixos/hosts/<name>/` and is auto-discovered by the flake.
 _Avoid_: node, machine, system, box
 
+**Always-on host**:
+A **Host** expected to be powered and reachable around the clock (bunyip, the arcade cabinet), as opposed to laptops and desktops that sleep or power off. Scheduled maintenance and liveness expectations key off this property.
+_Avoid_: server (a server is one kind of always-on host, not a synonym), headless
+
 **Profile**:
 A reusable NixOS-level bundle of system services and settings imported by one or more hosts. Lives in `nixos/profiles/`.
 _Avoid_: preset, template, base config
