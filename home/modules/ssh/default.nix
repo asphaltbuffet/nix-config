@@ -1,8 +1,14 @@
 {
   config,
+  osConfig,
+  lib,
   pkgs,
   ...
 }: let
+  # 1Password's agent socket only exists where a desktop session runs the app.
+  # Headless hosts (bunyip, arcade) use the agent forwarded by `ssh -A` instead.
+  hasDesktopAgent = osConfig.services.desktopManager.plasma6.enable;
+
   # The public key used for git/jj commit signing.
   # Update this value after generating the key in 1Password (Task 2).
   # Format: "ssh-ed25519 AAAA... comment"
@@ -21,19 +27,22 @@ in {
       enableDefaultConfig = false;
 
       settings = {
-        "*" = {
-          IdentityAgent = "${config.home.homeDirectory}/.1password/agent.sock";
-          ForwardAgent = false;
-          AddKeysToAgent = "no";
-          Compression = false;
-          ServerAliveInterval = 60;
-          ServerAliveCountMax = 3;
-          HashKnownHosts = false;
-          UserKnownHostsFile = "${config.home.homeDirectory}/.ssh/known_hosts";
-          ControlMaster = "auto";
-          ControlPath = "${config.home.homeDirectory}/.ssh/master-%r@%n:%p";
-          ControlPersist = "10m";
-        };
+        "*" =
+          lib.optionalAttrs hasDesktopAgent {
+            IdentityAgent = "${config.home.homeDirectory}/.1password/agent.sock";
+          }
+          // {
+            ForwardAgent = false;
+            AddKeysToAgent = "no";
+            Compression = false;
+            ServerAliveInterval = 60;
+            ServerAliveCountMax = 3;
+            HashKnownHosts = false;
+            UserKnownHostsFile = "${config.home.homeDirectory}/.ssh/known_hosts";
+            ControlMaster = "auto";
+            ControlPath = "${config.home.homeDirectory}/.ssh/master-%r@%n:%p";
+            ControlPersist = "10m";
+          };
 
         # Tailscale hosts — surfaced to wishlist via ~/.ssh/config.
         # MagicDNS domain: armadillo-toad.ts.net
@@ -47,6 +56,13 @@ in {
 
         "snallygaster" = {
           Hostname = "snallygaster.armadillo-toad.ts.net";
+        };
+
+        # Dev server: forward the 1Password agent so git push/pull and commit
+        # signing work there. Each use still prompts for approval in 1Password.
+        "bunyip" = {
+          Hostname = "bunyip.armadillo-toad.ts.net";
+          ForwardAgent = true;
         };
 
         # Bootstrap targets on the LAN (e.g. fresh NixOS installs) don't have
