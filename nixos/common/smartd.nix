@@ -2,16 +2,23 @@
 # Fleet-wide disk-health monitoring.
 #
 # smartd watches every disk (-a: health status, error log, self-test log,
-# pre-fail attributes, pending/reallocated sectors) and, on a problem, runs
-# hc-smartd-notify, which sends a /fail ping to the healthchecks.io check
-# `smartd-<host>` (auto-created via ?create=1). Problems only: no heartbeat,
-# so laptops that sleep don't page. -M daily repeats the ping while the
-# problem persists. Clear a check after fixing a disk: `just hc-clear smartd-<host>`.
+# pre-fail attributes, pending/offline-uncorrectable sector counts) and, on a
+# problem, runs hc-smartd-notify, which sends a /fail ping to the
+# healthchecks.io check `smartd-<host>` (auto-created via ?create=1).
+# Problems only: no heartbeat, so laptops that sleep don't page. -M daily
+# repeats the ping while the problem persists. After fixing a disk, clear or
+# pause the `smartd-<host>` check in the healthchecks.io UI (pausing is
+# preferred: a success ping would start the default 1-day timer and, with no
+# heartbeat, the check would go down again a day later).
 #
 # Self-tests: Always-on hosts (host.alwaysOn) run a weekly short + monthly
 # long test overnight; other hosts a weekly short test at midday, skipped if
-# the disk is in standby. No temperature alerts: laptop NVMe runs hot by
-# design; temperatures are visible in Grafana via smartctl-exporter.
+# the disk is in standby (-n standby,q; ATA-only, no effect on NVMe-only
+# laptops), and -d removable tolerates a removable/USB disk disappearing on
+# these non-always-on hosts. No -W temperature thresholds, but on NVMe -H
+# includes the critical-warning temperature bit, so an NVMe drive reporting
+# over-temperature in its health status WILL alert (intended); temperature
+# trends are visible in Grafana via smartctl-exporter.
 {
   config,
   pkgs,
@@ -43,7 +50,7 @@
   schedule =
     if config.host.alwaysOn
     then "-s (S/../../7/03|L/../01/./04)"
-    else "-n standby,q -s S/../../7/12";
+    else "-d removable -n standby,q -s S/../../7/12";
 in {
   services.smartd = {
     enable = true;
