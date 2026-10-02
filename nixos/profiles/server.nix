@@ -8,6 +8,9 @@
     ../common/monitoring.nix
   ];
 
+  # bunyip and future home-lab nodes run 24/7 (CONTEXT.md: Always-on host)
+  host.alwaysOn = true;
+
   # CUPS print server — serve printers to the network via mDNS/Bonjour
   services = {
     printing.enable = true;

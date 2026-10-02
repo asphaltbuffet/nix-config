@@ -13,6 +13,9 @@
     ../common/ssh-hardened.nix
   ];
 
+  # The cabinet is left running 24/7 (CONTEXT.md: Always-on host)
+  host.alwaysOn = true;
+
   # GL for MAME / RetroArch. Generic Mesa enable covers Intel/AMD.
   # NVIDIA would additionally need hardware.nvidia + videoDrivers; deferred.
   hardware.graphics.enable = true;
