@@ -14,6 +14,7 @@
     ../common/firefox.nix
     ../common/host.nix
     ../common/nas.nix
+    ../common/smartd.nix
     ../common/tailscale.nix
     ../common/compat.nix
   ];
