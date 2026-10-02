@@ -45,7 +45,10 @@
     '';
   };
 
-  monitored = "-a -o on -S on -m <nomailer> -M exec ${hcSmartdNotify}/bin/hc-smartd-notify -M daily";
+  # Notify hook only. smartd directives are additive, so anything on the
+  # DEFAULT line can't be dropped by an explicit device entry; checks live on
+  # DEVICESCAN (and on each explicit device) instead.
+  notify = "-m <nomailer> -M exec ${hcSmartdNotify}/bin/hc-smartd-notify -M daily";
 
   schedule =
     if config.host.alwaysOn
@@ -64,12 +67,11 @@ in {
     };
 
     defaults = {
-      # DEFAULT line: inherited by explicit services.smartd.devices entries
-      inherit monitored;
-      # DEVICESCAN line: DEFAULT directives already apply to it (repeating
-      # -m/-M here only makes smartd log "ignoring previous"), so add just
-      # the self-test schedule.
-      autodetected = schedule;
+      # DEFAULT line: inherited by every following line, including explicit
+      # services.smartd.devices entries (which pick their own checks)
+      monitored = notify;
+      # DEVICESCAN line: full checks plus the self-test schedule
+      autodetected = "-a -o on -S on ${schedule}";
     };
   };
 
