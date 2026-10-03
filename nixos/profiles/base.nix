@@ -10,6 +10,7 @@
     inputs.home-manager.nixosModules.home-manager
     ../common/1password.nix
     ../common/agenix.nix
+    ../common/alerts.nix
     ../common/autodeploy.nix
     ../common/firefox.nix
     ../common/host.nix
