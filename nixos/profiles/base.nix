@@ -14,6 +14,7 @@
     ../common/firefox.nix
     ../common/host.nix
     ../common/nas.nix
+    ../common/nixos-metrics.nix
     ../common/smartd.nix
     ../common/tailscale.nix
     ../common/compat.nix
@@ -71,7 +72,7 @@
 
   services = {
     envfs.enable = true;
-    prometheus.exporters.node.enable = true;
+    nixosMetrics.enable = true; # also enables prometheus.exporters.node
     fwupd.enable = true;
     tailscale.enable = lib.mkDefault true;
     openssh = {

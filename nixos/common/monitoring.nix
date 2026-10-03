@@ -12,61 +12,108 @@
 #
 # Grafana binds to 0.0.0.0:3000 but is only reachable via the tailscale0
 # interface (trusted in nixos/common/tailscale.nix).
-{lib, ...}: let
+{
+  config,
+  lib,
+  ...
+}: let
   hosts = lib.attrNames (lib.filterAttrs (_: type: type == "directory") (builtins.readDir ../hosts));
   targetsOn = port: map (h: "${h}.armadillo-toad.ts.net:${toString port}") hosts;
+
+  # Shared by Prometheus and the Grafana datasource: Grafana derives
+  # $__rate_interval from it, and rate() over a window of one scrape interval
+  # returns nothing (Grafana assumes 15s unless told otherwise).
+  scrapeInterval = "1m";
+
+  rendererToken = config.age.secrets.grafanaRendererToken.path;
 in {
-  age.secrets.grafanaKey = {
-    file = ../../secrets/grafanaKey.age;
-    owner = "grafana";
-    mode = "0400";
-  };
-
-  services.prometheus = {
-    enable = true;
-    port = 9090;
-
-    scrapeConfigs = [
-      {
-        job_name = "node";
-        static_configs = [{targets = targetsOn 9100;}];
-      }
-      {
-        job_name = "smartctl";
-        static_configs = [{targets = targetsOn 9633;}];
-      }
-      {
-        # Non-NixOS devices that cannot run Tailscale — add bare IPs here.
-        job_name = "node-unmanaged";
-        static_configs = [
-          {
-            targets = [];
-          }
-        ];
-      }
-    ];
-  };
-
-  services.grafana = {
-    enable = true;
-
-    settings.server = {
-      http_addr = "0.0.0.0";
-      http_port = 3000;
-      domain = "bunyip.armadillo-toad.ts.net";
+  age.secrets = {
+    grafanaKey = {
+      file = ../../secrets/grafanaKey.age;
+      owner = "grafana";
+      mode = "0400";
     };
 
-    # Read secret_key from agenix-decrypted file at runtime using Grafana's
-    # built-in file interpolation syntax.
-    settings.security.secret_key = "$__file{/run/agenix/grafanaKey}";
+    # Grafana 13 refuses to start with the default renderer_token, so Grafana
+    # and grafana-image-renderer read one shared token from this env file
+    # (GF_RENDERING_RENDERER_TOKEN= for Grafana, AUTH_TOKEN= for the renderer).
+    # EnvironmentFile is read by systemd as root, so the DynamicUser renderer
+    # needs no file access.
+    grafanaRendererToken = {
+      file = ../../secrets/grafanaRendererToken.age;
+      mode = "0400";
+    };
+  };
 
-    provision.datasources.settings.datasources = [
-      {
-        name = "Prometheus";
-        type = "prometheus";
-        url = "http://localhost:9090";
-        isDefault = true;
-      }
-    ];
+  systemd.services = {
+    grafana.serviceConfig.EnvironmentFile = rendererToken;
+    grafana-image-renderer.serviceConfig.EnvironmentFile = rendererToken;
+  };
+
+  services = {
+    prometheus = {
+      enable = true;
+      port = 9090;
+      globalConfig.scrape_interval = scrapeInterval;
+
+      scrapeConfigs = [
+        {
+          job_name = "node";
+          static_configs = [{targets = targetsOn 9100;}];
+        }
+        {
+          job_name = "smartctl";
+          static_configs = [{targets = targetsOn 9633;}];
+        }
+        {
+          # Non-NixOS devices that cannot run Tailscale — add bare IPs here.
+          job_name = "node-unmanaged";
+          static_configs = [
+            {
+              targets = [];
+            }
+          ];
+        }
+      ];
+    };
+
+    # Headless-Chromium renderer so dashboards/panels can be rendered to PNG
+    # (Grafana API / MCP get_panel_image). Listens on localhost:8081 only.
+    grafana-image-renderer = {
+      enable = true;
+      provisionGrafana = true;
+    };
+
+    grafana = {
+      enable = true;
+
+      settings.server = {
+        http_addr = "0.0.0.0";
+        http_port = 3000;
+        domain = "bunyip.armadillo-toad.ts.net";
+      };
+
+      # Read secret_key from agenix-decrypted file at runtime using Grafana's
+      # built-in file interpolation syntax.
+      settings.security.secret_key = "$__file{/run/agenix/grafanaKey}";
+
+      # Dashboard JSON lives in dashboards/ (portable; also importable by hand).
+      provision.dashboards.settings.providers = [
+        {
+          name = "nix-config";
+          options.path = ../../dashboards;
+        }
+      ];
+
+      provision.datasources.settings.datasources = [
+        {
+          name = "Prometheus";
+          type = "prometheus";
+          url = "http://localhost:9090";
+          isDefault = true;
+          jsonData.timeInterval = scrapeInterval;
+        }
+      ];
+    };
   };
 }
