@@ -15,6 +15,10 @@ in {
   # `grue` too so it can be edited without the cabinet's host key.
   "arcade/thegamesdbKey.age".publicKeys = [grue arcade];
   "grafanaKey.age".publicKeys = allHosts;
+  # Shared token between Grafana and grafana-image-renderer, as an env file
+  # (AUTH_TOKEN= for the renderer, GF_RENDERING_RENDERER_TOKEN= for Grafana).
+  # Only bunyip runs them; `grue` can edit it.
+  "grafanaRendererToken.age".publicKeys = [grue bunyip];
 
   # ── User secrets: grue ──────────────────────────────────────────────────
   "grue/goreleaser.age".publicKeys = [grue] ++ allHosts;
