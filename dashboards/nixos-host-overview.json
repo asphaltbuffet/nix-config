@@ -1765,8 +1765,8 @@
     },
     {
       "type": "stat",
-      "title": "Media errors",
-      "description": "NVMe media and data integrity errors. NVMe only.",
+      "title": "New media errors",
+      "description": "NVMe media and data integrity errors added during the selected time range (the lifetime total is a cumulative counter, so only a change matters). NVMe only.",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1779,14 +1779,15 @@
       },
       "targets": [
         {
+          "expr": "max_over_time(smartctl_device_media_errors{instance=~`(${host:regex}):[0-9]+`}[$__range]) - min_over_time(smartctl_device_media_errors{instance=~`(${host:regex}):[0-9]+`}[$__range])",
+          "legendFormat": "{{instance}} {{device}}",
+          "instant": true,
+          "range": false,
           "refId": "A",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
-          },
-          "expr": "smartctl_device_media_errors{instance=~`(${host:regex}):[0-9]+`}",
-          "legendFormat": "{{instance}} {{device}}",
-          "range": true
+          }
         }
       ],
       "fieldConfig": {
@@ -1919,8 +1920,8 @@
     },
     {
       "type": "timeseries",
-      "title": "SATA/SAS bad-sector counters",
-      "description": "Sum of the raw reallocated, pending, offline-uncorrectable and reported-uncorrectable sector counters, one line per disk. SATA/SAS only. Flat is fine, any rise is a warning. For the individual counters run: smartctl_device_attribute{attribute_name=~\"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable|Reported_Uncorrect\"}",
+      "title": "SATA/SAS bad-sector changes",
+      "description": "New reallocated, pending, offline-uncorrectable and reported-uncorrectable sectors per interval, summed per disk. The raw counters are lifetime totals that never go back down, so this shows only when one changes: empty or flat at 0 is healthy, any bar is an event. SATA/SAS only. To see the totals, query smartctl_device_attribute{attribute_value_type=\"raw\", attribute_name=~\"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable|Reported_Uncorrect\"}",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1938,7 +1939,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum by (instance, device)(smartctl_device_attribute{instance=~`(${host:regex}):[0-9]+`,attribute_value_type=\"raw\",attribute_name=~\"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable|Reported_Uncorrect\"})",
+          "expr": "sum by (instance, device)(max_over_time(smartctl_device_attribute{instance=~`(${host:regex}):[0-9]+`,attribute_value_type=\"raw\",attribute_name=~\"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable|Reported_Uncorrect\"}[$__rate_interval]) - min_over_time(smartctl_device_attribute{instance=~`(${host:regex}):[0-9]+`,attribute_value_type=\"raw\",attribute_name=~\"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable|Reported_Uncorrect\"}[$__rate_interval]))",
           "legendFormat": "{{instance}} {{device}}",
           "range": true
         }
@@ -1947,9 +1948,10 @@
         "defaults": {
           "unit": "short",
           "custom": {
-            "fillOpacity": 10,
+            "fillOpacity": 80,
             "lineWidth": 1,
-            "spanNulls": false
+            "spanNulls": false,
+            "drawStyle": "bars"
           }
         },
         "overrides": []
