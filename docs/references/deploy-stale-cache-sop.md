@@ -68,9 +68,9 @@ failure surfaces only in the consuming application, arbitrarily far away.
 - `test -s <path>` distinguishes it; `ls` alone does not.
 - Do **not** run the check under `sudo` as a non-wheel user — sudo fails for an
   unrelated reason and looks identical to the secret being absent.
-- Cross-check against another secret sharing the same host key (e.g.
-  `hcPingKey`). If that one has content, decryption is fine and the ciphertext
-  itself is empty.
+- Cross-check against another secret sharing the same host key (any other
+  `/run/agenix/*` file on that host). If that one has content, decryption is
+  fine and the ciphertext itself is empty.
 - A ~322-byte `.age` file with two recipients is an encrypted *empty* payload;
   real content shows up as a larger payload after the `--- ` header line.
 

@@ -3,13 +3,12 @@
 #
 # smartd watches every disk (-a: health status, error log, self-test log,
 # pre-fail attributes, pending/offline-uncorrectable sector counts) and, on a
-# problem, runs hc-smartd-notify, which sends a /fail ping to the
-# healthchecks.io check `smartd-<host>` (auto-created via ?create=1).
-# Problems only: no heartbeat, so laptops that sleep don't page. -M daily
-# repeats the ping while the problem persists. After fixing a disk, clear or
-# pause the `smartd-<host>` check in the healthchecks.io UI (pausing is
-# preferred: a success ping would start the default 1-day timer and, with no
-# heartbeat, the check would go down again a day later).
+# problem, runs smartd-alert, which pushes a priority-4 Alert
+# "<host>: smartd <failtype> on <device>" (ADR-0018). Only those two fields
+# (plus a `smartctl -a <device>` hint) are sent — never SMARTD_MESSAGE or
+# SMARTD_DEVICEINFO (serials); the topic is public. Problems only: no heartbeat, so laptops that sleep don't page.
+# -M daily repeats the alert while the problem persists; nothing to clear
+# after fixing a disk.
 #
 # Self-tests: Always-on hosts (host.alwaysOn) run a weekly short + monthly
 # long test overnight; other hosts a weekly short test at midday, skipped if
@@ -24,31 +23,20 @@
   pkgs,
   ...
 }: let
-  host = config.networking.hostName;
-
-  hcSmartdNotify = pkgs.writeShellApplication {
-    name = "hc-smartd-notify";
-    runtimeInputs = [pkgs.curl];
+  smartdAlert = pkgs.writeShellApplication {
+    name = "smartd-alert";
     text = ''
-      [[ -r /run/agenix/hcPingKey ]] \
-        || { echo "hc-smartd-notify: /run/agenix/hcPingKey not readable, skipping ping" >&2; exit 0; }
-      PING_KEY=$(< /run/agenix/hcPingKey)
-      slug="''${HC_SLUG:-smartd-${host}}"
-      printf 'host: %s\ndevice: %s\nfailtype: %s\n\n%s\n' \
-        "${host}" \
-        "''${SMARTD_DEVICEINFO:-''${SMARTD_DEVICE:-unknown}}" \
-        "''${SMARTD_FAILTYPE:-unknown}" \
-        "''${SMARTD_MESSAGE:-}" \
-        | curl -fsS --retry 3 --data-binary @- \
-            "https://hc-ping.com/$PING_KEY/$slug/fail?create=1" > /dev/null
-      unset PING_KEY
+      device="''${SMARTD_DEVICE:-unknown}"
+      exec ${config.alerts.package}/bin/alert --priority 4 --tag smartd \
+        --field "check=sudo smartctl -a $device" -- \
+        smartd "''${SMARTD_FAILTYPE:-unknown}" on "$device"
     '';
   };
 
   # Notify hook only. smartd directives are additive, so anything on the
   # DEFAULT line can't be dropped by an explicit device entry; checks live on
   # DEVICESCAN (and on each explicit device) instead.
-  notify = "-m <nomailer> -M exec ${hcSmartdNotify}/bin/hc-smartd-notify -M daily";
+  notify = "-m <nomailer> -M exec ${smartdAlert}/bin/smartd-alert -M daily";
 
   schedule =
     if config.host.alwaysOn

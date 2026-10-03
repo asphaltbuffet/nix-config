@@ -150,6 +150,16 @@ _Avoid_: auto-update, auto-upgrade, auto-switch
 The directory `/home/nixos/bootstrap-<hostname>/` on the live ISO where `nixos-bootstrap` saves generated files (hardware config, host pubkey, instructions) for transfer to an existing host.
 _Avoid_: output dir, bootstrap files
 
+### Monitoring
+
+**Alert**:
+A notification a host pushes when it detects a problem (a failed auto-deploy, a disk health warning). Sent only on problems — silence means nothing was detected, not that everything is fine.
+_Avoid_: ping, check, heartbeat
+
+**Liveness check**:
+Detection of a host going *silent* — a job that never ran, a host that stopped reporting — by noticing the absence of an expected signal. Applies only to **Always-on hosts**; hosts that sleep or power off are never liveness-checked, because their silence is normal.
+_Avoid_: heartbeat, dead-man's switch, health check
+
 ### Example dialogue
 
 > **Dev:** I want to add bunyip as a new host. Do I create a profile for it?

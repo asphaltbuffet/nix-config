@@ -221,7 +221,7 @@ with age to SSH public keys and stored as `.age` files in the repo.
 
 | Layer | Tool | Where secrets live |
 |---|---|---|
-| System secrets (e.g. healthchecks ping key) | agenix | `/run/agenix/hcPingKey` (tmpfs, root:root 0400) |
+| System secrets (e.g. Grafana secret key) | agenix | `/run/agenix/<name>` (tmpfs, root:root 0400) |
 | User secrets (API keys, tokens) | agenix | `/run/agenix/<name>` (tmpfs, user:user 0400) |
 | Bootstrap key distribution | 1Password `op` CLI | Host SSH keypairs in `Service` vault |
 

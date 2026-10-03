@@ -24,8 +24,8 @@
   };
 
   # thegamesdb.net scraper key. Owned by `arcade` because the home-manager
-  # activation script for that user reads it to render attract.cfg; root-owned
-  # 0400 (the default in common/agenix.nix) would be unreadable there.
+  # activation script for that user reads it to render attract.cfg; agenix's
+  # default root-owned 0400 would be unreadable there.
   age.secrets."arcade/thegamesdbKey" = {
     file = ../../../secrets/arcade/thegamesdbKey.age;
     owner = "arcade";
