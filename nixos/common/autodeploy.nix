@@ -5,7 +5,6 @@
   inputs,
   config,
   lib,
-  pkgs,
   ...
 }: {
   imports = [inputs.nixos-autodeploy.nixosModules.default];
@@ -31,46 +30,10 @@
   # Override with mkForce to give the system 5 minutes to settle first.
   systemd.timers.nixos-autodeploy.timerConfig.OnStartupSec = lib.mkForce "5min";
 
-  # Wire nixos-autodeploy into healthchecks.io so failed or missed runs are visible.
-  # Only active when autodeploy is enabled. The ping key is decrypted by agenix
-  # to /run/agenix/hcPingKey at activation time (see nixos/common/agenix.nix).
-  # The "-" prefixes allow the service to continue if monitoring fails.
-  # https://healthchecks.io/docs/monitoring_systemd_tasks/
-  systemd.services.nixos-autodeploy = lib.mkIf config.system.autoDeploy.enable (
-    let
-      host = config.networking.hostName;
-      hcPingStart = pkgs.writeShellApplication {
-        name = "hc-ping-start";
-        runtimeInputs = [pkgs.curl];
-        text = ''
-          [[ -r /run/agenix/hcPingKey ]] \
-            || { echo "hc-ping-start: /run/agenix/hcPingKey not readable, skipping ping" >&2; exit 0; }
-          PING_KEY=$(< /run/agenix/hcPingKey)
-          export PING_KEY
-          curl -fsS --retry 3 "https://hc-ping.com/$PING_KEY/nixos-autodeploy-${host}/start" > /dev/null
-          unset PING_KEY
-        '';
-      };
-      hcPingDone = pkgs.writeShellApplication {
-        name = "hc-ping-done";
-        runtimeInputs = [pkgs.curl];
-        text = ''
-          EXIT_STATUS="''${EXIT_STATUS:-0}"
-          [[ -r /run/agenix/hcPingKey ]] \
-            || { echo "hc-ping-done: /run/agenix/hcPingKey not readable, skipping ping" >&2; exit 0; }
-          PING_KEY=$(< /run/agenix/hcPingKey)
-          export PING_KEY
-          curl -fsS --retry 3 "https://hc-ping.com/$PING_KEY/nixos-autodeploy-${host}/$EXIT_STATUS" > /dev/null
-          unset PING_KEY
-        '';
-      };
-    in {
-      serviceConfig = {
-        Environment = "HOME=/root";
-        # "-" prefix means failure is non-fatal; service continues regardless.
-        ExecStartPre = "-${hcPingStart}/bin/hc-ping-start";
-        ExecStopPost = "-${hcPingDone}/bin/hc-ping-done";
-      };
-    }
-  );
+  # Push an Alert when a deploy fails (ADR-0018). Failure only — a host that
+  # is asleep and never runs the timer stays quiet, which is intended.
+  systemd.services.nixos-autodeploy = lib.mkIf config.system.autoDeploy.enable {
+    serviceConfig.Environment = "HOME=/root";
+    onFailure = ["alert@%n.service"];
+  };
 }
