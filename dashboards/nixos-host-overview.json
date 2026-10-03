@@ -622,7 +622,7 @@
     },
     {
       "type": "table",
-      "title": "Failed units",
+      "title": "Failed units (empty when none)",
       "description": "Needs node_exporter's systemd collector (services.nixosMetrics) — see dashboards/README.md. ",
       "datasource": {
         "type": "prometheus",
@@ -1919,8 +1919,8 @@
     },
     {
       "type": "timeseries",
-      "title": "SATA/SAS bad-sector attributes",
-      "description": "Raw values of reallocated/pending/uncorrectable sector counters. SATA/SAS only; any rise is a warning.",
+      "title": "SATA/SAS bad-sector counters",
+      "description": "Sum of the raw reallocated, pending, offline-uncorrectable and reported-uncorrectable sector counters, one line per disk. SATA/SAS only. Flat is fine, any rise is a warning. For the individual counters run: smartctl_device_attribute{attribute_name=~\"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable|Reported_Uncorrect\"}",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1938,8 +1938,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "smartctl_device_attribute{instance=~`(${host:regex}):[0-9]+`,attribute_value_type=\"raw\",attribute_name=~\"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable|Reported_Uncorrect\"}",
-          "legendFormat": "{{instance}} {{device}} {{attribute_name}}",
+          "expr": "sum by (instance, device)(smartctl_device_attribute{instance=~`(${host:regex}):[0-9]+`,attribute_value_type=\"raw\",attribute_name=~\"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable|Reported_Uncorrect\"})",
+          "legendFormat": "{{instance}} {{device}}",
           "range": true
         }
       ],
