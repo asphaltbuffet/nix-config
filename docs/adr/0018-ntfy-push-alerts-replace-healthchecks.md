@@ -8,7 +8,7 @@ A shared `alert` CLI and an `alert@.service` template live in `nixos/common/aler
 
 On public ntfy.sh the topic name *is* the credential — anyone who knows it can subscribe and can publish. It sits in plaintext in this public repo anyway. This is not critical infrastructure; the worst case is spoofed or snooped alerts, which is annoying, not harmful. If that happens, the topic moves into agenix (it is one Nix binding, so that is a one-module change plus a rekey). Do not "fix" this by encrypting it pre-emptively.
 
-Because the topic is world-readable, **Alerts carry titles only — never log content.** There is no way to guarantee a journal excerpt is free of secrets, so `alert@.service` sends the failed unit's name and nothing else; details are one `journalctl -u` away on the host. smartd's title adds only fields drawn from closed value sets — device path and `SMARTD_FAILTYPE` — and omits `SMARTD_DEVICEINFO` (serial numbers) and the free-form `SMARTD_MESSAGE`.
+Because the topic is world-readable, **Alerts carry titles only — never log content.** There is no way to guarantee a journal excerpt is free of secrets, so `alert@.service` sends the failed unit's name and nothing else; details are one `journalctl -u` away on the host. The ntfy message body itself is always the fixed string `see journalctl on <host>`, never caller-supplied text, so nothing but the title varies per alert. smartd's title adds only fields drawn from closed value sets — device path and `SMARTD_FAILTYPE` — and omits `SMARTD_DEVICEINFO` (serial numbers) and the free-form `SMARTD_MESSAGE`.
 
 ## Consequences
 

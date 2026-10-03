@@ -19,13 +19,18 @@
     name = "alert";
     runtimeInputs = [pkgs.curl];
     text = ''
+      usage() {
+        echo "usage: alert [-p 1-5] [-t TAG]... [-n] [--] <text>..." >&2
+        exit 2
+      }
+
       priority=3
       tags=()
       dry_run=0
       while [[ $# -gt 0 ]]; do
         case "$1" in
-          -p | --priority) priority="$2"; shift 2 ;;
-          -t | --tag) tags+=("$2"); shift 2 ;;
+          -p | --priority) [[ $# -ge 2 ]] || usage; priority="$2"; shift 2 ;;
+          -t | --tag) [[ $# -ge 2 ]] || usage; tags+=("$2"); shift 2 ;;
           -n | --dry-run) dry_run=1; shift ;;
           --) shift; break ;;
           -*) echo "alert: unknown option: $1" >&2; exit 2 ;;
@@ -34,8 +39,7 @@
       done
 
       if [[ $# -eq 0 ]]; then
-        echo "usage: alert [-p 1-5] [-t TAG]... [-n] [--] <text>..." >&2
-        exit 2
+        usage
       fi
       if [[ ! "$priority" =~ ^[1-5]$ ]]; then
         echo "alert: priority must be 1-5, got: $priority" >&2
@@ -44,18 +48,20 @@
 
       tags+=("${host}")
       tag_header=$(IFS=,; echo "''${tags[*]}")
-      message="${host}: $*"
+      title="${host}: $*"
+      body="see journalctl on ${host}"
       url="https://ntfy.sh/${cfg.topic}"
 
       if [[ $dry_run -eq 1 ]]; then
-        printf 'POST %s\nPriority: %s\nTags: %s\n\n%s\n' "$url" "$priority" "$tag_header" "$message"
+        printf 'POST %s\nTitle: %s\nPriority: %s\nTags: %s\n\n%s\n' "$url" "$title" "$priority" "$tag_header" "$body"
         exit 0
       fi
 
       curl -fsS --retry 3 \
+        -H "Title: $title" \
         -H "Priority: $priority" \
         -H "Tags: $tag_header" \
-        -d "$message" \
+        -d "$body" \
         "$url" > /dev/null
     '';
   };
@@ -80,6 +86,8 @@ in {
     # Template: alert@<unit>.service. %i is the failed unit's full name.
     systemd.services."alert@" = {
       description = "ntfy Alert for failed unit %i";
+      after = ["network-online.target"];
+      wants = ["network-online.target"];
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${alert}/bin/alert --tag %i -- %i failed";
