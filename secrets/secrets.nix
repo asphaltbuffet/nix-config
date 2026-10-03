@@ -11,8 +11,6 @@ let
   grue = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBCNN0FY6PqVhfejv10JDfq56G1DTR4RWNjPpt/LSNRN ben";
 in {
   # ── System secrets ──────────────────────────────────────────────────────
-  "hcPingKey.age".publicKeys = allHosts;
-
   # thegamesdb.net scraper API key. Only the cabinet needs it; encrypted to
   # `grue` too so it can be edited without the cabinet's host key.
   "arcade/thegamesdbKey.age".publicKeys = [grue arcade];
