@@ -5,8 +5,8 @@
 # pre-fail attributes, pending/offline-uncorrectable sector counts) and, on a
 # problem, runs smartd-alert, which pushes a priority-4 Alert
 # "<host>: smartd <failtype> on <device>" (ADR-0018). Only those two fields
-# are sent — never SMARTD_MESSAGE or SMARTD_DEVICEINFO (serials); the topic
-# is public. Problems only: no heartbeat, so laptops that sleep don't page.
+# (plus a `smartctl -a <device>` hint) are sent — never SMARTD_MESSAGE or
+# SMARTD_DEVICEINFO (serials); the topic is public. Problems only: no heartbeat, so laptops that sleep don't page.
 # -M daily repeats the alert while the problem persists; nothing to clear
 # after fixing a disk.
 #
@@ -26,8 +26,10 @@
   smartdAlert = pkgs.writeShellApplication {
     name = "smartd-alert";
     text = ''
-      exec ${config.alerts.package}/bin/alert --priority 4 --tag smartd -- \
-        smartd "''${SMARTD_FAILTYPE:-unknown}" on "''${SMARTD_DEVICE:-unknown}"
+      device="''${SMARTD_DEVICE:-unknown}"
+      exec ${config.alerts.package}/bin/alert --priority 4 --tag smartd \
+        --field "check=sudo smartctl -a $device" -- \
+        smartd "''${SMARTD_FAILTYPE:-unknown}" on "$device"
     '';
   };
 
