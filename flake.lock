@@ -477,7 +477,8 @@
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_4",
         "nur": "nur",
-        "serena": "serena"
+        "serena": "serena",
+        "wherefolk": "wherefolk"
       }
     },
     "rust-analyzer-src": {
@@ -628,6 +629,22 @@
       "original": {
         "owner": "pyproject-nix",
         "repo": "uv2nix",
+        "type": "github"
+      }
+    },
+    "wherefolk": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1791084287,
+        "narHash": "sha256-+VkCOpWgLno8ikLkPlLEA6/kjFWrUeaufp1O2wwv8yc=",
+        "owner": "asphaltbuffet",
+        "repo": "wherefolk",
+        "rev": "84f5876e90fee08806d20a513ac067ad93c9550b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "asphaltbuffet",
+        "repo": "wherefolk",
         "type": "github"
       }
     }

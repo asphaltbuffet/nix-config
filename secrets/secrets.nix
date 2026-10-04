@@ -20,6 +20,9 @@ in {
   # Only bunyip runs them; `grue` can edit it.
   "grafanaRendererToken.age".publicKeys = [grue bunyip];
 
+  # wherefolk container env (TS_AUTHKEY, passphrase, version). Only bunyip runs it.
+  "wherefolk-env.age".publicKeys = [grue bunyip];
+
   # ── User secrets: grue ──────────────────────────────────────────────────
   "grue/goreleaser.age".publicKeys = [grue] ++ allHosts;
   "grue/anthropic.age".publicKeys = [grue] ++ allHosts;
