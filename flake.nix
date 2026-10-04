@@ -41,6 +41,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Compose file and Tailscale Serve config for nixos/common/wherefolk.nix.
+    wherefolk = {
+      url = "github:asphaltbuffet/wherefolk";
+      flake = false;
+    };
+
     serena = {
       url = "github:oraios/serena";
       inputs.nixpkgs.follows = "nixpkgs";

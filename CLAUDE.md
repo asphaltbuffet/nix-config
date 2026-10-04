@@ -42,6 +42,7 @@ This document uses **progressive disclosure** to optimize LLM working efficiency
 | Deploy "succeeded" but nothing changed, empty agenix secret, scraper says system not recognized | `docs/references/deploy-stale-cache-sop.md` | flake registry TTL needs `--refresh`; 0-byte secrets decrypt silently; scraper cache poisons permanently |
 | MAME games fail to boot, "ROM needs redump", auditing or re-cutting the arcade ROM set | `docs/references/mame-rom-recut.md` | version-locked ROM sets, `-verifyroms` audit, rebuild + swap |
 | igir, 1G1R, ROM curation, DAT auditing, No-Intro/Redump/TOSEC, `arcade-curated` | `docs/adr/0016-igir-curates-roms-runbook-on-nas.md` | igir supersedes the copy loop; runbook lives on the NAS; igir cannot write CHD; MAME needs `--input-checksum-quick` |
+| Editing the tailnet policy, tagging a node, "connection times out" between hosts, wherefolk on bunyip | `docs/adr/0019-tailnet-policy-least-privilege-bunyip-tagged.md`, `tailscale/policy.hujson` | default-deny: every flow needs a grant; bunyip is `tag:server`; console is authoritative, paste the file after edits; emails are placeholders |
 
 ---
 

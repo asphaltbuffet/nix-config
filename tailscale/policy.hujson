@@ -1,0 +1,124 @@
+// Tailnet policy (armadillo-toad.ts.net). Default-deny: every flow is listed.
+//
+// The Tailscale admin console is authoritative; this file is the reviewed
+// copy. Paste it into Access controls after editing (the console runs `tests`
+// on save and refuses a policy that fails them).
+//
+// Emails here are PLACEHOLDERS (the repo is public). Replace operator@ and
+// editor@example.com with the real logins in the console before saving.
+{
+	"groups": {
+		"group:operator":        ["operator@example.com"],
+		"group:wherefolk-users": ["operator@example.com", "editor@example.com"],
+	},
+
+	// Only tailnet admins may apply these tags.
+	"tagOwners": {
+		// bunyip: always-on server, scrapes the fleet, subnet router.
+		"tag:server":    ["autogroup:admin"],
+		// The wherefolk Tailscale sidecar (OAuth client mints nodes with this tag).
+		"tag:wherefolk": ["autogroup:admin"],
+	},
+
+	"grants": [
+		// Operator's own (untagged) devices reach each other: laptop/desktop
+		// SSH, arcade ROM scp, etc. Same reach as the old allow-all, scoped to self.
+		{"src": ["group:operator"], "dst": ["autogroup:self"], "ip": ["*"]},
+
+		// Operator to bunyip: SSH (Tailscale SSH needs port 22 granted here too)
+		// and Grafana.
+		{"src": ["group:operator"], "dst": ["tag:server"], "ip": ["tcp:22", "tcp:3000"]},
+
+		// bunyip's Prometheus scrapes node_exporter and smartctl_exporter on the
+		// operator's devices (nixos/common/monitoring.nix). Scrape-only: a
+		// compromised bunyip cannot reach SSH on the laptops. NixOS trusts
+		// tailscale0 in its firewall, so this grant is the only gate on these ports.
+		{"src": ["tag:server"], "dst": ["group:operator"], "ip": ["tcp:9100", "tcp:9633"]},
+
+		// Subnet router: operator reaches the home LAN through bunyip.
+		{"src": ["group:operator"], "dst": ["192.168.86.0/24"], "ip": ["*"]},
+
+		// wherefolk: 443 ONLY. The app also listens on 8080 over the shared
+		// loopback, and Serve's TLS is bypassed if that port is ever granted.
+		{"src": ["group:wherefolk-users"], "dst": ["tag:wherefolk"], "ip": ["tcp:443"]},
+	],
+
+	// bunyip's advertised LAN route is approved without a console visit.
+	"autoApprovers": {
+		"routes": {
+			"192.168.86.0/24": ["tag:server"],
+		},
+	},
+
+	// No nodeAttrs: Funnel is not granted to anyone. Do NOT add a "funnel" attr
+	// for tag:wherefolk or "*".
+
+	"ssh": [
+		// Own devices.
+		{
+			"action": "accept",
+			"src":    ["autogroup:member"],
+			"dst":    ["autogroup:self"],
+			"users":  ["autogroup:nonroot"],
+		},
+		{
+			"action": "check",
+			"src":    ["autogroup:member"],
+			"dst":    ["autogroup:self"],
+			"users":  ["root"],
+		},
+		// bunyip is tagged, so autogroup:self no longer covers it.
+		{
+			"action": "accept",
+			"src":    ["group:operator"],
+			"dst":    ["tag:server"],
+			"users":  ["autogroup:nonroot"],
+		},
+		{
+			"action": "check",
+			"src":    ["group:operator"],
+			"dst":    ["tag:server"],
+			"users":  ["root"],
+		},
+	],
+
+	// The console refuses to save a policy that fails any of these.
+	"tests": [
+		{
+			// Editor: wherefolk 443 and nothing else.
+			"src":    "editor@example.com",
+			"accept": ["tag:wherefolk:443"],
+			"deny": [
+				"tag:wherefolk:22",
+				"tag:wherefolk:8080",
+				"tag:server:22",
+				"tag:server:3000",
+				"192.168.86.10:22",
+			],
+		},
+		{
+			"src": "operator@example.com",
+			"accept": [
+				"tag:wherefolk:443",
+				"tag:server:22",
+				"tag:server:3000",
+				"192.168.86.10:22",
+			],
+			"deny": [
+				"tag:wherefolk:22",
+				"tag:wherefolk:8080",
+				"tag:server:9100",
+			],
+		},
+		{
+			// A compromised sidecar reaches nothing.
+			"src": "tag:wherefolk",
+			"deny": ["tag:server:22", "tag:server:3000", "192.168.86.10:22"],
+		},
+		{
+			// bunyip is not a general-purpose peer.
+			"src": "tag:server",
+			"deny": ["tag:wherefolk:443", "192.168.86.10:22"],
+		},
+	],
+}

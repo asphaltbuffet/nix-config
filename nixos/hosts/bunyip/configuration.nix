@@ -4,6 +4,7 @@
     ../../common/users.nix
     ../../profiles/base.nix
     ../../profiles/server.nix
+    ../../common/wherefolk.nix
   ];
 
   networking.hostName = "bunyip";
