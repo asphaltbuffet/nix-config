@@ -50,7 +50,7 @@ in {
         # dependsOn makes systemd Requires=: restarting the sidecar restarts the
         # app too, so it rejoins the sidecar's fresh network namespace.
         dependsOn = ["stirling-ts"];
-        environment.DOCKER_ENABLE_SECURITY = "false";
+        environment.SECURITY_ENABLELOGIN = "false";
         # Shares the sidecar's namespace: 127.0.0.1:8080 here is where Serve
         # proxies. No ports are published on the host.
         extraOptions = [
