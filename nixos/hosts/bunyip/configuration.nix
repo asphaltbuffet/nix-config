@@ -5,6 +5,7 @@
     ../../profiles/base.nix
     ../../profiles/server.nix
     ../../common/wherefolk.nix
+    ../../common/stirling-pdf.nix
   ];
 
   networking.hostName = "bunyip";
