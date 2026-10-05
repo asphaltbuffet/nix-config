@@ -23,6 +23,9 @@ in {
   # wherefolk container env (TS_AUTHKEY, passphrase, version). Only bunyip runs it.
   "wherefolk-env.age".publicKeys = [grue bunyip];
 
+  # Stirling-PDF Tailscale sidecar env (TS_AUTHKEY, OAuth client for tag:stirling). Only bunyip runs it.
+  "stirling-env.age".publicKeys = [grue bunyip];
+
   # ── User secrets: grue ──────────────────────────────────────────────────
   "grue/goreleaser.age".publicKeys = [grue] ++ allHosts;
   "grue/anthropic.age".publicKeys = [grue] ++ allHosts;
