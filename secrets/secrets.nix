@@ -26,6 +26,12 @@ in {
   # Stirling-PDF Tailscale sidecar env (TS_AUTHKEY, OAuth client for tag:stirling). Only bunyip runs it.
   "stirling-env.age".publicKeys = [grue bunyip];
 
+  # micasa relay (ADR-0021): one env file per container, only bunyip runs them.
+  # The Postgres password appears in both db-env and relay-env (DATABASE_URL).
+  "micasa-ts-env.age".publicKeys = [grue bunyip];
+  "micasa-db-env.age".publicKeys = [grue bunyip];
+  "micasa-relay-env.age".publicKeys = [grue bunyip];
+
   # ── User secrets: grue ──────────────────────────────────────────────────
   "grue/goreleaser.age".publicKeys = [grue] ++ allHosts;
   "grue/anthropic.age".publicKeys = [grue] ++ allHosts;
