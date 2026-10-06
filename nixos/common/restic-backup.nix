@@ -156,21 +156,24 @@
       text = ''
         ${prelude repo}
 
-        if ! restic forget --prune --retry-lock 1h \
-          --keep-daily 7 --keep-weekly 4 --keep-monthly 6; then
+        fail() {
           restic-metrics repo-fail ${textfileDir} ${repo}
           exit 1
-        fi
+        }
+
+        restic forget --prune --retry-lock 1h \
+          --keep-daily 7 --keep-weekly 4 --keep-monthly 6 || fail
 
         # A corrupt repo is worse than a missed night: priority 4 (the unit
         # failure then also sends the generic alert; the duplicate is accepted).
+        # The metric is written first; a failing alert must not change the outcome.
         if ! restic check --retry-lock 1h --read-data-subset=5%; then
-          ${alert} --priority 4 --tag restic --field "repo=${repo}" -- restic check failed
           restic-metrics repo-fail ${textfileDir} ${repo}
+          ${alert} --priority 4 --tag restic --field "repo=${repo}" -- restic check failed || true
           exit 1
         fi
 
-        raw=$(restic stats --mode raw-data --json | jq -r '.total_size')
+        raw=$(restic stats --mode raw-data --json | jq -er '.total_size') || fail
         restic-metrics repo-ok ${textfileDir} ${repo} "$raw"
       '';
     };
