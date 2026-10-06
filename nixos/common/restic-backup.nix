@@ -19,6 +19,7 @@
   nasRoot = "/nas/public/backups";
   textfileDir = config.services.nixosMetrics.textfileDirectory;
   excludeFile = ./restic-backup/excludes.txt;
+  alert = "${config.alerts.package}/bin/alert";
 
   metrics = pkgs.writeShellApplication {
     name = "restic-metrics";
@@ -147,6 +148,56 @@
     # an empty directory on the root disk.
     unitConfig.RequiresMountsFor = ["/srv"];
   };
+
+  mkPruneScript = repo:
+    pkgs.writeShellApplication {
+      name = "restic-prune-${repo}";
+      runtimeInputs = [pkgs.restic pkgs.jq pkgs.coreutils metrics];
+      text = ''
+        ${prelude repo}
+
+        if ! restic forget --prune --retry-lock 1h \
+          --keep-daily 7 --keep-weekly 4 --keep-monthly 6; then
+          restic-metrics repo-fail ${textfileDir} ${repo}
+          exit 1
+        fi
+
+        # A corrupt repo is worse than a missed night: priority 4 (the unit
+        # failure then also sends the generic alert; the duplicate is accepted).
+        if ! restic check --retry-lock 1h --read-data-subset=5%; then
+          ${alert} --priority 4 --tag restic --field "repo=${repo}" -- restic check failed
+          restic-metrics repo-fail ${textfileDir} ${repo}
+          exit 1
+        fi
+
+        raw=$(restic stats --mode raw-data --json | jq -r '.total_size')
+        restic-metrics repo-ok ${textfileDir} ${repo} "$raw"
+      '';
+    };
+
+  mkPruneUnits = repo: {
+    services."restic-prune-${repo}" = {
+      description = "restic prune + check of ${nasRoot}/${repo}";
+      after = ["network-online.target"];
+      wants = ["network-online.target"];
+      onFailure = ["alert@%n.service"];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = lib.getExe (mkPruneScript repo);
+        Nice = 19;
+        IOSchedulingClass = "idle";
+        PrivateTmp = true;
+      };
+    };
+    timers."restic-prune-${repo}" = {
+      wantedBy = ["timers.target"];
+      timerConfig = {
+        OnCalendar = "Sun *-*-* 04:00:00";
+        RandomizedDelaySec = "2h";
+        Persistent = true;
+      };
+    };
+  };
 in {
   options.services.resticBackup = {
     home = {
@@ -166,14 +217,20 @@ in {
         file = ../../secrets + "/restic-${homeRepo}.age";
         mode = "0400";
       };
-      systemd = {inherit (homeUnits) services timers;};
+      systemd = {
+        services = homeUnits.services // (mkPruneUnits homeRepo).services;
+        timers = homeUnits.timers // (mkPruneUnits homeRepo).timers;
+      };
     })
     (lib.mkIf cfg.srv.enable {
       age.secrets."restic-${srvRepo}" = {
         file = ../../secrets + "/restic-${srvRepo}.age";
         mode = "0400";
       };
-      systemd = {inherit (srvUnits) services timers;};
+      systemd = {
+        services = srvUnits.services // (mkPruneUnits srvRepo).services;
+        timers = srvUnits.timers // (mkPruneUnits srvRepo).timers;
+      };
     })
   ];
 }
