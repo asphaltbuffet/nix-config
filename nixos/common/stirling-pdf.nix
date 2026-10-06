@@ -76,15 +76,19 @@ in {
         # --read-only. The entrypoint starts as root, creates users, edits
         # /etc/passwd and writes under /usr and /var/lib before dropping to uid
         # 1000 with setpriv; upstream supports neither flag. The root phase
-        # needs only SETUID/SETGID for setpriv, and the app holds no
-        # capabilities once it has dropped. Add CHOWN/DAC_OVERRIDE/FOWNER only
-        # if `docker logs stirling-pdf` shows a permission error naming them.
+        # needs SETUID/SETGID for setpriv, and CHOWN/DAC_OVERRIDE/FOWNER for the
+        # chown -R / chmod -R it runs building the LibreOffice profile template
+        # (scripts/init-without-ocr.sh). The app holds no capabilities once it
+        # has dropped to uid 1000.
         extraOptions =
           baseline
           ++ [
             "--network=container:stirling-ts"
             "--cap-add=SETUID"
             "--cap-add=SETGID"
+            "--cap-add=CHOWN"
+            "--cap-add=DAC_OVERRIDE"
+            "--cap-add=FOWNER"
             "--memory=2g"
             "--cpus=2"
             "--pids-limit=1024"

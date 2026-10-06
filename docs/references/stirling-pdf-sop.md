@@ -19,7 +19,7 @@ Tailnet service on bunyip: `stirling-ts` (Tailscale sidecar) + `stirling-pdf` (a
 | Connection times out from a member device | Policy not pasted, or tag missing in console | Re-paste policy; check the node is tagged `tag:stirling` |
 | Sidecar logs "invalid key" / node never appears | Empty or wrong `stirling-env.age` | Check `/run/agenix/stirling-env` is non-empty; re-create OAuth client |
 | New node every restart (`stirling-pdf-1`, `-2`…) | `stirling-ts-state` volume lost or `TS_STATE_DIR` unset | Restore volume; delete stale nodes in console |
-| `stirling-pdf` exits at start with a permission error | A capability beyond SETUID/SETGID is needed | Read `docker logs stirling-pdf`; add only the capability the error names (CHOWN, DAC_OVERRIDE, FOWNER) |
+| `stirling-pdf` restarts in a loop, logs stop after the "Binary Versions" block | The init script lacks a capability it needs | `docker inspect -f "{{.State.ExitCode}}" stirling-pdf` and `journalctl -u docker-stirling-pdf`; add only the capability the error names |
 | Sidecar will not start after the baseline change | `--read-only` is untested for containerboot | Remove `--read-only` and the two `--tmpfs` lines from `stirling-ts` |
 | App OOM-killed during large conversion | 2 GB cap | Raise `--memory` after checking bunyip's free RAM |
 
