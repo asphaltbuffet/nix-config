@@ -52,3 +52,11 @@ kernel-modules of the booted vs. current system.
 
 Prometheus only needs to scrape ports 9100 (and 9633 for SMART) with the same
 host in `instance`.
+
+## Backups (`backups.json`)
+
+Restic backup health (ADR-0022). Needs the `restic_*` textfile metrics written by
+`nixos/common/restic-backup.nix` (hosts with `services.resticBackup.*.enable`).
+"Restore size" is the logical size of a source's latest snapshot; repository
+size is physical. Freshness panels are informational: a laptop that was off the
+home network legitimately ages, and nothing alerts on it.
