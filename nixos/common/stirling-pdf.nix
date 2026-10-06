@@ -11,6 +11,13 @@
   pkgs,
   ...
 }: let
+  # Container baseline (ADR-0020): every container service starts from these
+  # and adds only the capabilities it proves it needs.
+  baseline = [
+    "--cap-drop=ALL"
+    "--security-opt=no-new-privileges"
+  ];
+
   # ${TS_CERT_DOMAIN} is expanded by containerboot, not Nix, hence the escapes.
   serveConfig = pkgs.writeText "stirling-pdf-serve.json" (builtins.toJSON {
     TCP."443".HTTPS = true;
@@ -43,6 +50,17 @@ in {
           "stirling-ts-state:/var/lib/tailscale"
           "${serveConfig}:/config/serve.json:ro"
         ];
+        # Userspace mode needs no capabilities. Read-only root is untested for
+        # containerboot: if it fails, drop "--read-only" and the tmpfs lines.
+        extraOptions =
+          baseline
+          ++ [
+            "--read-only"
+            "--tmpfs=/tmp:rw,size=16m"
+            "--tmpfs=/var/run:rw,size=16m"
+            "--memory=256m"
+            "--pids-limit=256"
+          ];
       };
 
       stirling-pdf = {
@@ -53,11 +71,24 @@ in {
         environment.SECURITY_ENABLELOGIN = "false";
         # Shares the sidecar's namespace: 127.0.0.1:8080 here is where Serve
         # proxies. No ports are published on the host.
-        extraOptions = [
-          "--network=container:stirling-ts"
-          "--memory=2g"
-          "--cpus=2"
-        ];
+        #
+        # Documented exceptions to the baseline (ADR-0020): no --user and no
+        # --read-only. The entrypoint starts as root, creates users, edits
+        # /etc/passwd and writes under /usr and /var/lib before dropping to uid
+        # 1000 with setpriv; upstream supports neither flag. The root phase
+        # needs only SETUID/SETGID for setpriv, and the app holds no
+        # capabilities once it has dropped. Add CHOWN/DAC_OVERRIDE/FOWNER only
+        # if `docker logs stirling-pdf` shows a permission error naming them.
+        extraOptions =
+          baseline
+          ++ [
+            "--network=container:stirling-ts"
+            "--cap-add=SETUID"
+            "--cap-add=SETGID"
+            "--memory=2g"
+            "--cpus=2"
+            "--pids-limit=1024"
+          ];
       };
     };
   };

@@ -11,7 +11,7 @@ Tailnet service on bunyip: `stirling-ts` (Tailscale sidecar) + `stirling-pdf` (a
 - `https://stirling-pdf.armadillo-toad.ts.net` loads from a tailnet device.
 - `curl --max-time 5 http://stirling-pdf.armadillo-toad.ts.net:8080` fails.
 - LAN host: `curl --max-time 5 http://192.168.86.<bunyip>:8080` fails.
-- `ssh bunyip docker ps` shows both containers; `docker logs stirling-pdf` has no `Read-only file system`.
+- `ssh bunyip docker ps` shows both containers; `docker logs stirling-pdf` shows no permission errors.
 
 ## Symptoms
 | Symptom | Cause | Fix |
@@ -19,7 +19,8 @@ Tailnet service on bunyip: `stirling-ts` (Tailscale sidecar) + `stirling-pdf` (a
 | Connection times out from a member device | Policy not pasted, or tag missing in console | Re-paste policy; check the node is tagged `tag:stirling` |
 | Sidecar logs "invalid key" / node never appears | Empty or wrong `stirling-env.age` | Check `/run/agenix/stirling-env` is non-empty; re-create OAuth client |
 | New node every restart (`stirling-pdf-1`, `-2`…) | `stirling-ts-state` volume lost or `TS_STATE_DIR` unset | Restore volume; delete stale nodes in console |
-| Conversion fails with `Read-only file system` | A new write path | `docker diff stirling-pdf`, add a `--tmpfs` in the module |
+| `stirling-pdf` exits at start with a permission error | A capability beyond SETUID/SETGID is needed | Read `docker logs stirling-pdf`; add only the capability the error names (CHOWN, DAC_OVERRIDE, FOWNER) |
+| Sidecar will not start after the baseline change | `--read-only` is untested for containerboot | Remove `--read-only` and the two `--tmpfs` lines from `stirling-ts` |
 | App OOM-killed during large conversion | 2 GB cap | Raise `--memory` after checking bunyip's free RAM |
 
 ## Upgrade / rollback
