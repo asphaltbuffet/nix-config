@@ -150,6 +150,20 @@ _Avoid_: auto-update, auto-upgrade, auto-switch
 The directory `/home/nixos/bootstrap-<hostname>/` on the live ISO where `nixos-bootstrap` saves generated files (hardware config, host pubkey, instructions) for transfer to an existing host.
 _Avoid_: output dir, bootstrap files
 
+### Hosted services
+
+**Tailnet service**:
+An application running in a container on an **Always-on host** that is reachable only over the tailnet, never on the home LAN. It has its own tailnet identity (via a [[Tailnet sidecar]]) and its own policy tag, so access to it is granted independently of access to the host. wherefolk and Stirling-PDF are the two.
+_Avoid_: homelab app, self-hosted app, docker service
+
+**Tailnet sidecar**:
+A Tailscale node running beside a **Tailnet service**'s application, sharing its network, that gives the service its own tailnet identity and terminates TLS for it. Registered under a per-service policy tag, so a compromised service can reach nothing it was not explicitly granted. The sidecar, not the host, is what tailnet policy sees.
+_Avoid_: proxy, tunnel, VPN container
+
+**Tailnet member**:
+A user account in the tailnet, as opposed to a device shared in from another tailnet. "Any member" access means every such account, and no one outside the tailnet.
+_Avoid_: user (ambiguous with the host **Users**), peer, guest
+
 ### Monitoring
 
 **Alert**:

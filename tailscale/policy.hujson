@@ -18,6 +18,8 @@
 		"tag:server":    ["autogroup:admin"],
 		// The wherefolk Tailscale sidecar (OAuth client mints nodes with this tag).
 		"tag:wherefolk": ["autogroup:admin"],
+		// The Stirling-PDF Tailscale sidecar (its own OAuth client mints nodes with this tag).
+		"tag:stirling": ["autogroup:admin"],
 	},
 
 	"grants": [
@@ -41,6 +43,11 @@
 		// wherefolk: 443 ONLY. The app also listens on 8080 over the shared
 		// loopback, and Serve's TLS is bypassed if that port is ever granted.
 		{"src": ["group:wherefolk-users"], "dst": ["tag:wherefolk"], "ip": ["tcp:443"]},
+
+		// Stirling-PDF: any tailnet member, 443 ONLY. The app also listens on
+		// 8080 over the sidecar's shared loopback; granting it would bypass
+		// Serve's TLS.
+		{"src": ["autogroup:member"], "dst": ["tag:stirling"], "ip": ["tcp:443"]},
 	],
 
 	// bunyip's advertised LAN route is approved without a console visit.
@@ -119,6 +126,22 @@
 			// bunyip is not a general-purpose peer.
 			"src": "tag:server",
 			"deny": ["tag:wherefolk:443", "192.168.86.10:22"],
+		},
+		{
+			// Any member: Stirling-PDF 443 and nothing else on it.
+			"src":    "editor@example.com",
+			"accept": ["tag:stirling:443"],
+			"deny":   ["tag:stirling:22", "tag:stirling:8080"],
+		},
+		{
+			// A compromised Stirling sidecar reaches nothing.
+			"src": "tag:stirling",
+			"deny": [
+				"tag:server:22",
+				"tag:server:3000",
+				"tag:wherefolk:443",
+				"192.168.86.10:22",
+			],
 		},
 	],
 }
