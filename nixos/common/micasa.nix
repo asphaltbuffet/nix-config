@@ -82,6 +82,16 @@ in {
     '';
   };
 
+  # Non-root sidecar needs a state dir it owns: a fresh named volume is
+  # root-owned and tailscaled cannot chmod it (it falls back to an in-memory
+  # store, i.e. a new node each restart).
+  systemd.tmpfiles.rules = ["d /var/lib/micasa-ts 0700 61001 61001 -"];
+
+  # Postgres refuses TCP while initdb runs on first boot; the relay exits and is
+  # restarted. Without a delay, systemd's default start limit (5 in 10 s) can
+  # trip and leave it failed.
+  systemd.services.docker-micasa-relay.serviceConfig.RestartSec = "5s";
+
   virtualisation.oci-containers = {
     backend = "docker";
     containers = {
@@ -124,7 +134,7 @@ in {
           TS_USERSPACE = "true";
         };
         volumes = [
-          "micasa-ts-state:/var/lib/tailscale"
+          "/var/lib/micasa-ts:/var/lib/tailscale"
           "${serveConfig}:/config/serve.json:ro"
         ];
         # Egress for the control plane; micasa-db so the relay, which shares
@@ -133,10 +143,12 @@ in {
         extraOptions =
           baseline
           ++ [
+            "--user=61001:61001"
             "--read-only"
             "--tmpfs=/tmp:rw,size=16m"
             "--tmpfs=/var/run:rw,size=16m"
             "--memory=256m"
+            "--cpus=0.5"
             "--pids-limit=256"
           ];
       };
@@ -144,9 +156,11 @@ in {
       micasa-relay = {
         image = "micasa-relay:${relayImage.imageTag}";
         imageStream = relayImage;
-        # Requires= on both: a sidecar restart restarts the relay so it rejoins
-        # the fresh namespace. Postgres may still be initialising on first boot;
-        # the relay exits and systemd restarts it until it connects.
+        # Requires= on both: an explicit restart of the sidecar restarts the
+        # relay so it rejoins the fresh namespace. A crash-restart of the sidecar
+        # does not, leaving the relay in a dead namespace (Serve returns 502);
+        # see the SOP. Postgres may still be initialising on first boot; the
+        # relay exits and systemd restarts it until it connects.
         dependsOn = ["micasa-ts" "micasa-postgres"];
         environmentFiles = [config.age.secrets.micasa-relay-env.path];
         # BLOB_QUOTA deliberately unset (unlimited, ADR-0021).

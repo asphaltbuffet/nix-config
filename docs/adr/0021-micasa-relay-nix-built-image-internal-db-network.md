@@ -19,6 +19,7 @@ micasa is a terminal app; each machine keeps its own SQLite database and syncs e
 
 - micasa updates are a manual tag edit, not a Renovate PR; rollback is still reverting the commit.
 - The sidecar needs egress and the `--internal` network at once, but Docker refuses to combine the default `bridge` with a user-defined network, so it joins a user-defined `micasa-egress` network instead.
-- Upstream verified compatible with the full ADR-0020 baseline: Postgres as `--user=70:70` and the relay as `65534`, both `--read-only` with `--cap-drop=ALL`; no exceptions.
+- All three containers meet the full ADR-0020 baseline with no exceptions: Postgres `--user=70:70`, relay `65534`, sidecar `61001` with its state in `/var/lib/micasa-ts` (tmpfiles) instead of a named volume.
+- The relay listens on all interfaces of the sidecar's namespace (plain HTTP reachable from the bunyip host and `micasa-db`, never from the tailnet or LAN) and has outbound internet via `micasa-egress`, both inherent to sharing the sidecar's namespace.
 - The relay is the first stateful container service, and `micasa-pgdata` the first volume whose loss costs more than a re-registered node.
 - `BLOB_QUOTA` is left unset (unlimited): any tailnet member can create a household and store blobs.

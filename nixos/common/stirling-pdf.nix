@@ -25,6 +25,11 @@ in {
     mode = "0400";
   };
 
+  # Non-root sidecar needs a state dir it owns: a fresh named volume is
+  # root-owned and tailscaled cannot chmod it (it falls back to an in-memory
+  # store, i.e. a new node each restart).
+  systemd.tmpfiles.rules = ["d /var/lib/stirling-ts 0700 61002 61002 -"];
+
   virtualisation.oci-containers = {
     backend = "docker";
     containers = {
@@ -42,18 +47,19 @@ in {
           TS_USERSPACE = "true";
         };
         volumes = [
-          "stirling-ts-state:/var/lib/tailscale"
+          "/var/lib/stirling-ts:/var/lib/tailscale"
           "${serveConfig}:/config/serve.json:ro"
         ];
-        # Userspace mode needs no capabilities. Read-only root is untested for
-        # containerboot: if it fails, drop "--read-only" and the tmpfs lines.
+        # Meets the full baseline: non-root, read-only, no capabilities.
         extraOptions =
           baseline
           ++ [
+            "--user=61002:61002"
             "--read-only"
             "--tmpfs=/tmp:rw,size=16m"
             "--tmpfs=/var/run:rw,size=16m"
             "--memory=256m"
+            "--cpus=0.5"
             "--pids-limit=256"
           ];
       };
