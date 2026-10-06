@@ -63,8 +63,14 @@ case "$cmd" in
   backup-ok)
     [ $# -eq 2 ] || usage
     source=$1 summary=$2
-    size=$(jq -r '.total_bytes_processed' "$summary")
-    added=$(jq -r '.data_added' "$summary")
+    size=$(jq -er '.total_bytes_processed' "$summary") || {
+      echo "restic-metrics: summary lacks total_bytes_processed" >&2
+      exit 1
+    }
+    added=$(jq -er '.data_added' "$summary") || {
+      echo "restic-metrics: summary lacks data_added" >&2
+      exit 1
+    }
     emit_backup "$repo" "$source" 1 "$(date +%s)" "$size" "$added" |
       write_atomic "$dir/restic-$repo-$source.prom"
     ;;

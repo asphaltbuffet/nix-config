@@ -29,18 +29,58 @@
 
   # Shared prelude: repo + password env, and the reachability probe. Reading
   # the repo's config file triggers the NFS automount.
+  # Hosts that sleep retry the probe (a laptop waking at 02:00 races Wi-Fi);
+  # Always-on hosts probe once and fail.
+  probeAttempts =
+    if alwaysOn
+    then 1
+    else 6;
+  probeCmd = ''timeout 15 test -f "$RESTIC_REPOSITORY/config"'';
+  unreachableMsg = ''echo "restic repository $RESTIC_REPOSITORY unreachable (NAS off-network or repo not initialised)"'';
+  probe =
+    if alwaysOn
+    then ''
+      if ! ${probeCmd}; then
+        ${unreachableMsg}
+        exit 1
+      fi
+    ''
+    else ''
+      reachable=0
+      for attempt in $(seq 1 ${toString probeAttempts}); do
+        if ${probeCmd}; then
+          reachable=1
+          break
+        fi
+        if [ "$attempt" -lt ${toString probeAttempts} ]; then
+          sleep 20
+        fi
+      done
+      if [ "$reachable" -eq 0 ]; then
+        ${unreachableMsg}
+        exit 0
+      fi
+    '';
+
   prelude = repo: ''
     export RESTIC_REPOSITORY=${nasRoot}/${repo}
     export RESTIC_PASSWORD_FILE=${config.age.secrets."restic-${repo}".path}
-    if ! timeout 15 test -f "$RESTIC_REPOSITORY/config"; then
-      echo "restic repository $RESTIC_REPOSITORY unreachable (NAS off-network or repo not initialised)"
-      exit ${
-      if alwaysOn
-      then "1"
-      else "0"
-    }
-    fi
+    ${probe}
   '';
+
+  # `sudo restic-<repo> ...` for hands-on admin: repo, password and cache preset.
+  mkAdminWrapper = repo:
+    pkgs.writeShellScriptBin "restic-${repo}" ''
+      export RESTIC_REPOSITORY=${lib.escapeShellArg "${nasRoot}/${repo}"}
+      export RESTIC_PASSWORD_FILE=${lib.escapeShellArg config.age.secrets."restic-${repo}".path}
+      export RESTIC_CACHE_DIR=${lib.escapeShellArg "/var/cache/restic-${repo}"}
+      exec ${lib.getExe pkgs.restic} "$@"
+    '';
+
+  cacheConfig = repo: {
+    CacheDirectory = "restic-${repo}";
+    Environment = ["RESTIC_CACHE_DIR=/var/cache/restic-${repo}"];
+  };
 
   mkBackupScript = {
     repo,
@@ -68,7 +108,11 @@
           if { [ "$status" -eq 0 ] || [ "$status" -eq 3 ]; } &&
             jq -c 'select(.message_type=="summary")' "$tmp/out.json" > "$tmp/summary.json" &&
             [ -s "$tmp/summary.json" ]; then
-            restic-metrics backup-ok ${textfileDir} ${repo} "$source" "$tmp/summary.json"
+            if ! restic-metrics backup-ok ${textfileDir} ${repo} "$source" "$tmp/summary.json"; then
+              echo "recording metrics for $source failed" >&2
+              restic-metrics backup-fail ${textfileDir} ${repo} "$source" || true
+              rc=1
+            fi
           else
             echo "backup of $source failed (restic exit $status)" >&2
             restic-metrics backup-fail ${textfileDir} ${repo} "$source"
@@ -103,13 +147,15 @@
       wants = ["network-online.target"];
       onFailure = ["alert@%n.service"];
       inherit unitConfig;
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = lib.getExe (mkBackupScript {inherit repo jobs;});
-        Nice = 19;
-        IOSchedulingClass = "idle";
-        PrivateTmp = true;
-      };
+      serviceConfig =
+        {
+          Type = "oneshot";
+          ExecStart = lib.getExe (mkBackupScript {inherit repo jobs;});
+          Nice = 19;
+          IOSchedulingClass = "idle";
+          PrivateTmp = true;
+        }
+        // cacheConfig repo;
     };
     timers."restic-backup-${repo}" = {
       wantedBy = ["timers.target"];
@@ -184,13 +230,15 @@
       after = ["network-online.target"];
       wants = ["network-online.target"];
       onFailure = ["alert@%n.service"];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = lib.getExe (mkPruneScript repo);
-        Nice = 19;
-        IOSchedulingClass = "idle";
-        PrivateTmp = true;
-      };
+      serviceConfig =
+        {
+          Type = "oneshot";
+          ExecStart = lib.getExe (mkPruneScript repo);
+          Nice = 19;
+          IOSchedulingClass = "idle";
+          PrivateTmp = true;
+        }
+        // cacheConfig repo;
     };
     timers."restic-prune-${repo}" = {
       wantedBy = ["timers.target"];
@@ -220,6 +268,7 @@ in {
         file = ../../secrets + "/restic-${homeRepo}.age";
         mode = "0400";
       };
+      environment.systemPackages = [(mkAdminWrapper homeRepo)];
       systemd = {
         services = homeUnits.services // (mkPruneUnits homeRepo).services;
         timers = homeUnits.timers // (mkPruneUnits homeRepo).timers;
@@ -230,6 +279,7 @@ in {
         file = ../../secrets + "/restic-${srvRepo}.age";
         mode = "0400";
       };
+      environment.systemPackages = [(mkAdminWrapper srvRepo)];
       systemd = {
         services = srvUnits.services // (mkPruneUnits srvRepo).services;
         timers = srvUnits.timers // (mkPruneUnits srvRepo).timers;

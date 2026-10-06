@@ -109,7 +109,7 @@
       "id": 2,
       "type": "stat",
       "title": "Oldest successful backup",
-      "description": "Age of the stalest source. A sleeping laptop legitimately ages; there is no alert on this (ADR-0022).",
+      "description": "Age of the stalest source. A sleeping laptop legitimately ages; there is no alert on this (ADR-0022). Sources keep showing for 30 days after a host goes off-network.",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -127,9 +127,10 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "max(time() - (restic_backup_last_success_timestamp_seconds{instance=~`(${host:regex}):[0-9]+`} > 0))",
+          "expr": "max(time() - (max by (instance,repo,source) (last_over_time(restic_backup_last_success_timestamp_seconds{instance=~`(${host:regex}):[0-9]+`}[30d])) > 0))",
           "legendFormat": "",
-          "range": true
+          "range": false,
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -169,7 +170,7 @@
       "id": 3,
       "type": "stat",
       "title": "Last repo maintenance",
-      "description": "Age of the stalest weekly prune + check.",
+      "description": "Age of the stalest weekly prune + check. Repos keep showing for 30 days after a host goes off-network.",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -187,9 +188,10 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "max(time() - (restic_repo_maintenance_last_success_timestamp_seconds{instance=~`(${host:regex}):[0-9]+`} > 0))",
+          "expr": "max(time() - (max by (instance,repo) (last_over_time(restic_repo_maintenance_last_success_timestamp_seconds{instance=~`(${host:regex}):[0-9]+`}[30d])) > 0))",
           "legendFormat": "",
-          "range": true
+          "range": false,
+          "instant": true
         }
       ],
       "fieldConfig": {
@@ -285,7 +287,7 @@
       "id": 5,
       "type": "bargauge",
       "title": "Last successful backup (age)",
-      "description": "Per host and source. 0 history (never succeeded) is hidden.",
+      "description": "Per host and source. 0 history (never succeeded) is hidden. Sources keep showing for 30 days after a host goes off-network.",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -303,9 +305,10 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "time() - (restic_backup_last_success_timestamp_seconds{instance=~`(${host:regex}):[0-9]+`} > 0)",
+          "expr": "time() - (max by (instance,repo,source) (last_over_time(restic_backup_last_success_timestamp_seconds{instance=~`(${host:regex}):[0-9]+`}[30d])) > 0)",
           "legendFormat": "{{instance}} / {{source}}",
-          "range": true
+          "range": false,
+          "instant": true
         }
       ],
       "fieldConfig": {

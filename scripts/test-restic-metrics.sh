@@ -40,6 +40,12 @@ m repo-fail "$dir" wendigo
 has "$r" 'restic_repo_maintenance_last_run_success{repo="wendigo"} 0'
 has "$r" 'restic_repo_raw_data_bytes{repo="wendigo"} 987654321'
 
+# A summary missing a field fails cleanly and leaves the previous file untouched.
+echo '{"message_type":"summary","data_added":1}' > "$dir/bad.json"
+before=$(cat "$f")
+if m backup-ok "$dir" wendigo grue "$dir/bad.json" 2> /dev/null; then fail "bad summary accepted"; fi
+[ "$(cat "$f")" = "$before" ] || fail "prom file changed after bad summary"
+
 # No temp files left behind.
 [ -z "$(find "$dir" -name '*.prom.*')" ] || fail "temp files leaked"
 echo "PASS"
