@@ -14,6 +14,11 @@
 
   system.autoDeploy.enable = true;
 
+  services.resticBackup = {
+    home.enable = true;
+    srv.enable = true;
+  };
+
   # 2012 Aptio 4 firmware has no ESRT, so UEFI capsule updates are impossible
   # (and Biostar never published to LVFS); silence fwupd's warning about it.
   services.fwupd.daemonSettings.DisabledPlugins = ["uefi_capsule"];
