@@ -47,6 +47,14 @@
       flake = false;
     };
 
+    # micasa TUI (home/modules/micasa) and sync relay (nixos/common/micasa.nix).
+    # Pinned to a release tag so bunyip never runs unreleased main (ADR-0021);
+    # bump by editing the tag, then `nix flake update micasa`.
+    micasa = {
+      url = "github:micasa-dev/micasa/v2.8.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     serena = {
       url = "github:oraios/serena";
       inputs.nixpkgs.follows = "nixpkgs";

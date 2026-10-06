@@ -9,6 +9,7 @@
     ../modules/firefox
     ../modules/1password
     ../modules/kitty
+    ../modules/micasa
     ../modules/mullvad
     ../modules/signal
     ../modules/vivaldi
