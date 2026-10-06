@@ -44,6 +44,7 @@ This document uses **progressive disclosure** to optimize LLM working efficiency
 | igir, 1G1R, ROM curation, DAT auditing, No-Intro/Redump/TOSEC, `arcade-curated` | `docs/adr/0016-igir-curates-roms-runbook-on-nas.md` | igir supersedes the copy loop; runbook lives on the NAS; igir cannot write CHD; MAME needs `--input-checksum-quick` |
 | Editing the tailnet policy, tagging a node, "connection times out" between hosts, wherefolk on bunyip | `docs/adr/0019-tailnet-policy-least-privilege-bunyip-tagged.md`, `tailscale/policy.hujson` | default-deny: every flow needs a grant; bunyip is `tag:server`; console is authoritative, paste the file after edits; emails are placeholders |
 | Stirling-PDF, bunyip container services, Tailscale sidecar, `oci-containers`, `tag:stirling`, Renovate image bumps | `docs/references/stirling-pdf-sop.md`, `docs/adr/0020-container-services-oci-containers-tailnet-sidecar.md` | one tag + OAuth client per service; digest-pinned images; confined app container |
+| micasa, sync relay, `tag:micasa`, `micasa-*-env.age`, joining a machine to the household, internal Docker network, Nix-built container image | `docs/references/micasa-sop.md`, `docs/adr/0021-micasa-relay-nix-built-image-internal-db-network.md` | empty relay-env → silent in-memory store; DB on `--internal` network the sidecar joins; bump by flake tag, not Renovate |
 
 ---
 
@@ -188,6 +189,7 @@ Use these slash commands for guided workflows:
 | MAME ROM audit/re-cut, arcade games failing to boot, version-locked ROM sets | `docs/references/mame-rom-recut.md` | `-verifyroms` audit, rebuild + swap, ADR-0011 boundary |
 | igir, 1G1R, ROM curation, DAT auditing, No-Intro/Redump/TOSEC, `arcade-curated` | `docs/adr/0016-igir-curates-roms-runbook-on-nas.md` | runbook on the NAS not in repo; no CHD writing; `--input-checksum-quick` for MAME |
 | Stirling-PDF, bunyip container services, Tailscale sidecar, `oci-containers`, `tag:stirling`, Renovate image bumps | `docs/references/stirling-pdf-sop.md`, `docs/adr/0020-container-services-oci-containers-tailnet-sidecar.md` | one tag + OAuth client per service; digest-pinned images; confined app container |
+| micasa, sync relay, `tag:micasa`, `micasa-*-env.age`, joining a machine to the household, internal Docker network, Nix-built container image | `docs/references/micasa-sop.md`, `docs/adr/0021-micasa-relay-nix-built-image-internal-db-network.md` | empty relay-env → silent in-memory store; DB on `--internal` network the sidecar joins; bump by flake tag, not Renovate |
 
 ---
 
