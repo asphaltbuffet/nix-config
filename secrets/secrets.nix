@@ -32,6 +32,14 @@ in {
   "micasa-db-env.age".publicKeys = [grue bunyip];
   "micasa-relay-env.age".publicKeys = [grue bunyip];
 
+  # restic repository passwords (ADR-0022): one per repo, readable only by the
+  # owning host and the admin. A recovery copy lives in 1Password.
+  "restic-wendigo.age".publicKeys = [grue wendigo];
+  "restic-kushtaka.age".publicKeys = [grue kushtaka];
+  "restic-snallygaster.age".publicKeys = [grue snallygaster];
+  "restic-bunyip.age".publicKeys = [grue bunyip];
+  "restic-bunyip-srv.age".publicKeys = [grue bunyip];
+
   # ── User secrets: grue ──────────────────────────────────────────────────
   "grue/goreleaser.age".publicKeys = [grue] ++ allHosts;
   "grue/anthropic.age".publicKeys = [grue] ++ allHosts;
