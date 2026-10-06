@@ -65,32 +65,34 @@ in {
   # Docker cannot combine the default bridge with a user-defined network, so
   # the sidecar's egress is a user-defined network too. micasa-db is
   # --internal: no route out.
-  systemd.services.docker-network-micasa = {
-    description = "Docker networks for the micasa relay";
-    after = ["docker.service"];
-    requires = ["docker.service"];
-    before = networked;
-    requiredBy = networked;
-    path = [config.virtualisation.docker.package];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
+  systemd = {
+    services.docker-network-micasa = {
+      description = "Docker networks for the micasa relay";
+      after = ["docker.service"];
+      requires = ["docker.service"];
+      before = networked;
+      requiredBy = networked;
+      path = [config.virtualisation.docker.package];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        docker network inspect micasa-egress >/dev/null 2>&1 || docker network create micasa-egress
+        docker network inspect micasa-db >/dev/null 2>&1 || docker network create --internal micasa-db
+      '';
     };
-    script = ''
-      docker network inspect micasa-egress >/dev/null 2>&1 || docker network create micasa-egress
-      docker network inspect micasa-db >/dev/null 2>&1 || docker network create --internal micasa-db
-    '';
+
+    # Non-root sidecar needs a state dir it owns: a fresh named volume is
+    # root-owned and tailscaled cannot chmod it (it falls back to an in-memory
+    # store, i.e. a new node each restart).
+    tmpfiles.rules = ["d /var/lib/micasa-ts 0700 61001 61001 -"];
+
+    # Postgres refuses TCP while initdb runs on first boot; the relay exits and is
+    # restarted. Without a delay, systemd's default start limit (5 in 10 s) can
+    # trip and leave it failed.
+    services.docker-micasa-relay.serviceConfig.RestartSec = "5s";
   };
-
-  # Non-root sidecar needs a state dir it owns: a fresh named volume is
-  # root-owned and tailscaled cannot chmod it (it falls back to an in-memory
-  # store, i.e. a new node each restart).
-  systemd.tmpfiles.rules = ["d /var/lib/micasa-ts 0700 61001 61001 -"];
-
-  # Postgres refuses TCP while initdb runs on first boot; the relay exits and is
-  # restarted. Without a delay, systemd's default start limit (5 in 10 s) can
-  # trip and leave it failed.
-  systemd.services.docker-micasa-relay.serviceConfig.RestartSec = "5s";
 
   virtualisation.oci-containers = {
     backend = "docker";
