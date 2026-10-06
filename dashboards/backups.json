@@ -127,7 +127,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "max(time() - restic_backup_last_success_timestamp_seconds{instance=~`(${host:regex}):[0-9]+`} > 0)",
+          "expr": "max(time() - (restic_backup_last_success_timestamp_seconds{instance=~`(${host:regex}):[0-9]+`} > 0))",
           "legendFormat": "",
           "range": true
         }
@@ -187,7 +187,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "max(time() - restic_repo_maintenance_last_success_timestamp_seconds{instance=~`(${host:regex}):[0-9]+`} > 0)",
+          "expr": "max(time() - (restic_repo_maintenance_last_success_timestamp_seconds{instance=~`(${host:regex}):[0-9]+`} > 0))",
           "legendFormat": "",
           "range": true
         }
@@ -303,7 +303,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "time() - restic_backup_last_success_timestamp_seconds{instance=~`(${host:regex}):[0-9]+`} > 0",
+          "expr": "time() - (restic_backup_last_success_timestamp_seconds{instance=~`(${host:regex}):[0-9]+`} > 0)",
           "legendFormat": "{{instance}} / {{source}}",
           "range": true
         }
