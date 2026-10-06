@@ -8,12 +8,44 @@
 #
 # Secrets, one per container: micasa-ts-env (TS_AUTHKEY), micasa-db-env
 # (POSTGRES_PASSWORD), micasa-relay-env (DATABASE_URL, RELAY_ENCRYPTION_KEY).
-{config, ...}: let
+{
+  config,
+  inputs,
+  lib,
+  pkgs,
+  ...
+}: let
   baseline = import ./container-baseline.nix;
 
   # Containers that join micasa-egress / micasa-db, ordered after the unit that
   # creates them.
-  networked = map (c: "docker-${c}.service") ["micasa-postgres"];
+  networked = map (c: "docker-${c}.service") ["micasa-ts" "micasa-postgres"];
+
+  # Upstream publishes no relay image and packages only cmd/micasa, so the
+  # relay is built from the same input as the TUI (ADR-0021).
+  relay = inputs.micasa.packages.${pkgs.stdenv.hostPlatform.system}.micasa.overrideAttrs (old: {
+    pname = "micasa-relay";
+    subPackages = ["cmd/relay"];
+    tags = ["selfhosted"];
+    meta = old.meta // {mainProgram = "relay";};
+  });
+
+  # Static binary, nothing else. The tag defaults to the content hash, so a new
+  # binary is a new image string and systemd restarts the unit.
+  relayImage = pkgs.dockerTools.streamLayeredImage {
+    name = "micasa-relay";
+    config = {
+      Entrypoint = [(lib.getExe relay)];
+      User = "65534:65534";
+    };
+  };
+
+  # ${TS_CERT_DOMAIN} is expanded by containerboot, not Nix, hence the escapes.
+  serveConfig = pkgs.writeText "micasa-serve.json" (builtins.toJSON {
+    TCP."443".HTTPS = true;
+    Web."\${TS_CERT_DOMAIN}:443".Handlers."/".Proxy = "http://127.0.0.1:8080";
+    AllowFunnel."\${TS_CERT_DOMAIN}:443" = false;
+  });
 in {
   age.secrets = {
     micasa-ts-env = {
@@ -52,29 +84,88 @@ in {
 
   virtualisation.oci-containers = {
     backend = "docker";
-    containers.micasa-postgres = {
-      image = "postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24";
-      environmentFiles = [config.age.secrets.micasa-db-env.path];
-      environment = {
-        POSTGRES_USER = "micasa";
-        POSTGRES_DB = "micasa";
+    containers = {
+      micasa-postgres = {
+        image = "postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24";
+        environmentFiles = [config.age.secrets.micasa-db-env.path];
+        environment = {
+          POSTGRES_USER = "micasa";
+          POSTGRES_DB = "micasa";
+        };
+        volumes = ["micasa-pgdata:/var/lib/postgresql/data"];
+        networks = ["micasa-db"];
+        # Full baseline: as uid 70 (alpine's postgres) from the start the
+        # entrypoint needs no chown/setuid; a fresh named volume inherits the
+        # image's postgres-owned data dir.
+        extraOptions =
+          baseline
+          ++ [
+            "--user=70:70"
+            "--read-only"
+            "--tmpfs=/var/run/postgresql:rw,size=16m"
+            "--tmpfs=/tmp:rw,size=64m"
+            "--memory=512m"
+            "--cpus=1"
+            "--pids-limit=256"
+          ];
       };
-      volumes = ["micasa-pgdata:/var/lib/postgresql/data"];
-      networks = ["micasa-db"];
-      # Full baseline: as uid 70 (alpine's postgres) from the start the
-      # entrypoint needs no chown/setuid; a fresh named volume inherits the
-      # image's postgres-owned data dir.
-      extraOptions =
-        baseline
-        ++ [
-          "--user=70:70"
-          "--read-only"
-          "--tmpfs=/var/run/postgresql:rw,size=16m"
-          "--tmpfs=/tmp:rw,size=64m"
-          "--memory=512m"
-          "--cpus=1"
-          "--pids-limit=256"
+
+      micasa-ts = {
+        image = "tailscale/tailscale:v1.102.5@sha256:c507f3a2a6ab1cabd8d809b98edeb41edbd5c3fb6ad9632ffd098b4c7d0b4065";
+        environmentFiles = [config.age.secrets.micasa-ts-env.path];
+        environment = {
+          TS_HOSTNAME = "micasa";
+          # OAuth clients can only mint tagged nodes.
+          TS_EXTRA_ARGS = "--advertise-tags=tag:micasa";
+          # Without persisted state every restart authenticates as a new node.
+          TS_STATE_DIR = "/var/lib/tailscale";
+          TS_SERVE_CONFIG = "/config/serve.json";
+          # No tun device and no NET_ADMIN: the sidecar needs neither to serve.
+          TS_USERSPACE = "true";
+        };
+        volumes = [
+          "micasa-ts-state:/var/lib/tailscale"
+          "${serveConfig}:/config/serve.json:ro"
         ];
+        # Egress for the control plane; micasa-db so the relay, which shares
+        # this namespace, can reach micasa-postgres.
+        networks = ["micasa-egress" "micasa-db"];
+        extraOptions =
+          baseline
+          ++ [
+            "--read-only"
+            "--tmpfs=/tmp:rw,size=16m"
+            "--tmpfs=/var/run:rw,size=16m"
+            "--memory=256m"
+            "--pids-limit=256"
+          ];
+      };
+
+      micasa-relay = {
+        image = "micasa-relay:${relayImage.imageTag}";
+        imageStream = relayImage;
+        # Requires= on both: a sidecar restart restarts the relay so it rejoins
+        # the fresh namespace. Postgres may still be initialising on first boot;
+        # the relay exits and systemd restarts it until it connects.
+        dependsOn = ["micasa-ts" "micasa-postgres"];
+        environmentFiles = [config.age.secrets.micasa-relay-env.path];
+        # BLOB_QUOTA deliberately unset (unlimited, ADR-0021).
+        environment = {
+          PORT = "8080";
+          SELF_HOSTED = "true";
+        };
+        extraOptions =
+          baseline
+          ++ [
+            "--network=container:micasa-ts"
+            "--user=65534:65534"
+            "--read-only"
+            "--tmpfs=/tmp:rw,size=128m"
+            "--memory=256m"
+            "--cpus=1"
+            "--pids-limit=256"
+          ];
+      };
     };
   };
 }
