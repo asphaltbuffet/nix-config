@@ -10,3 +10,13 @@
 /home/*/dev/**/node_modules
 /home/*/dev/**/target
 /home/*/dev/**/result
+# Regenerable tool state that lives outside ~/.cache. Deliberately NOT all of
+# ~/.local/share: it also holds irreplaceable state (atuin history, kwallet,
+# micasa's local DB) that ADR-0021 treats as the only copy.
+/home/*/go/pkg
+/home/*/.npm
+/home/*/.phoronix-test-suite
+/home/*/.config/discord/Cache
+/home/*/.local/share/mise
+/home/*/.local/share/baloo
+/home/*/.local/share/uv
