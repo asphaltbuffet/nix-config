@@ -1,0 +1,12 @@
+# Home-backup excludes (ADR-0022). One restic pattern per line, absolute.
+# ~/nas is mandatory: never back the NAS up onto itself.
+/home/*/nas
+/home/*/Downloads
+/home/*/.cache
+/home/*/.local/share/Trash
+/home/*/.local/share/Steam
+/home/*/.local/share/containers
+/home/*/.docker
+/home/*/dev/**/node_modules
+/home/*/dev/**/target
+/home/*/dev/**/result

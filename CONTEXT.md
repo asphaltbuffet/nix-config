@@ -174,6 +174,24 @@ _Avoid_: ping, check, heartbeat
 Detection of a host going *silent* — a job that never ran, a host that stopped reporting — by noticing the absence of an expected signal. Applies only to **Always-on hosts**; hosts that sleep or power off are never liveness-checked, because their silence is normal.
 _Avoid_: heartbeat, dead-man's switch, health check
 
+### Backups
+
+**Backup repository**:
+An encrypted restic store on the NAS, holding the snapshots of one **Host**'s data. Each host has one for its home directories; bunyip has a second for its data disk. Repositories sit in a world-readable NAS directory and are protected only by their own password, so each repository's password is a **Secret** readable by that host alone.
+_Avoid_: backup (ambiguous: the job, the data, or the store), vault, archive
+
+**Home backup**:
+The scheduled job that snapshots every user's home directory on a **Host** into that host's **Backup repository**, one snapshot per user. Regenerable and bulky content (caches, build outputs, downloads, the NAS mount itself) is excluded.
+_Avoid_: user backup, system backup
+
+**Data-disk backup**:
+The scheduled job that snapshots bunyip's `/srv` disk, with no exclusions, into its own **Backup repository**. Kept separate from the **Home backup** so a failing disk and routine home churn never share a repository.
+_Avoid_: srv backup, disk image
+
+**Restore size**:
+The logical size of a user's latest snapshot — what restoring it would produce. The per-user usage figure on the backup dashboard; physical NAS usage is only meaningful per **Backup repository**, because deduplication makes per-user attribution impossible.
+_Avoid_: backup size, usage (ambiguous between logical and physical)
+
 ### Example dialogue
 
 > **Dev:** I want to add bunyip as a new host. Do I create a profile for it?

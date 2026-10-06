@@ -17,4 +17,6 @@
   # Pull NixOS updates automatically from CI via cachix + GitHub Pages.
   # Create .autodeploy-skip/snallygaster to pause without editing this file.
   system.autoDeploy.enable = true;
+
+  services.resticBackup.home.enable = true;
 }

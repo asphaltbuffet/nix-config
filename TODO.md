@@ -8,7 +8,7 @@ Implement in separate design → plan cycles.
 - [ ] **Persistent dev sessions** — tmux or zellij running as a user service so SSH sessions survive disconnects
 - [ ] **Reverse proxy** — nginx or Caddy for self-hosted apps behind local HTTPS
 - [ ] **Container workloads** — Podman or NixOS declarative containers for service isolation
-- [ ] **Automated backups** — restic with systemd timers to local disk or Backblaze B2
+- [x] **Automated backups** — restic with systemd timers to per-host repos on the NAS (ADR-0022); offsite B2 copy still open
 - [ ] **CI / build runner** *(top priority)* — Forgejo runner or Nix remote builder to offload flake builds from laptops
 - [ ] **Media server** — Jellyfin for local video/audio streaming
 
