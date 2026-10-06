@@ -11,12 +11,7 @@
   pkgs,
   ...
 }: let
-  # Container baseline (ADR-0020): every container service starts from these
-  # and adds only the capabilities it proves it needs.
-  baseline = [
-    "--cap-drop=ALL"
-    "--security-opt=no-new-privileges"
-  ];
+  baseline = import ./container-baseline.nix;
 
   # ${TS_CERT_DOMAIN} is expanded by containerboot, not Nix, hence the escapes.
   serveConfig = pkgs.writeText "stirling-pdf-serve.json" (builtins.toJSON {

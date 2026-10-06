@@ -129,6 +129,22 @@
         "type": "github"
       }
     },
+    "flake-compat": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1767039857,
+        "narHash": "sha256-vNpUSpF5Nuw8xvDLj2KCwwksIbjua2LZCqhV1LNRDns=",
+        "owner": "NixOS",
+        "repo": "flake-compat",
+        "rev": "5edf11c44bc78a0d334f6334cdaf7d60d732daab",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "flake-compat",
+        "type": "github"
+      }
+    },
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": [
@@ -186,6 +202,24 @@
         "type": "github"
       }
     },
+    "flake-utils_3": {
+      "inputs": {
+        "systems": "systems_3"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
     "flakeCompat": {
       "flake": false,
       "locked": {
@@ -199,6 +233,72 @@
       "original": {
         "owner": "edolstra",
         "repo": "flake-compat",
+        "type": "github"
+      }
+    },
+    "git-hooks": {
+      "inputs": {
+        "flake-compat": "flake-compat",
+        "gitignore": "gitignore",
+        "nixpkgs": [
+          "micasa",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1774861927,
+        "narHash": "sha256-FB1fbeJQjaTMI2JFAa0LNMaYXiShiYbJA6puGQC4xdg=",
+        "owner": "cachix",
+        "repo": "git-hooks.nix",
+        "rev": "9c4469b68b62e122c3b3d2ab0ed3caeb04ff1ac4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "cachix",
+        "repo": "git-hooks.nix",
+        "type": "github"
+      }
+    },
+    "gitignore": {
+      "inputs": {
+        "nixpkgs": [
+          "micasa",
+          "git-hooks",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1709087332,
+        "narHash": "sha256-HG2cCnktfHsKV0s4XW83gU3F57gaTljL9KNSuG6bnQs=",
+        "owner": "hercules-ci",
+        "repo": "gitignore.nix",
+        "rev": "637db329424fd7e46cf4185293b9cc8c88c95394",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "gitignore.nix",
+        "type": "github"
+      }
+    },
+    "gitignore_2": {
+      "inputs": {
+        "nixpkgs": [
+          "micasa",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1762808025,
+        "narHash": "sha256-XmjITeZNMTQXGhhww6ed/Wacy2KzD6svioyCX7pkUu4=",
+        "owner": "hercules-ci",
+        "repo": "gitignore.nix",
+        "rev": "cb5e3fdca1de58ccbc3ef53de65bd372b48f567c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "gitignore.nix",
         "type": "github"
       }
     },
@@ -219,6 +319,30 @@
       "original": {
         "owner": "nix-community",
         "repo": "home-manager",
+        "type": "github"
+      }
+    },
+    "micasa": {
+      "inputs": {
+        "flake-utils": "flake-utils",
+        "git-hooks": "git-hooks",
+        "gitignore": "gitignore_2",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1777191333,
+        "narHash": "sha256-SvatCbTdM6a2Po83IdUBfv56rWr4ZC0jB3m6f4hghRE=",
+        "owner": "micasa-dev",
+        "repo": "micasa",
+        "rev": "8e5143133ca91b0b8a973dcaef98017fd7a6369c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "micasa-dev",
+        "ref": "v2.8.0",
+        "repo": "micasa",
         "type": "github"
       }
     },
@@ -264,7 +388,7 @@
     "nixos-autodeploy": {
       "inputs": {
         "fenix": "fenix_2",
-        "flake-utils": "flake-utils",
+        "flake-utils": "flake-utils_2",
         "naersk": "naersk",
         "nixpkgs": [
           "nixpkgs"
@@ -472,6 +596,7 @@
         "alejandra": "alejandra",
         "charmbracelet-nur": "charmbracelet-nur",
         "home-manager": "home-manager",
+        "micasa": "micasa",
         "nix-index-database": "nix-index-database",
         "nixos-autodeploy": "nixos-autodeploy",
         "nixos-hardware": "nixos-hardware",
@@ -534,7 +659,7 @@
     },
     "serena": {
       "inputs": {
-        "flake-utils": "flake-utils_2",
+        "flake-utils": "flake-utils_3",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -572,6 +697,21 @@
       }
     },
     "systems_2": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_3": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
