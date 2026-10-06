@@ -20,6 +20,8 @@
 		"tag:wherefolk": ["autogroup:admin"],
 		// The Stirling-PDF Tailscale sidecar (its own OAuth client mints nodes with this tag).
 		"tag:stirling": ["autogroup:admin"],
+		// The micasa relay's Tailscale sidecar (its own OAuth client mints nodes with this tag).
+		"tag:micasa": ["autogroup:admin"],
 	},
 
 	"grants": [
@@ -48,6 +50,11 @@
 		// 8080 over the sidecar's shared loopback; granting it would bypass
 		// Serve's TLS.
 		{"src": ["autogroup:member"], "dst": ["tag:stirling"], "ip": ["tcp:443"]},
+
+		// micasa relay: any tailnet member, 443 ONLY. The relay listens on 8080
+		// over the sidecar's shared loopback; granting it would bypass Serve's
+		// TLS. Postgres is on an internal Docker network, not on this node.
+		{"src": ["autogroup:member"], "dst": ["tag:micasa"], "ip": ["tcp:443"]},
 	],
 
 	// bunyip's advertised LAN route is approved without a console visit.
@@ -140,6 +147,24 @@
 				"tag:server:22",
 				"tag:server:3000",
 				"tag:wherefolk:443",
+				"tag:micasa:443",
+				"192.168.86.10:22",
+			],
+		},
+		{
+			// Any member: micasa relay 443 and nothing else on it.
+			"src":    "editor@example.com",
+			"accept": ["tag:micasa:443"],
+			"deny":   ["tag:micasa:22", "tag:micasa:8080", "tag:micasa:5432"],
+		},
+		{
+			// A compromised micasa sidecar reaches nothing.
+			"src": "tag:micasa",
+			"deny": [
+				"tag:server:22",
+				"tag:server:3000",
+				"tag:wherefolk:443",
+				"tag:stirling:443",
 				"192.168.86.10:22",
 			],
 		},
