@@ -16,6 +16,9 @@
   baseline = [
     "--cap-drop=ALL"
     "--security-opt=no-new-privileges"
+    # json-file has no size limit by default, and uploads end up in app logs.
+    "--log-opt=max-size=10m"
+    "--log-opt=max-file=3"
   ];
 
   # ${TS_CERT_DOMAIN} is expanded by containerboot, not Nix, hence the escapes.
@@ -89,7 +92,7 @@ in {
             "--cap-add=CHOWN"
             "--cap-add=DAC_OVERRIDE"
             "--cap-add=FOWNER"
-            "--memory=2g"
+            "--memory=4g"
             "--cpus=2"
             "--pids-limit=1024"
           ];

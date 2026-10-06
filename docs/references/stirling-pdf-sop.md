@@ -21,7 +21,7 @@ Tailnet service on bunyip: `stirling-ts` (Tailscale sidecar) + `stirling-pdf` (a
 | New node every restart (`stirling-pdf-1`, `-2`…) | `stirling-ts-state` volume lost or `TS_STATE_DIR` unset | Restore volume; delete stale nodes in console |
 | `stirling-pdf` restarts in a loop, logs stop after the "Binary Versions" block | The init script lacks a capability it needs | `docker inspect -f "{{.State.ExitCode}}" stirling-pdf` and `journalctl -u docker-stirling-pdf`; add only the capability the error names |
 | Sidecar will not start after the baseline change | `--read-only` is untested for containerboot | Remove `--read-only` and the two `--tmpfs` lines from `stirling-ts` |
-| App OOM-killed during large conversion | 2 GB cap | Raise `--memory` after checking bunyip's free RAM |
+| App OOM-killed during large conversion | 4 GB cap | Raise `--memory` (bunyip has 23 GiB; the cap is 4 GB) |
 
 ## Upgrade / rollback
 Renovate PRs bump `image = "repo:tag@sha256:…"`. Merge → autodeploy (ADR-0004). Roll back by reverting the commit; the previous digest comes back with the previous generation.
