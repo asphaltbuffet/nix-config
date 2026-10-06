@@ -6,6 +6,7 @@
     ../../profiles/server.nix
     ../../common/wherefolk.nix
     ../../common/stirling-pdf.nix
+    ../../common/micasa.nix
   ];
 
   networking.hostName = "bunyip";
