@@ -16,6 +16,7 @@
 {
   config,
   lib,
+  self,
   ...
 }: let
   hosts = lib.attrNames (lib.filterAttrs (_: type: type == "directory") (builtins.readDir ../hosts));
@@ -27,6 +28,18 @@
   scrapeInterval = "1m";
 
   rendererToken = config.age.secrets.grafanaRendererToken.path;
+
+  # Tailnet devices expected to be online around the clock (ADR-0023): every
+  # Always-on host plus every Tailnet sidecar. Other hosts are read through the
+  # flake; this host reads its own `config`, so it is not evaluated twice.
+  otherHosts = lib.filterAttrs (n: _: n != config.networking.hostName) self.nixosConfigurations;
+  alwaysOnHosts =
+    lib.optional config.host.alwaysOn config.networking.hostName
+    ++ lib.attrNames (lib.filterAttrs (_: h: h.config.host.alwaysOn) otherHosts);
+  sidecars =
+    config.host.tailnetSidecars
+    ++ lib.concatMap (h: h.config.host.tailnetSidecars) (lib.attrValues otherHosts);
+  expectedAlwaysOn = lib.unique (alwaysOnHosts ++ sidecars);
 in {
   age.secrets = {
     grafanaKey = {
@@ -93,6 +106,26 @@ in {
           job_name = "tailscale";
           static_configs = [{targets = ["127.0.0.1:9250"];}];
         }
+      ];
+
+      # One constant series per expected device, so the dashboard learns the
+      # expectation from Nix rather than from Tailscale (which carries no tag
+      # label on its device series). Join on `hostname`.
+      rules = [
+        (builtins.toJSON {
+          groups = [
+            {
+              name = "tailnet-expectation";
+              rules =
+                map (h: {
+                  record = "tailnet_expected_always_on";
+                  expr = "vector(1)";
+                  labels.hostname = h;
+                })
+                expectedAlwaysOn;
+            }
+          ];
+        })
       ];
     };
 
