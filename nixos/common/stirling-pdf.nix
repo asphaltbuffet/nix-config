@@ -13,6 +13,9 @@
 }: let
   baseline = import ./container-baseline.nix;
 
+  # The sidecar's tailnet device name; also registered for the tailnet dashboard.
+  tsHostname = "stirling-pdf";
+
   # ${TS_CERT_DOMAIN} is expanded by containerboot, not Nix, hence the escapes.
   serveConfig = pkgs.writeText "stirling-pdf-serve.json" (builtins.toJSON {
     TCP."443".HTTPS = true;
@@ -20,6 +23,8 @@
     AllowFunnel."\${TS_CERT_DOMAIN}:443" = false;
   });
 in {
+  host.tailnetSidecars = [tsHostname];
+
   age.secrets.stirling-env = {
     file = ../../secrets/stirling-env.age;
     mode = "0400";
@@ -37,7 +42,7 @@ in {
         image = "tailscale/tailscale:v1.102.5@sha256:c507f3a2a6ab1cabd8d809b98edeb41edbd5c3fb6ad9632ffd098b4c7d0b4065";
         environmentFiles = [config.age.secrets.stirling-env.path];
         environment = {
-          TS_HOSTNAME = "stirling-pdf";
+          TS_HOSTNAME = tsHostname;
           # OAuth clients can only mint tagged nodes.
           TS_EXTRA_ARGS = "--advertise-tags=tag:stirling";
           # Without persisted state every restart authenticates as a new node.

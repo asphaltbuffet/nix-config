@@ -17,7 +17,19 @@
   composeFile = "${inputs.wherefolk}/deploy/compose.yaml";
   envFile = config.age.secrets.wherefolk-env.path;
   compose = "${lib.getExe pkgs.docker-compose} -f ${composeFile} --env-file ${envFile}";
+
+  # The compose file hard-codes the sidecar's name; keep ours in step with it.
+  tsHostname = "wherefolk";
 in {
+  host.tailnetSidecars = [tsHostname];
+
+  assertions = [
+    {
+      assertion = lib.hasInfix "TS_HOSTNAME: ${tsHostname}" (builtins.readFile composeFile);
+      message = "wherefolk's compose file no longer sets TS_HOSTNAME: ${tsHostname}; update tsHostname in wherefolk.nix (the tailnet dashboard expects this device name).";
+    }
+  ];
+
   age.secrets.wherefolk-env = {
     file = ../../secrets/wherefolk-env.age;
     mode = "0400";
