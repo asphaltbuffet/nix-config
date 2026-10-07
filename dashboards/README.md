@@ -69,3 +69,15 @@ and, for the Self-test panel, the `ups_selftest_*` textfile metrics. Draw is
 UPS load % × `ups.realpower.nominal`. "Last mains failure" and the monthly
 figure are bounded by Prometheus retention (15 days), so the month is projected
 from the last 7 days.
+
+## Tailnet (`tailnet.json`)
+
+Every **Tailnet device** and the problems among them (ADR-0023). Needs the
+`tailscale` Prometheus job (`prometheus-tailscale-exporter` on `127.0.0.1:9250`,
+`monitoring.nix`) and the `tailnet_expected_always_on` recording rules it also
+defines. View-only: nothing alerts. "Expected devices" are Always-on hosts
+(`host.alwaysOn`) plus Tailnet sidecars (`host.tailnetSidecars`); sleeping
+laptops are shown with last-seen age and never flagged. The exporter's OAuth
+client is read-only (`devices:core:read`, `devices:routes:read`,
+`auth_keys:read`, `feature_settings:read`); unused collectors failing for
+lack of scope is expected. History is bounded by Prometheus retention.

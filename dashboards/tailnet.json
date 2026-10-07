@@ -1,133 +1,1113 @@
 {
   "title": "Tailnet",
   "uid": "tailnet",
-  "tags": ["tailscale"],
+  "tags": [
+    "tailscale"
+  ],
   "schemaVersion": 39,
   "version": 1,
   "refresh": "1m",
-  "time": {"from": "now-24h", "to": "now"},
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
   "timezone": "browser",
   "templating": {
     "list": [
-      {"name": "datasource", "label": "Prometheus", "type": "datasource", "query": "prometheus", "current": {}}
+      {
+        "name": "datasource",
+        "label": "Prometheus",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {}
+      }
     ]
   },
   "panels": [
     {
-      "id": 1, "type": "stat", "title": "Expected devices offline",
+      "id": 1,
+      "type": "stat",
+      "title": "Expected devices offline",
       "description": "Always-on hosts and Tailnet sidecars that are not online (including ones missing from the tailnet altogether). Laptops are never counted.",
-      "datasource": {"type": "prometheus", "uid": "${datasource}"},
-      "gridPos": {"x": 0, "y": 0, "w": 3, "h": 4},
-      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "count(tailnet_expected_always_on unless on(hostname) (tailscale_devices_online == 1)) or vector(0)", "instant": true}],
-      "fieldConfig": {"defaults": {"unit": "short", "thresholds": {"mode": "absolute", "steps": [{"value": null, "color": "green"}, {"value": 1, "color": "red"}]}}, "overrides": []},
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"}
-    },
-    {
-      "id": 2, "type": "stat", "title": "Keys expiring (14d)",
-      "description": "Devices whose node key expires within 14 days or already has. Devices with key expiry disabled are ignored.",
-      "datasource": {"type": "prometheus", "uid": "${datasource}"},
-      "gridPos": {"x": 3, "y": 0, "w": 3, "h": 4},
-      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "count(((tailscale_devices_expires_timestamp - time()) < 14 * 86400) unless on(id) (tailscale_devices_key_expiry_disabled == 1)) or vector(0)", "instant": true}],
-      "fieldConfig": {"defaults": {"unit": "short", "thresholds": {"mode": "absolute", "steps": [{"value": null, "color": "green"}, {"value": 1, "color": "red"}]}}, "overrides": []},
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"}
-    },
-    {
-      "id": 3, "type": "stat", "title": "Routes not approved",
-      "description": "Devices advertising more subnet routes than are enabled: the router looks healthy but serves nothing until the routes are approved in the admin console.",
-      "datasource": {"type": "prometheus", "uid": "${datasource}"},
-      "gridPos": {"x": 6, "y": 0, "w": 3, "h": 4},
-      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "count(tailscale_devices_routes_advertised > tailscale_devices_routes_enabled) or vector(0)", "instant": true}],
-      "fieldConfig": {"defaults": {"unit": "short", "thresholds": {"mode": "absolute", "steps": [{"value": null, "color": "green"}, {"value": 1, "color": "red"}]}}, "overrides": []},
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"}
-    },
-    {
-      "id": 4, "type": "stat", "title": "Updates available",
-      "description": "Devices running a Tailscale client that has a newer release.",
-      "datasource": {"type": "prometheus", "uid": "${datasource}"},
-      "gridPos": {"x": 9, "y": 0, "w": 3, "h": 4},
-      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "count(tailscale_devices_update_available == 1) or vector(0)", "instant": true}],
-      "fieldConfig": {"defaults": {"unit": "short", "thresholds": {"mode": "absolute", "steps": [{"value": null, "color": "green"}, {"value": 1, "color": "orange"}]}}, "overrides": []},
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"}
-    },
-    {
-      "id": 5, "type": "stat", "title": "Unauthorized",
-      "description": "Devices waiting for approval in the admin console.",
-      "datasource": {"type": "prometheus", "uid": "${datasource}"},
-      "gridPos": {"x": 12, "y": 0, "w": 3, "h": 4},
-      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "count(tailscale_devices_authorized == 0) or vector(0)", "instant": true}],
-      "fieldConfig": {"defaults": {"unit": "short", "thresholds": {"mode": "absolute", "steps": [{"value": null, "color": "green"}, {"value": 1, "color": "red"}]}}, "overrides": []},
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"}
-    },
-    {
-      "id": 6, "type": "stat", "title": "New devices (7d)",
-      "description": "Devices created in the last 7 days. Expected after adding a device; a surprise otherwise. A sidecar that re-registered under a suffixed name (e.g. micasa-1) also shows here.",
-      "datasource": {"type": "prometheus", "uid": "${datasource}"},
-      "gridPos": {"x": 15, "y": 0, "w": 3, "h": 4},
-      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "count((time() - tailscale_devices_created_timestamp) < 7 * 86400) or vector(0)", "instant": true}],
-      "fieldConfig": {"defaults": {"unit": "short", "thresholds": {"mode": "absolute", "steps": [{"value": null, "color": "green"}, {"value": 1, "color": "orange"}]}}, "overrides": []},
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"}
-    },
-    {
-      "id": 7, "type": "stat", "title": "Exporter down",
-      "description": "1 when the Tailscale API exporter is missing or cannot reach the API (bad OAuth client, empty secret, API outage). Every other panel is stale while this is 1.",
-      "datasource": {"type": "prometheus", "uid": "${datasource}"},
-      "gridPos": {"x": 18, "y": 0, "w": 3, "h": 4},
-      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "absent(tailscale_up == 1) or vector(0)", "instant": true}],
-      "fieldConfig": {"defaults": {"unit": "short", "thresholds": {"mode": "absolute", "steps": [{"value": null, "color": "green"}, {"value": 1, "color": "red"}]}}, "overrides": []},
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"}
-    },
-    {
-      "id": 8, "type": "stat", "title": "Devices online",
-      "description": "Devices seen in the last five minutes, of all devices on the tailnet. Informational: sleeping laptops are legitimately offline.",
-      "datasource": {"type": "prometheus", "uid": "${datasource}"},
-      "gridPos": {"x": 21, "y": 0, "w": 3, "h": 4},
-      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "count(tailscale_devices_online == 1) or vector(0)", "instant": true, "legendFormat": "online"}, {"refId": "B", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "count(tailscale_devices_online) or vector(0)", "instant": true, "legendFormat": "total"}],
-      "fieldConfig": {"defaults": {"unit": "short", "color": {"mode": "fixed", "fixedColor": "blue"}}, "overrides": []},
-      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "none", "textMode": "value_and_name"}
-    },
-    {
-      "id": 9, "type": "table", "title": "Expected devices not online (empty when healthy)",
-      "datasource": {"type": "prometheus", "uid": "${datasource}"},
-      "gridPos": {"x": 0, "y": 4, "w": 24, "h": 5},
-      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "tailnet_expected_always_on unless on(hostname) (tailscale_devices_online == 1)", "instant": true, "format": "table"}],
-      "transformations": [{"id": "organize", "options": {"excludeByName": {"Time": true, "Value": true, "__name__": true, "job": true, "instance": true}, "renameByName": {"hostname": "Device"}}}],
-      "fieldConfig": {"defaults": {}, "overrides": []},
-      "options": {"showHeader": true}
-    },
-    {
-      "id": 10, "type": "table", "title": "Tailnet devices",
-      "description": "One row per Tailnet device. Key expiry is blank where expiry is disabled. 'Expected always-on' marks the devices the Problems row watches.",
-      "datasource": {"type": "prometheus", "uid": "${datasource}"},
-      "gridPos": {"x": 0, "y": 9, "w": 24, "h": 13},
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 3,
+        "h": 4
+      },
       "targets": [
-        {"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "max by (hostname, os, client_version, tailscale_ip) (tailscale_devices_info)", "instant": true, "format": "table"},
-        {"refId": "B", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "max by (hostname) (tailscale_devices_online)", "instant": true, "format": "table"},
-        {"refId": "C", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "max by (hostname) (time() - tailscale_devices_last_seen_timestamp)", "instant": true, "format": "table"},
-        {"refId": "D", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "max by (hostname) ((tailscale_devices_expires_timestamp - time()) unless on(id) (tailscale_devices_key_expiry_disabled == 1))", "instant": true, "format": "table"},
-        {"refId": "E", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "max by (hostname) (tailscale_devices_update_available)", "instant": true, "format": "table"},
-        {"refId": "F", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "max by (hostname) (tailnet_expected_always_on)", "instant": true, "format": "table"},
-        {"refId": "G", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "max by (hostname) (tailscale_devices_routes_advertised - tailscale_devices_routes_enabled)", "instant": true, "format": "table"}
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "count(tailnet_expected_always_on unless on(hostname) (tailscale_devices_online == 1)) or vector(0)",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Keys expiring (14d)",
+      "description": "Devices whose node key expires within 14 days or already has. Devices with key expiry disabled are ignored.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 3,
+        "y": 0,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "count(((tailscale_devices_expires_timestamp - time()) < 14 * 86400) unless on(id) (tailscale_devices_key_expiry_disabled == 1)) or vector(0)",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Routes not approved",
+      "description": "Devices advertising more subnet routes than are enabled: the router looks healthy but serves nothing until the routes are approved in the admin console.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "count(tailscale_devices_routes_advertised > tailscale_devices_routes_enabled) or vector(0)",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Updates available",
+      "description": "Devices running a Tailscale client that has a newer release.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 9,
+        "y": 0,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "count(tailscale_devices_update_available == 1) or vector(0)",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "orange"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Unauthorized",
+      "description": "Devices waiting for approval in the admin console.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "count(tailscale_devices_authorized == 0) or vector(0)",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "New devices (7d)",
+      "description": "Devices created in the last 7 days. Expected after adding a device; a surprise otherwise. A sidecar that re-registered under a suffixed name (e.g. micasa-1) also shows here.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 15,
+        "y": 0,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "count((time() - tailscale_devices_created_timestamp) < 7 * 86400) or vector(0)",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "orange"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Exporter down",
+      "description": "1 when the Tailscale API exporter is missing or cannot reach the API (bad OAuth client, empty secret, API outage). Every other panel is stale while this is 1.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "absent(tailscale_up == 1) or vector(0)",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "Devices online",
+      "description": "Devices seen in the last five minutes, of all devices on the tailnet. Informational: sleeping laptops are legitimately offline.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 21,
+        "y": 0,
+        "w": 3,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "count(tailscale_devices_online == 1) or vector(0)",
+          "instant": true,
+          "legendFormat": "online"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "count(tailscale_devices_online) or vector(0)",
+          "instant": true,
+          "legendFormat": "total"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name"
+      }
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Expected devices not online (empty when healthy)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 24,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "tailnet_expected_always_on unless on(hostname) (tailscale_devices_online == 1)",
+          "instant": true,
+          "format": "table"
+        }
       ],
       "transformations": [
-        {"id": "joinByField", "options": {"byField": "hostname", "mode": "outer"}},
-        {"id": "organize", "options": {
-          "excludeByName": {"Time 1": true, "Time 2": true, "Time 3": true, "Time 4": true, "Time 5": true, "Time 6": true, "Time 7": true, "Value #A": true},
-          "renameByName": {"hostname": "Device", "os": "OS", "client_version": "Client", "tailscale_ip": "IP", "Value #B": "Online", "Value #C": "Last seen (ago)", "Value #D": "Key expires in", "Value #E": "Update", "Value #F": "Expected always-on", "Value #G": "Unapproved routes"},
-          "indexByName": {"hostname": 0, "Value #B": 1, "Value #F": 2, "Value #C": 3, "Value #D": 4, "Value #E": 5, "Value #G": 6, "os": 7, "client_version": 8, "tailscale_ip": 9}
-        }}
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true,
+              "__name__": true,
+              "job": true,
+              "instance": true
+            },
+            "renameByName": {
+              "hostname": "Device"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 10,
+      "type": "table",
+      "title": "Tailnet devices",
+      "description": "One row per Tailnet device. Key expiry is blank where expiry is disabled. 'Expected always-on' marks the devices the Problems row watches.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 24,
+        "h": 13
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "max by (hostname, os, client_version, tailscale_ip) (tailscale_devices_info)",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "max by (hostname) (tailscale_devices_online)",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "max by (hostname) (time() - tailscale_devices_last_seen_timestamp)",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "max by (hostname) ((tailscale_devices_expires_timestamp - time()) unless on(id) (tailscale_devices_key_expiry_disabled == 1))",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "refId": "E",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "max by (hostname) (tailscale_devices_update_available)",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "refId": "F",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "max by (hostname) (tailnet_expected_always_on)",
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "refId": "G",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "max by (hostname) (tailscale_devices_routes_advertised - tailscale_devices_routes_enabled)",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "hostname",
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time 1": true,
+              "Time 2": true,
+              "Time 3": true,
+              "Time 4": true,
+              "Time 5": true,
+              "Time 6": true,
+              "Time 7": true,
+              "Value #A": true
+            },
+            "renameByName": {
+              "hostname": "Device",
+              "os": "OS",
+              "client_version": "Client",
+              "tailscale_ip": "IP",
+              "Value #B": "Online",
+              "Value #C": "Last seen (ago)",
+              "Value #D": "Key expires in",
+              "Value #E": "Update",
+              "Value #F": "Expected always-on",
+              "Value #G": "Unapproved routes"
+            },
+            "indexByName": {
+              "hostname": 0,
+              "Value #B": 1,
+              "Value #F": 2,
+              "Value #C": 3,
+              "Value #D": 4,
+              "Value #E": 5,
+              "Value #G": 6,
+              "os": 7,
+              "client_version": 8,
+              "tailscale_ip": 9
+            }
+          }
+        }
       ],
       "fieldConfig": {
         "defaults": {},
         "overrides": [
-          {"matcher": {"id": "byName", "options": "Online"}, "properties": [{"id": "mappings", "value": [{"type": "value", "options": {"0": {"text": "offline", "color": "orange"}, "1": {"text": "online", "color": "green"}}}]}, {"id": "custom.cellOptions", "value": {"type": "color-text"}}]},
-          {"matcher": {"id": "byName", "options": "Expected always-on"}, "properties": [{"id": "mappings", "value": [{"type": "value", "options": {"1": {"text": "yes"}}}]}]},
-          {"matcher": {"id": "byName", "options": "Update"}, "properties": [{"id": "mappings", "value": [{"type": "value", "options": {"0": {"text": "current", "color": "green"}, "1": {"text": "available", "color": "orange"}}}]}, {"id": "custom.cellOptions", "value": {"type": "color-text"}}]},
-          {"matcher": {"id": "byName", "options": "Last seen (ago)"}, "properties": [{"id": "unit", "value": "s"}]},
-          {"matcher": {"id": "byName", "options": "Key expires in"}, "properties": [{"id": "unit", "value": "s"}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"value": null, "color": "red"}, {"value": 604800, "color": "orange"}, {"value": 1209600, "color": "green"}]}}, {"id": "custom.cellOptions", "value": {"type": "color-text"}}]},
-          {"matcher": {"id": "byName", "options": "Unapproved routes"}, "properties": [{"id": "thresholds", "value": {"mode": "absolute", "steps": [{"value": null, "color": "green"}, {"value": 1, "color": "red"}]}}, {"id": "custom.cellOptions", "value": {"type": "color-text"}}]}
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Online"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "offline",
+                        "color": "orange"
+                      },
+                      "1": {
+                        "text": "online",
+                        "color": "green"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Expected always-on"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "1": {
+                        "text": "yes"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Update"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "current",
+                        "color": "green"
+                      },
+                      "1": {
+                        "text": "available",
+                        "color": "orange"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last seen (ago)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Key expires in"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "red"
+                    },
+                    {
+                      "value": 604800,
+                      "color": "orange"
+                    },
+                    {
+                      "value": 1209600,
+                      "color": "green"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Unapproved routes"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "green"
+                    },
+                    {
+                      "value": 1,
+                      "color": "red"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
         ]
       },
-      "options": {"showHeader": true, "sortBy": [{"displayName": "Device", "desc": false}]}
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "Device",
+            "desc": false
+          }
+        ]
+      }
+    },
+    {
+      "id": 11,
+      "type": "piechart",
+      "title": "Devices by OS",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "count by (os) (tailscale_devices_info)",
+          "instant": true,
+          "legendFormat": "{{os}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value"
+          ]
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "piechart",
+      "title": "Devices by client version",
+      "description": "A lone version in the list is a straggler that missed an update.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 22,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "count by (client_version) (tailscale_devices_info)",
+          "instant": true,
+          "legendFormat": "{{client_version}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value"
+          ]
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "id": 13,
+      "type": "stat",
+      "title": "Key lifetime setting",
+      "description": "Tailnet-wide default node-key lifetime, in days.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 22,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "tailscale_tailnet_settings_devices_key_duration_days",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "d",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "Latency to DERP regions",
+      "description": "Per-device latency to each DERP relay region, as the control plane last measured it. There is no direct-versus-relayed series in the API.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 30,
+        "w": 24,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "tailscale_devices_latency_ms",
+          "legendFormat": "{{hostname}} → {{derp_region}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "id": 15,
+      "type": "table",
+      "title": "Auth and API keys",
+      "description": "Keys that expire, including the exporter's own credentials. Negative means already expired.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 24,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "tailscale_keys_expires_timestamp - time()",
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true,
+              "instance": true
+            },
+            "renameByName": {
+              "id": "Key ID",
+              "key_type": "Type",
+              "user_id": "Owner",
+              "Value": "Expires in"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Expires in"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "red"
+                    },
+                    {
+                      "value": 604800,
+                      "color": "orange"
+                    },
+                    {
+                      "value": 1209600,
+                      "color": "green"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true
+      }
     }
   ]
 }
