@@ -77,7 +77,7 @@ Every **Tailnet device** and the problems among them (ADR-0023). Needs the
 `monitoring.nix`) and the `tailnet_expected_always_on` recording rules it also
 defines. View-only: nothing alerts. "Expected devices" are Always-on hosts
 (`host.alwaysOn`) plus Tailnet sidecars (`host.tailnetSidecars`); sleeping
-laptops are shown with last-seen age and never flagged. The exporter's OAuth
-client is read-only (`devices:core:read`, `devices:routes:read`,
-`auth_keys:read`, `feature_settings:read`); unused collectors failing for
-lack of scope is expected. History is bounded by Prometheus retention.
+laptops are shown with last-seen age and never flagged. The exporter's OAuth client needs all nine read scopes (it
+requests them at token time). The "Exporter down" tile watches the devices
+collector's success.
+History is bounded by Prometheus retention.

@@ -358,7 +358,7 @@
       "id": 7,
       "type": "stat",
       "title": "Exporter down",
-      "description": "1 when the Tailscale API exporter is missing or cannot reach the API (bad OAuth client, empty secret, API outage). Every other panel is stale while this is 1.",
+      "description": "1 when the exporter is missing or its devices collector is failing (revoked or invalid credentials, missing scope, API outage); every other panel is stale while this is 1.",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -376,7 +376,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "absent(tailscale_up == 1) or vector(0)",
+          "expr": "absent(tailscale_scrape_collector_success{collector=\"devices\"} == 1) or vector(0)",
           "instant": true
         }
       ],
