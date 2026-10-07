@@ -40,6 +40,10 @@ in {
   "restic-bunyip.age".publicKeys = [grue bunyip];
   "restic-bunyip-srv.age".publicKeys = [grue bunyip];
 
+  # NUT upsd password for upsmon / self-test / beeper (bunyip-only, nothing
+  # else is a NUT client). Regenerable: no 1Password copy.
+  "nut-upsmon.age".publicKeys = [grue bunyip];
+
   # ── User secrets: grue ──────────────────────────────────────────────────
   "grue/goreleaser.age".publicKeys = [grue] ++ allHosts;
   "grue/anthropic.age".publicKeys = [grue] ++ allHosts;
