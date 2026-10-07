@@ -215,10 +215,10 @@ ssh-verify:
     echo ""
     echo "Done."
 
-# Print instructions for adding a host's SSH public key to secrets.nix
+# Print instructions for adding a host's SSH public key to agenix-rules.nix
 [group('ssh')]
 ssh-add-host hostname pubkey:
-    echo "1. Add to secrets/secrets.nix in the 'let' block:"
+    echo "1. Add to secrets/agenix-rules.nix in the 'let' block:"
     echo "     {{ hostname }} = \"{{ pubkey }}\";"
     echo ""
     echo "2. Add '{{ hostname }}' to the systems = [...] list."
@@ -229,11 +229,11 @@ ssh-add-host hostname pubkey:
 # Secrets
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Re-encrypt all secrets after adding a new recipient to secrets.nix.
+# Re-encrypt all secrets after adding a new recipient to agenix-rules.nix.
 # Runs as root (for host key access) while preserving the 1Password SSH agent socket.
 [group('secrets')]
 rekey:
-    sudo SSH_AUTH_SOCK="${SSH_AUTH_SOCK:-$HOME/.1password/agent.sock}" agenix --rekey -i /etc/ssh/ssh_host_ed25519_key
+    cd {{ flake }}/secrets && sudo SSH_AUTH_SOCK="${SSH_AUTH_SOCK:-$HOME/.1password/agent.sock}" agenix --rekey -i /etc/ssh/ssh_host_ed25519_key
 
 # Re-encrypt all secrets after adding new keys
 [group('secrets')]
@@ -269,7 +269,7 @@ prep-host hostname: _op-check
     fi
 
     echo ""
-    echo "Add {{ hostname }} as a recipient in secrets.nix, then run: just rekey"
+    echo "Add {{ hostname }} as a recipient in agenix-rules.nix, then run: just rekey"
     echo "Commit the results and push before running nixos-install on the new host."
 
 # ─────────────────────────────────────────────────────────────────────────────

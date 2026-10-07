@@ -74,6 +74,6 @@ failure surfaces only in the consuming application, arbitrarily far away.
 - A ~322-byte `.age` file with two recipients is an encrypted *empty* payload;
   real content shows up as a larger payload after the `--- ` header line.
 
-Repair with `agenix -e secrets/<path>.age` (there is no `just` recipe — `just
+Repair with `cd secrets && agenix -e <path>.age` (there is no `just` recipe — `just
 rekey` only re-encrypts existing content, so it will faithfully re-encrypt
 nothing).

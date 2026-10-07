@@ -17,10 +17,6 @@
       env = "GORELEASER_KEY";
     }
     {
-      secret = "anthropic";
-      env = "ANTHROPIC_API_KEY";
-    }
-    {
       secret = "context7";
       env = "CONTEXT7_API_KEY";
     }

@@ -16,6 +16,13 @@
     {
       "matchDatasources": ["docker"],
       "pinDigests": true
+    },
+    {
+      "description": "Postgres majors change the on-disk format and the 18+ image moves PGDATA; micasa-pgdata needs a planned dump/restore (see PR #248).",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["postgres"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     }
   ]
 }

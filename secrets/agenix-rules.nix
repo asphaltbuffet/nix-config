@@ -46,7 +46,6 @@ in {
 
   # ── User secrets: grue ──────────────────────────────────────────────────
   "grue/goreleaser.age".publicKeys = [grue] ++ allHosts;
-  "grue/anthropic.age".publicKeys = [grue] ++ allHosts;
   "grue/context7.age".publicKeys = [grue] ++ allHosts;
   "grue/github.age".publicKeys = [grue] ++ allHosts;
   "grue/githubMcp.age".publicKeys = [grue] ++ allHosts;
