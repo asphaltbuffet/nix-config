@@ -12,7 +12,7 @@ Every host with a repo gets an admin wrapper `restic-<repo>` on PATH (repo, pass
 ## Add a repository (one-time, per repo)
 1. Generate the password: `nix shell "nixpkgs#openssl" -c openssl rand -base64 32` (or `head -c 32 /dev/urandom | base64 -w0`).
 2. **Store it in 1Password first** (item `restic-<repo>`). Losing it loses the backups.
-3. Add `secrets/restic-<repo>.age` to `secrets/secrets.nix`, encrypted to **that host's key + admin key only**; `cd secrets && agenix -e restic-<repo>.age`; `just rekey`.
+3. Add `secrets/restic-<repo>.age` to `secrets/agenix-rules.nix`, encrypted to **that host's key + admin key only**; `cd secrets && agenix -e restic-<repo>.age`; `just rekey`.
 4. `jj file track` the new files; set the host's `services.resticBackup.home.enable` / `services.resticBackup.srv.enable`.
 5. Deploy, then init by hand on the host: `sudo restic-<repo> init`. Never automated. Autodeploy rolls the change out to all hosts after merge, so bunyip alerts nightly until BOTH its repos (`bunyip`, `bunyip-srv`) are initialised: init them straight after deploying.
 6. Trigger the first run: `sudo systemctl start restic-backup-<repo>`, then `journalctl -u restic-backup-<repo> -b` and `cat /var/lib/node-exporter-textfile/restic-<repo>-*.prom` (expect `last_run_success 1`), and check the dashboard. Until init, a laptop skips silently (an uninitialised repo looks like an unreachable NAS). Do the first run of `bunyip-srv` early in the week: a first full 1.5 TB run can outlast Sunday's prune lock wait (`--retry-lock 1h`).

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Secrets are managed with **agenix**. `.age` files are ciphertext (safe to commit). `secrets.nix` maps files to age recipient public keys.
+Secrets are managed with **agenix**. `.age` files are ciphertext (safe to commit). `agenix-rules.nix` maps files to age recipient public keys.
 
 - System secrets decrypt to `/run/agenix/` (root-owned)
 - User secrets decrypt to `/run/agenix/` (user-owned)
@@ -10,7 +10,7 @@ Secrets are managed with **agenix**. `.age` files are ciphertext (safe to commit
 
 ## Adding a New User Secret
 
-1. Add the secret path + recipient keys to `secrets/secrets.nix`:
+1. Add the secret path + recipient keys to `secrets/agenix-rules.nix`:
    ```nix
    "grue/mysecret.age".publicKeys = [grue] ++ allHosts;
    ```
@@ -18,16 +18,16 @@ Secrets are managed with **agenix**. `.age` files are ciphertext (safe to commit
    ```nix
    { secret = "mysecret"; env = "MY_ENV_VAR"; }
    ```
-3. Encrypt the `.age` file: `agenix -e secrets/grue/mysecret.age`
+3. Encrypt the `.age` file: `cd secrets && agenix -e grue/mysecret.age`
 4. Track with jj: `jj file track secrets/grue/mysecret.age`
 
 ## Rekeying
 
-Run `just rekey` after adding a new recipient to `secrets.nix`. Requires agenix CLI and your SSH key loaded in the agent.
+Run `just rekey` after adding a new recipient to `agenix-rules.nix`. Requires agenix CLI and your SSH key loaded in the agent.
 
 ## New Host Preparation
 
-`just prep-host <hostname>` fetches the host pubkey from 1Password `Service` vault, saves to `nixos/hosts/<hostname>/ssh_host_ed25519_key.pub`, and prints instructions to update `secrets.nix`.
+`just prep-host <hostname>` fetches the host pubkey from 1Password `Service` vault, saves to `nixos/hosts/<hostname>/ssh_host_ed25519_key.pub`, and prints instructions to update `agenix-rules.nix`.
 
 ## SSH Module
 

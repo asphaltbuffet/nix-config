@@ -226,8 +226,8 @@ with age to SSH public keys and stored as `.age` files in the repo.
 | Bootstrap key distribution | 1Password `op` CLI | Host SSH keypairs in `Service` vault |
 
 **Adding a secret:**
-1. Encrypt: `nix shell "github:ryantm/agenix" --command agenix -e secrets/<path>.age`
-2. Add the file → recipient mapping to `secrets/secrets.nix`
+1. Encrypt: `cd secrets && nix shell "github:ryantm/agenix" --command agenix -e <path>.age`
+2. Add the file → recipient mapping to `secrets/agenix-rules.nix`
 3. For a *user* secret exposed as an env var, add a `{secret, env}` entry to the
    `secretEnvs` list in `home/users/<name>.nix` — the `age.secrets` declaration
    and the shell export are derived from it automatically
@@ -238,7 +238,7 @@ See [`docs/references/secrets-sop.md`](docs/references/secrets-sop.md) for the f
 **Adding a new host:**
 1. Create SSH keypair in 1Password (`Service` vault, item `host-<hostname>`)
 2. Run `just prep-host <hostname>` on any existing host
-3. Add host to `secrets.nix` recipients and run `just rekey`
+3. Add host to `agenix-rules.nix` recipients and run `just rekey`
 4. Commit, push, and wait for merge
 5. On the new host ISO: `op read "op://Service/host-<hostname>/private_key" > /etc/ssh/ssh_host_ed25519_key && chmod 600 /etc/ssh/ssh_host_ed25519_key`
 6. Run `nixos-install --flake "github:asphaltbuffet/nix-config#<hostname>"`

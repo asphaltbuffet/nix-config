@@ -10,8 +10,8 @@ When a task is complete, do the following before considering it done:
 6. **Switch** (when ready): `just switch` — activates and sets boot default
 
 For secrets changes:
-- After adding a recipient to `secrets/secrets.nix`: run `just rekey`
-- Encrypt new secret: `agenix -e secrets/<name>.age`
+- After adding a recipient to `secrets/agenix-rules.nix`: run `just rekey`
+- Encrypt new secret: `cd secrets && agenix -e <name>.age`
 
 Reference docs:
 - Secrets workflow: `docs/references/secrets-sop.md`

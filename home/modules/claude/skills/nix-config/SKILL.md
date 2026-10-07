@@ -73,7 +73,7 @@ home/
   modules/<tool>/default.nix    # Per-tool home-manager configuration
 
 secrets/
-  secrets.nix                   # Declares secrets and authorized keys
+  agenix-rules.nix              # Declares secrets and authorized keys
   *.age                         # Encrypted secret files (agenix)
 ```
 
@@ -123,13 +123,13 @@ Module template:
 2. Ask user for `uid` and `gid` that matches NAS setup.
 3. Add user to `nixos/common/users.nix` (both `users.users` and `home-manager.users`)
 
-1. Add entry to `secrets/secrets.nix` with `publicKeys = users ++ systems;`
-2. Encrypt the file: `nix shell "github:ryantm/agenix" --command agenix -e secrets/<name>.age`
+1. Add entry to `secrets/agenix-rules.nix` with `publicKeys = users ++ systems;`
+2. Encrypt the file: `cd secrets && agenix -e <name>.age` (agenix is in the dev shell)
 3. For a **user** secret exposed as an env var, add a `{secret, env}` record to the
    `secretEnvs` list in `home/users/<name>.nix` — `age.secrets` and the zsh export
    are derived from it. For a **system/module** secret, reference it directly:
    `age.secrets.<name>.file = ../../secrets/<name>.age;`
-4. After adding a new host or user key to `secrets.nix`: `just rekey`
+4. After adding a new host or user key to `agenix-rules.nix`: `just rekey`
 
 **Note**: System secrets may require `sudo agenix -e <name>.age -i /etc/ssh/ssh_host_ed25519_key`
 

@@ -4,7 +4,7 @@
 flake.nix                   # mkHost, mkPkgs, devShell, formatter, checks
 justfile                    # All dev commands
 shell.nix                   # Dev shell (also usable as legacy nix-shell)
-secrets/                    # agenix encrypted secrets (.age files + secrets.nix)
+secrets/                    # agenix encrypted secrets (.age files + agenix-rules.nix)
 
 nixos/
   hosts/<name>/             # Per-host entry point (auto-discovered)
@@ -45,7 +45,7 @@ home/
 `nixos/common/users.nix` defines system users AND maps `home-manager.users.<name>` to `home/users/<name>.nix`.
 
 ## Secrets
-- `secrets/secrets.nix` — declares secrets + authorized recipient keys
+- `secrets/agenix-rules.nix` — declares secrets + authorized recipient keys
 - `*.age` files — encrypted ciphertext (safe to commit)
 - System secrets: `nixos/common/agenix.nix`
 - User secrets: `home/modules/agenix/default.nix` (`userSecrets` attrset = source of truth for user secret → env var mappings)

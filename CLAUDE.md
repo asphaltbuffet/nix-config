@@ -63,7 +63,7 @@ just fmt                # Always run before committing; fixes formatting, lint, 
 just lint               # Read-only check — use in CI or to verify before running fmt
 just precommit          # Full pre-commit gate: lint + flake check (slower than lint alone)
 just update             # Bump all flake inputs to latest; run when you want upstream changes
-just rekey              # Must run after adding a host or user key to secrets/secrets.nix
+just rekey              # Must run after adding a host or user key to secrets/agenix-rules.nix
 just prep-host <name>   # First step when onboarding a new host — fetches its pubkey from 1Password
 ```
 
@@ -137,8 +137,8 @@ When running shell commands, prefer these modern alternatives:
 
 See `docs/references/secrets-sop.md` when touching secrets, agenix, or the SSH module.
 
-- **Secrets**: Managed with agenix. `.age` files are ciphertext (safe to commit). `secrets.nix` maps files to age recipient public keys. The `secretEnvs` list in `home/users/<name>.nix` is the single source of truth for user secret → env var mappings; `age.secrets` and `zsh.initContent` exports are derived from it automatically. See `docs/references/secrets-sop.md` for the full workflow.
-- **Rekeying**: Run `just rekey` after adding a new recipient to `secrets.nix`.
+- **Secrets**: Managed with agenix. `.age` files are ciphertext (safe to commit). `agenix-rules.nix` maps files to age recipient public keys. The `secretEnvs` list in `home/users/<name>.nix` is the single source of truth for user secret → env var mappings; `age.secrets` and `zsh.initContent` exports are derived from it automatically. See `docs/references/secrets-sop.md` for the full workflow.
+- **Rekeying**: Run `just rekey` after adding a new recipient to `agenix-rules.nix`.
 
 ---
 
