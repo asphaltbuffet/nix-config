@@ -20,6 +20,10 @@ in {
   # Only bunyip runs them; `grue` can edit it.
   "grafanaRendererToken.age".publicKeys = [grue bunyip];
 
+  # Tailscale API exporter env (TAILSCALE_TAILNET, TAILSCALE_OAUTH_CLIENT_ID,
+  # TAILSCALE_OAUTH_CLIENT_SECRET): a read-only OAuth client, ADR-0023. Only bunyip runs it.
+  "tailscale-exporter-env.age".publicKeys = [grue bunyip];
+
   # wherefolk container env (TS_AUTHKEY, passphrase, version). Only bunyip runs it.
   "wherefolk-env.age".publicKeys = [grue bunyip];
 
