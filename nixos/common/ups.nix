@@ -241,5 +241,39 @@ in {
         pathConfig.PathExists = "${runDir}/catch-up";
       };
     };
+
+    services.prometheus = {
+      # nut_exporter only exports what is listed (its default list omits runtime).
+      exporters.nut = {
+        enable = true;
+        listenAddress = "127.0.0.1";
+        nutVariables = [
+          "battery.charge"
+          "battery.runtime"
+          "battery.voltage"
+          "input.voltage"
+          "output.voltage"
+          "ups.load"
+          "ups.realpower.nominal"
+          "ups.status"
+        ];
+      };
+
+      # Prometheus runs on this same host (monitoring.nix). The exporter serves
+      # /ups_metrics, not /metrics, and needs ?ups=<name>.
+      scrapeConfigs = lib.mkIf config.services.prometheus.enable [
+        {
+          job_name = "nut";
+          metrics_path = "/ups_metrics";
+          params.ups = [cfg.ups];
+          static_configs = [
+            {
+              targets = ["127.0.0.1:9199"];
+              labels.host = config.networking.hostName;
+            }
+          ];
+        }
+      ];
+    };
   };
 }
