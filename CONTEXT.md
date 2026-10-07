@@ -167,8 +167,16 @@ _Avoid_: user (ambiguous with the host **Users**), peer, guest
 ### Monitoring
 
 **Alert**:
-A notification a host pushes when it detects a problem (a failed auto-deploy, a disk health warning). Sent only on problems — silence means nothing was detected, not that everything is fine.
+A notification a host pushes when it detects a problem (a failed auto-deploy, a disk health warning). Sent only on problems — silence means nothing was detected, not that everything is fine. The one exception is a **Resolution**, which closes out an earlier Alert.
 _Avoid_: ping, check, heartbeat
+
+**Resolution**:
+The all-clear that follows a specific earlier **Alert** once its condition ends (e.g. mains power returning after an on-battery Alert). It is sent only if the Alert it pairs with was sent. A condition that cleared before anything was alerted produces nothing.
+_Avoid_: recovery alert, OK notification, resolved ping
+
+**Mains failure**:
+Loss of utility power to the house, as detected by bunyip's UPS switching to battery. bunyip is the only load on that UPS, and the network gear and NAS are on a separate unmonitored UPS, so this is the fleet's only power sensor. It reports on the house's supply, not just bunyip's.
+_Avoid_: power outage (fine in prose), brownout (the UPS's AVR absorbs those without going to battery)
 
 **Liveness check**:
 Detection of a host going *silent* — a job that never ran, a host that stopped reporting — by noticing the absence of an expected signal. Applies only to **Always-on hosts**; hosts that sleep or power off are never liveness-checked, because their silence is normal.
