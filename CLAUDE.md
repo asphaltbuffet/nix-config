@@ -46,6 +46,7 @@ This document uses **progressive disclosure** to optimize LLM working efficiency
 | Stirling-PDF, bunyip container services, Tailscale sidecar, `oci-containers`, `tag:stirling`, Renovate image bumps | `docs/references/stirling-pdf-sop.md`, `docs/adr/0020-container-services-oci-containers-tailnet-sidecar.md` | one tag + OAuth client per service; digest-pinned images; confined app container |
 | micasa, sync relay, `tag:micasa`, `micasa-*-env.age`, joining a machine to the household, internal Docker network, Nix-built container image | `docs/references/micasa-sop.md`, `docs/adr/0021-micasa-relay-nix-built-image-internal-db-network.md` | empty relay-env → silent in-memory store; DB on `--internal` network the sidecar joins; bump by flake tag, not Renovate |
 | restic, backups, `restic-*.age`, `/nas/public/backups`, bunyip `/srv` disk, backup dashboard, restore | `docs/references/restic-backup-sop.md`, `docs/adr/0022-restic-per-host-repos-on-public-nas-share.md` | per-host repo + password (1Password copy!); laptops skip silently off-network, bunyip fails loudly; `restic init` is manual |
+| UPS, NUT, upsmon/upssched, power loss Alert, bunyip shutdown on battery, `nut-upsmon.age`, power dashboard, beeper, self-test | `docs/references/ups-sop.md` | bunyip is the only load (house mains sensor); jobs deferred on battery catch up on mains return; COMMBAD deliberately not alerted |
 
 ---
 
@@ -192,6 +193,7 @@ Use these slash commands for guided workflows:
 | Stirling-PDF, bunyip container services, Tailscale sidecar, `oci-containers`, `tag:stirling`, Renovate image bumps | `docs/references/stirling-pdf-sop.md`, `docs/adr/0020-container-services-oci-containers-tailnet-sidecar.md` | one tag + OAuth client per service; digest-pinned images; confined app container |
 | micasa, sync relay, `tag:micasa`, `micasa-*-env.age`, joining a machine to the household, internal Docker network, Nix-built container image | `docs/references/micasa-sop.md`, `docs/adr/0021-micasa-relay-nix-built-image-internal-db-network.md` | empty relay-env → silent in-memory store; DB on `--internal` network the sidecar joins; bump by flake tag, not Renovate |
 | restic, backups, `restic-*.age`, `/nas/public/backups`, bunyip `/srv` disk, backup dashboard, restore | `docs/references/restic-backup-sop.md`, `docs/adr/0022-restic-per-host-repos-on-public-nas-share.md` | per-host repo + password (1Password copy!); laptops skip silently off-network, bunyip fails loudly; `restic init` is manual |
+| UPS, NUT, upsmon/upssched, power loss Alert, bunyip shutdown on battery, `nut-upsmon.age`, power dashboard, beeper, self-test | `docs/references/ups-sop.md` | bunyip is the only load (house mains sensor); jobs deferred on battery catch up on mains return; COMMBAD deliberately not alerted |
 
 ---
 

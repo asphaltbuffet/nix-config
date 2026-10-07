@@ -1,0 +1,170 @@
+{
+  "uid": "ups-power",
+  "title": "Power",
+  "description": "bunyip's CyberPower CP1500AVR via NUT (nixos/common/ups.nix). bunyip is the UPS's only load, so this is also the house's Mains failure history.",
+  "tags": ["ups", "power", "nut"],
+  "schemaVersion": 39,
+  "editable": true,
+  "time": {"from": "now-7d", "to": "now"},
+  "refresh": "1m",
+  "templating": {
+    "list": [
+      {"name": "datasource", "label": "Prometheus", "type": "datasource", "query": "prometheus", "current": {}, "hide": 0}
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "name": "On battery",
+        "datasource": {"type": "prometheus", "uid": "${datasource}"},
+        "enable": true,
+        "iconColor": "orange",
+        "expr": "max(network_ups_tools_ups_status{flag=\"OB\"}) == 1",
+        "step": "1m",
+        "titleFormat": "On battery"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "State",
+      "description": "Mains, on battery, or low battery (shutdown imminent). LB only counts while on battery: with ignorelb it can be set on mains while recharging.",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 0, "y": 0, "w": 5, "h": 5},
+      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "max(network_ups_tools_ups_status{flag=\"LB\"}) * max(network_ups_tools_ups_status{flag=\"OB\"}) * 2 + max(network_ups_tools_ups_status{flag=\"OB\"})"}],
+      "fieldConfig": {"defaults": {
+        "mappings": [{"type": "value", "options": {
+          "0": {"text": "On mains", "color": "green"},
+          "1": {"text": "On battery", "color": "orange"},
+          "2": {"text": "Low battery", "color": "red"},
+          "3": {"text": "Low battery", "color": "red"}}}],
+        "noValue": "No data (NUT down?)"
+      }, "overrides": []},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none", "textMode": "value"}
+    },
+    {
+      "id": 2, "type": "stat", "title": "Battery charge",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 5, "y": 0, "w": 4, "h": 5},
+      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "network_ups_tools_battery_charge"}],
+      "fieldConfig": {"defaults": {"unit": "percent", "min": 0, "max": 100,
+        "thresholds": {"mode": "absolute", "steps": [{"value": null, "color": "red"}, {"value": 50, "color": "orange"}, {"value": 90, "color": "green"}]}}, "overrides": []},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "area"}
+    },
+    {
+      "id": 3, "type": "stat", "title": "Runtime",
+      "description": "Estimated runtime on battery at the current load. bunyip shuts down at 5 min.",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 9, "y": 0, "w": 4, "h": 5},
+      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "network_ups_tools_battery_runtime"}],
+      "fieldConfig": {"defaults": {"unit": "s",
+        "thresholds": {"mode": "absolute", "steps": [{"value": null, "color": "red"}, {"value": 300, "color": "orange"}, {"value": 900, "color": "green"}]}}, "overrides": []},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "area"}
+    },
+    {
+      "id": 4, "type": "stat", "title": "Draw",
+      "description": "bunyip's wall draw: UPS load % × rated watts.",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 13, "y": 0, "w": 4, "h": 5},
+      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "network_ups_tools_ups_load * network_ups_tools_ups_realpower_nominal / 100"}],
+      "fieldConfig": {"defaults": {"unit": "watt", "decimals": 0, "color": {"mode": "fixed", "fixedColor": "text"}}, "overrides": []},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "area"}
+    },
+    {
+      "id": 5, "type": "stat", "title": "Last mains failure",
+      "description": "Most recent time on battery within Prometheus retention (15 days).",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 17, "y": 0, "w": 4, "h": 5},
+      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "max_over_time((timestamp(max(network_ups_tools_ups_status{flag=\"OB\"}) == 1))[15d:1m]) * 1000", "instant": true}],
+      "fieldConfig": {"defaults": {"unit": "dateTimeFromNow", "noValue": "None in 15 days", "color": {"mode": "fixed", "fixedColor": "text"}}, "overrides": []},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "none"}
+    },
+    {
+      "id": 6, "type": "stat", "title": "Self-test",
+      "description": "Result of the monthly quick battery test (ups-selftest.timer).",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 21, "y": 0, "w": 3, "h": 5},
+      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "max(ups_selftest_passed)"}],
+      "fieldConfig": {"defaults": {
+        "mappings": [{"type": "value", "options": {"0": {"text": "Failed", "color": "red"}, "1": {"text": "Passed", "color": "green"}}}],
+        "noValue": "Never run"}, "overrides": []},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background", "graphMode": "none"}
+    },
+    {"id": 100, "type": "row", "title": "Power quality", "collapsed": false, "gridPos": {"x": 0, "y": 5, "w": 24, "h": 1}, "panels": []},
+    {
+      "id": 7, "type": "state-timeline", "title": "Mains / battery",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 0, "y": 6, "w": 24, "h": 4},
+      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "max(network_ups_tools_ups_status{flag=\"OB\"})", "legendFormat": "Supply"}],
+      "fieldConfig": {"defaults": {
+        "mappings": [{"type": "value", "options": {"0": {"text": "Mains", "color": "green"}, "1": {"text": "Battery", "color": "orange"}}}],
+        "color": {"mode": "thresholds"}}, "overrides": []},
+      "options": {"showValue": "never", "mergeValues": true, "legend": {"showLegend": false}}
+    },
+    {
+      "id": 8, "type": "timeseries", "title": "Voltage",
+      "description": "Input is the mains supply; output is what bunyip gets after AVR.",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 0, "y": 10, "w": 24, "h": 8},
+      "targets": [
+        {"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "network_ups_tools_input_voltage", "legendFormat": "Input"},
+        {"refId": "B", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "network_ups_tools_output_voltage", "legendFormat": "Output"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "volt", "custom": {"lineWidth": 2, "fillOpacity": 0}}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+    },
+    {"id": 101, "type": "row", "title": "Battery health", "collapsed": false, "gridPos": {"x": 0, "y": 18, "w": 24, "h": 1}, "panels": []},
+    {
+      "id": 9, "type": "timeseries", "title": "Charge",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 0, "y": 19, "w": 8, "h": 8},
+      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "network_ups_tools_battery_charge", "legendFormat": "Charge"}],
+      "fieldConfig": {"defaults": {"unit": "percent", "min": 0, "max": 100, "custom": {"lineWidth": 2, "fillOpacity": 10}}, "overrides": []},
+      "options": {"legend": {"showLegend": false}}
+    },
+    {
+      "id": 10, "type": "timeseries", "title": "Runtime at current load",
+      "description": "A shrinking trend at steady load is the earliest sign of an ageing battery.",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 8, "y": 19, "w": 8, "h": 8},
+      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "network_ups_tools_battery_runtime", "legendFormat": "Runtime"}],
+      "fieldConfig": {"defaults": {"unit": "s", "min": 0, "custom": {"lineWidth": 2, "fillOpacity": 10}}, "overrides": []},
+      "options": {"legend": {"showLegend": false}}
+    },
+    {
+      "id": 11, "type": "timeseries", "title": "Battery voltage",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 16, "y": 19, "w": 8, "h": 8},
+      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "network_ups_tools_battery_voltage", "legendFormat": "Battery"}],
+      "fieldConfig": {"defaults": {"unit": "volt", "custom": {"lineWidth": 2, "fillOpacity": 0}}, "overrides": []},
+      "options": {"legend": {"showLegend": false}}
+    },
+    {"id": 102, "type": "row", "title": "Energy", "collapsed": false, "gridPos": {"x": 0, "y": 27, "w": 24, "h": 1}, "panels": []},
+    {
+      "id": 12, "type": "timeseries", "title": "Draw",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 0, "y": 28, "w": 12, "h": 8},
+      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "network_ups_tools_ups_load * network_ups_tools_ups_realpower_nominal / 100", "legendFormat": "bunyip"}],
+      "fieldConfig": {"defaults": {"unit": "watt", "min": 0, "custom": {"lineWidth": 2, "fillOpacity": 10}}, "overrides": []},
+      "options": {"legend": {"showLegend": false}}
+    },
+    {
+      "id": 13, "type": "timeseries", "title": "Energy per day",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 12, "y": 28, "w": 6, "h": 8},
+      "interval": "1d",
+      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "avg_over_time((network_ups_tools_ups_load * network_ups_tools_ups_realpower_nominal / 100)[1d:1m]) * 24 / 1000", "legendFormat": "kWh"}],
+      "fieldConfig": {"defaults": {"unit": "kwatth", "decimals": 2, "min": 0, "custom": {"drawStyle": "bars", "fillOpacity": 80, "lineWidth": 1}}, "overrides": []},
+      "options": {"legend": {"showLegend": false}}
+    },
+    {
+      "id": 14, "type": "stat", "title": "Projected monthly",
+      "description": "Last 7 days' average draw × 30 days. Prometheus retention (15 d) is too short for a true month.",
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "gridPos": {"x": 18, "y": 28, "w": 6, "h": 8},
+      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "avg_over_time((network_ups_tools_ups_load * network_ups_tools_ups_realpower_nominal / 100)[7d:5m]) * 24 * 30 / 1000", "instant": true}],
+      "fieldConfig": {"defaults": {"unit": "kwatth", "decimals": 1, "color": {"mode": "fixed", "fixedColor": "text"}}, "overrides": []},
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value", "graphMode": "none"}
+    }
+  ]
+}

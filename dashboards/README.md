@@ -60,3 +60,12 @@ Restic backup health (ADR-0022). Needs the `restic_*` textfile metrics written b
 "Restore size" is the logical size of a source's latest snapshot; repository
 size is physical. Freshness panels are informational: a laptop that was off the
 home network legitimately ages, and nothing alerts on it.
+
+## Power (`power.json`)
+
+bunyip's UPS via NUT (`nixos/common/ups.nix`). Needs the `nut` Prometheus job
+(`prometheus-nut-exporter` on `127.0.0.1:9199`, path `/ups_metrics?ups=cyberpower`)
+and, for the Self-test panel, the `ups_selftest_*` textfile metrics. Draw is
+UPS load % × `ups.realpower.nominal`. "Last mains failure" and the monthly
+figure are bounded by Prometheus retention (15 days), so the month is projected
+from the last 7 days.
