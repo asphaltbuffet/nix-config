@@ -13,5 +13,16 @@
         liveness expectations key off this.
       '';
     };
+    tailnetSidecars = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      example = ["micasa"];
+      description = ''
+        Tailnet device names (the sidecar's TS_HOSTNAME) of the Tailnet sidecars
+        (CONTEXT.md) running on this host. Each service module registers its own,
+        so the tailnet dashboard's expected-always-on list (monitoring.nix) uses
+        the exact name the sidecar registers with Tailscale.
+      '';
+    };
   };
 }

@@ -17,6 +17,9 @@
 }: let
   baseline = import ./container-baseline.nix;
 
+  # The sidecar's tailnet device name; also registered for the tailnet dashboard.
+  tsHostname = "micasa";
+
   # Containers that join micasa-egress / micasa-db, ordered after the unit that
   # creates them.
   networked = map (c: "docker-${c}.service") ["micasa-ts" "micasa-postgres"];
@@ -47,6 +50,8 @@
     AllowFunnel."\${TS_CERT_DOMAIN}:443" = false;
   });
 in {
+  host.tailnetSidecars = [tsHostname];
+
   age.secrets = {
     micasa-ts-env = {
       file = ../../secrets/micasa-ts-env.age;
@@ -126,7 +131,7 @@ in {
         image = "tailscale/tailscale:v1.102.5@sha256:c507f3a2a6ab1cabd8d809b98edeb41edbd5c3fb6ad9632ffd098b4c7d0b4065";
         environmentFiles = [config.age.secrets.micasa-ts-env.path];
         environment = {
-          TS_HOSTNAME = "micasa";
+          TS_HOSTNAME = tsHostname;
           # OAuth clients can only mint tagged nodes.
           TS_EXTRA_ARGS = "--advertise-tags=tag:micasa";
           # Without persisted state every restart authenticates as a new node.
