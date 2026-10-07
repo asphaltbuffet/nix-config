@@ -50,6 +50,9 @@
 
       case "''${1:-}" in
         onbatt) # on battery for 30 s
+          # A flap within the 30 s mains-stable window re-arms the onbatt timer;
+          # the open Alert already covers it.
+          [[ -e ${stateDir}/onbatt-alerted ]] && exit 0
           touch ${stateDir}/onbatt-alerted
           ups_fields
           ${alert} --priority 4 --tag ups "''${fields[@]}" -- "on battery: mains failure"
@@ -64,8 +67,13 @@
           ups_fields
           ${alert} --priority 5 --tag ups "''${fields[@]}" -- "low battery: shutting down"
           ;;
-        nocomm)
+        nocomm) # NUT re-notifies every NOCOMMWARNTIME; alert once per outage
+          [[ -e ${runDir}/nocomm-alerted ]] && exit 0
+          touch ${runDir}/nocomm-alerted
           ${alert} --priority 3 --tag ups --field "check=upsc ${upsAddr}" -- "UPS communication lost"
+          ;;
+        commok) # link recovered: re-arm the NOCOMM alert, send nothing
+          rm -f ${runDir}/nocomm-alerted
           ;;
         replbatt)
           ${alert} --priority 3 --tag ups --field "check=sudo systemctl start ups-selftest" -- "UPS battery needs replacing"
@@ -96,6 +104,7 @@
     AT LOWBATT * EXECUTE lowbatt
     AT FSD * EXECUTE fsd
     AT NOCOMM * EXECUTE nocomm
+    AT COMMOK * EXECUTE commok
     AT REPLBATT * EXECUTE replbatt
   '';
 in {
@@ -133,10 +142,11 @@ in {
       schedulerRules = "${upsschedConf}";
 
       # COMMBAD is deliberately absent: it fires on every upsd/driver restart.
+      # COMMOK is only used to re-arm the NOCOMM alert and never alerts.
       # NOCOMM means the link has been down for NOCOMMWARNTIME (300 s).
       upsmon.settings.NOTIFYFLAG =
         map (event: [event "SYSLOG+EXEC"])
-        ["ONBATT" "ONLINE" "LOWBATT" "FSD" "NOCOMM" "REPLBATT"];
+        ["ONBATT" "ONLINE" "LOWBATT" "FSD" "NOCOMM" "COMMOK" "REPLBATT"];
 
       upsmon.monitor.${cfg.ups} = {
         system = "${cfg.ups}@localhost";
