@@ -5,7 +5,8 @@
 # Prometheus scrapes node_exporter (9100) and smartctl_exporter (9633) from
 # every host in nixos/hosts/ (auto-discovered, ADR-0003) via Tailscale
 # MagicDNS FQDNs. Non-NixOS devices without Tailscale are added to the
-# "node-unmanaged" job by bare IP.
+# "node-unmanaged" job by bare IP. Tailnet devices come from the Tailscale API
+# exporter on localhost (ADR-0023).
 #
 # Laptops/desktops that sleep will show up == 0; before alerting on `up`,
 # filter to Always-on hosts (CONTEXT.md, host.alwaysOn).
@@ -43,6 +44,12 @@ in {
       file = ../../secrets/grafanaRendererToken.age;
       mode = "0400";
     };
+
+    # Read-only OAuth client for the Tailscale API exporter (ADR-0023).
+    tailscale-exporter-env = {
+      file = ../../secrets/tailscale-exporter-env.age;
+      mode = "0400";
+    };
   };
 
   systemd.services = {
@@ -55,6 +62,12 @@ in {
       enable = true;
       port = 9090;
       globalConfig.scrape_interval = scrapeInterval;
+
+      exporters.tailscale = {
+        enable = true;
+        listenAddress = "127.0.0.1";
+        environmentFile = config.age.secrets.tailscale-exporter-env.path;
+      };
 
       scrapeConfigs = [
         {
@@ -73,6 +86,12 @@ in {
               targets = [];
             }
           ];
+        }
+        {
+          # Control-plane API view of every Tailnet device (ADR-0023). The
+          # exporter calls Tailscale over the internet, not the tailnet.
+          job_name = "tailscale";
+          static_configs = [{targets = ["127.0.0.1:9250"];}];
         }
       ];
     };
