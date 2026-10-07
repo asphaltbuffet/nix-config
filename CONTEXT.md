@@ -164,6 +164,10 @@ _Avoid_: proxy, tunnel, VPN container
 A user account in the tailnet, as opposed to a device shared in from another tailnet. "Any member" access means every such account, and no one outside the tailnet.
 _Avoid_: user (ambiguous with the host **Users**), peer, guest
 
+**Tailnet device**:
+Any node the tailnet's control plane lists: a **Host**, a **Tailnet sidecar**, or a device not managed by this flake (a phone, or a device shared in). It is what the tailnet dashboard counts. Only Hosts and sidecars can be *expected* to be online.
+_Avoid_: node, peer, machine
+
 ### Monitoring
 
 **Alert**:
@@ -179,7 +183,7 @@ Loss of utility power to the house, as detected by bunyip's UPS switching to bat
 _Avoid_: power outage (fine in prose), brownout (the UPS's AVR absorbs those without going to battery)
 
 **Liveness check**:
-Detection of a host going *silent* — a job that never ran, a host that stopped reporting — by noticing the absence of an expected signal. Applies only to **Always-on hosts**; hosts that sleep or power off are never liveness-checked, because their silence is normal.
+Detection of a host going *silent* — a job that never ran, a host that stopped reporting — by noticing the absence of an expected signal. Applies only to **Always-on hosts** and **Tailnet sidecars** (which run on one); hosts that sleep or power off are never liveness-checked, because their silence is normal.
 _Avoid_: heartbeat, dead-man's switch, health check
 
 ### Backups
