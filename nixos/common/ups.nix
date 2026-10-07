@@ -140,6 +140,65 @@
     AT COMMOK * EXECUTE commok
     AT REPLBATT * EXECUTE replbatt
   '';
+
+  textfileDir = config.services.nixosMetrics.textfileDirectory;
+  passwordFile = config.age.secrets.nut-upsmon.path;
+
+  # upscmd takes the password on argv; this runs as root on a localhost-only
+  # upsd, briefly, so that is accepted.
+  upscmd = cmd: ''upscmd -u upsmon -p "$(< ${passwordFile})" ${upsAddr} ${cmd}'';
+
+  selftest = pkgs.writeShellApplication {
+    name = "ups-selftest";
+    runtimeInputs = [nut pkgs.coreutils];
+    text = ''
+      ${upscmd "test.battery.start.quick"}
+
+      # ups.test.result reads "No test initiated" until the UPS picks it up.
+      sleep 15
+      result="unknown"
+      for _ in $(seq 24); do
+        result=$(upsc ${upsAddr} ups.test.result 2> /dev/null) || result="unknown"
+        [[ $result == "In progress" ]] || break
+        sleep 5
+      done
+
+      passed=0
+      [[ $result == "Done and passed" ]] && passed=1
+
+      out="${textfileDir}/ups.prom"
+      tmp=$(mktemp "$out.XXXXXX")
+      cat > "$tmp" << EOF
+      # HELP ups_selftest_passed 1 if the last UPS battery self-test passed.
+      # TYPE ups_selftest_passed gauge
+      ups_selftest_passed $passed
+      # HELP ups_selftest_last_run_timestamp_seconds When the last UPS self-test ran.
+      # TYPE ups_selftest_last_run_timestamp_seconds gauge
+      ups_selftest_last_run_timestamp_seconds $(date +%s)
+      EOF
+      chmod 0644 "$tmp"
+      mv "$tmp" "$out"
+
+      # ups.test.result is a closed set from the driver (ADR-0018-safe).
+      if [[ $passed -eq 0 ]]; then
+        ${alert} --priority 3 --tag ups --field "result=$result" --field "check=upsc ${upsAddr} ups.test.result" -- "UPS self-test did not pass"
+      fi
+    '';
+  };
+
+  beeperOff = pkgs.writeShellApplication {
+    name = "ups-beeper-off";
+    runtimeInputs = [nut pkgs.coreutils];
+    text = ''
+      # upsd/driver may still be settling at boot; some CyberPower firmware
+      # forgets this setting after a power cycle, hence every boot.
+      for _ in $(seq 12); do
+        if ${upscmd "beeper.disable"}; then exit 0; fi
+        sleep 5
+      done
+      exit 1
+    '';
+  };
 in {
   options.services.upsMonitor = {
     enable = lib.mkEnableOption "NUT UPS monitoring, Alerts and on-battery job deferral";
@@ -175,7 +234,8 @@ in {
       mode = "standalone";
 
       users.upsmon = {
-        passwordFile = config.age.secrets.nut-upsmon.path;
+        inherit passwordFile;
+        instcmds = ["beeper.disable" "test.battery.start.quick"];
         upsmon = "primary";
       };
 
@@ -225,6 +285,26 @@ in {
               ExecStart = lib.getExe catchUp;
             };
           };
+          ups-selftest = {
+            description = "Quick UPS battery self-test";
+            after = ["upsd.service" "upsdrv.service"];
+            onFailure = ["alert@%n.service"];
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = lib.getExe selftest;
+            };
+          };
+          ups-beeper-off = {
+            description = "Disable the UPS beeper (Alerts replace it)";
+            after = ["upsd.service" "upsdrv.service"];
+            wantedBy = ["multi-user.target"];
+            onFailure = ["alert@%n.service"];
+            serviceConfig = {
+              Type = "oneshot";
+              RemainAfterExit = true;
+              ExecStart = lib.getExe beeperOff;
+            };
+          };
         }
         # "+": run the gate with full privileges whatever the unit's User=.
         // lib.genAttrs cfg.deferOnBattery (unit: {
@@ -234,6 +314,14 @@ in {
       timers.ups-boot-check = {
         wantedBy = ["timers.target"];
         timerConfig.OnBootSec = "2min";
+      };
+
+      # 01:00 on the 1st: clear of auto-deploy (00:00 +30m) and restic
+      # (02:00 +2h; Sunday prune 04:00 +2h). Not Persistent: never at boot
+      # after an outage.
+      timers.ups-selftest = {
+        wantedBy = ["timers.target"];
+        timerConfig.OnCalendar = "*-*-01 01:00:00";
       };
 
       paths.ups-catch-up = {
