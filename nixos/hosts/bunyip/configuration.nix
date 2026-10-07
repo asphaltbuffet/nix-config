@@ -38,7 +38,18 @@
   };
 
   services = {
-    upsMonitor.enable = true;
+    upsMonitor = {
+      enable = true;
+      # Not on battery: a deploy may need a reboot, and backups write to a NAS
+      # on a different UPS that may run out first.
+      deferOnBattery = [
+        "nixos-autodeploy"
+        "restic-backup-bunyip"
+        "restic-backup-bunyip-srv"
+        "restic-prune-bunyip"
+        "restic-prune-bunyip-srv"
+      ];
+    };
 
     # 2012 Aptio 4 firmware has no ESRT, so UEFI capsule updates are impossible
     # (and Biostar never published to LVFS); silence fwupd's warning about it.

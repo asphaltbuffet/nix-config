@@ -22,6 +22,39 @@
   runDir = "/run/upssched"; # nutmon: upssched pipe/lock + catch-up trigger
   stateDir = "/var/lib/ups-events"; # nutmon: survives a low-battery shutdown
 
+  deferDir = "/var/lib/ups-deferred"; # root: one marker per skipped unit
+
+  # ExecCondition gate. Exit 1 = skip (not a failure, so no alert@ fires).
+  # If NUT itself is broken, never block the job.
+  onMains = pkgs.writeShellApplication {
+    name = "ups-on-mains";
+    runtimeInputs = [nut pkgs.coreutils];
+    text = ''
+      unit="$1"
+      status=$(upsc ${upsAddr} ups.status 2> /dev/null) || exit 0
+      if [[ " $status " == *" OB "* ]]; then
+        echo "on battery (ups.status: $status): deferring $unit until mains returns"
+        touch "${deferDir}/$unit"
+        exit 1
+      fi
+    '';
+  };
+
+  catchUp = pkgs.writeShellApplication {
+    name = "ups-catch-up";
+    runtimeInputs = [pkgs.coreutils config.systemd.package];
+    text = ''
+      rm -f ${runDir}/catch-up # PathExists re-triggers until it is gone
+      shopt -s nullglob
+      for marker in ${deferDir}/*; do
+        unit=$(basename "$marker")
+        rm -f "$marker"
+        echo "mains back: starting deferred $unit"
+        systemctl start --no-block "$unit"
+      done
+    '';
+  };
+
   # upssched CMDSCRIPT, runs as nutmon. Alert fields are numbers or closed-set
   # values only (ADR-0018).
   upsEvent = pkgs.writeShellApplication {
@@ -125,6 +158,13 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
+    assertions =
+      map (unit: {
+        assertion = (config.systemd.services.${unit}.serviceConfig.ExecStart or null) != null;
+        message = "services.upsMonitor.deferOnBattery: ${unit} is not a service with an ExecStart on this host.";
+      })
+      cfg.deferOnBattery;
+
     age.secrets.nut-upsmon = {
       file = ../../secrets/nut-upsmon.age;
       mode = "0400";
@@ -160,24 +200,45 @@ in {
       tmpfiles.rules = [
         "d ${runDir} 0750 ${nutUser} ${nutGroup} -"
         "d ${stateDir} 0750 ${nutUser} ${nutGroup} -"
+        "d ${deferDir} 0755 root root -"
       ];
 
-      # Sends the Resolution (and triggers catch-up) after a low-battery
-      # shutdown, when no ONLINE event will ever arrive.
-      services.ups-boot-check = {
-        description = "Resolve a pre-shutdown on-battery Alert once mains is back";
-        after = ["upsd.service" "upsdrv.service" "network-online.target"];
-        wants = ["network-online.target"];
-        serviceConfig = {
-          Type = "oneshot";
-          User = nutUser;
-          Group = nutGroup;
-          ExecStart = "${lib.getExe upsEvent} boot";
-        };
-      };
+      services =
+        {
+          # Sends the Resolution (and triggers catch-up) after a low-battery
+          # shutdown, when no ONLINE event will ever arrive.
+          ups-boot-check = {
+            description = "Resolve a pre-shutdown on-battery Alert once mains is back";
+            after = ["upsd.service" "upsdrv.service" "network-online.target"];
+            wants = ["network-online.target"];
+            serviceConfig = {
+              Type = "oneshot";
+              User = nutUser;
+              Group = nutGroup;
+              ExecStart = "${lib.getExe upsEvent} boot";
+            };
+          };
+          ups-catch-up = {
+            description = "Start jobs deferred while on battery";
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = lib.getExe catchUp;
+            };
+          };
+        }
+        # "+": run the gate with full privileges whatever the unit's User=.
+        // lib.genAttrs cfg.deferOnBattery (unit: {
+          serviceConfig.ExecCondition = ["+${lib.getExe onMains} ${unit}"];
+        });
+
       timers.ups-boot-check = {
         wantedBy = ["timers.target"];
         timerConfig.OnBootSec = "2min";
+      };
+
+      paths.ups-catch-up = {
+        wantedBy = ["paths.target"];
+        pathConfig.PathExists = "${runDir}/catch-up";
       };
     };
   };
