@@ -23,10 +23,10 @@ All go through `alert`; fields are numbers or closed-set values (ADR-0018).
 |---|---|---|
 | on battery: mains failure | 4 | Once per outage, 30 s after going on battery. A power flap inside the 30 s mains-stable window does not send a second one. |
 | mains restored (Resolution) | 3 | 30 s after mains is stable, and only if an on-battery Alert actually went out (flag in `/var/lib/ups-events`, survives shutdown) |
-| low battery: shutting down | 5 | Once (LOWBATT and FSD both fire on the way down) |
+| low battery: shutting down | 5 | Once (LOWBATT, FSD and SHUTDOWN all fire on the way down). LOWBATT only alerts while on battery (`OB`): with `ignorelb` the driver can set LB on mains while recharging. |
 | UPS communication lost | 3 | Once per comm outage (`NOCOMM`, link down 300 s). A `COMMOK` event silently re-arms it (flag `/run/upssched/nocomm-alerted`). `COMMBAD` never alerts: it fires on every upsd/driver restart, i.e. every deploy. |
 | UPS battery needs replacing | 3 | On `REPLBATT`; NUT repeats it every 12 h |
-| UPS self-test did not pass | 3 | After `ups-selftest` if the result is not "Done and passed" |
+| UPS self-test did not pass | 3 | After `ups-selftest` if the result is not "Done and passed". The test is skipped (no Alert) unless on mains (`OL`, not `OB`) with charge >= 95 %. |
 
 ## Prerequisite (one-time, at the console)
 
@@ -53,13 +53,24 @@ cat /var/lib/node-exporter-textfile/ups.prom  # last self-test result
    Alert, and a marker in `/var/lib/ups-deferred/`.
 3. Reconnect. Expect the "mains restored" Resolution about 30 s later, and any
    marker gone with the job started (`journalctl -u ups-catch-up`).
+4. While `sudo systemctl start ups-selftest` runs (on mains), watch
+   `upsc cyberpower@localhost ups.status`. If it shows `OB`, report it: a test
+   that reports OB would trip deferral and the "Last mains failure" stat
+   (follow-up needed).
 
 Testing the low-battery shutdown is optional and disruptive. Run
 `sudo upsmon -c fsd` to force the shutdown path. bunyip should halt, the
 outlets should cut about 60 s later, and bunyip should boot by itself because
-mains is still present. Expect the priority-5 Alert and then, after boot, "mains
-restored after shutdown". If the UPS never cuts the outlets, killpower failed:
-check `journalctl -b -1 -u ups-killpower`, and try different `offdelay`/`ondelay`.
+mains is still present. Expect the priority-5 "low battery: shutting down"
+Alert (via SHUTDOWN/FSD). No "mains restored" Resolution follows: `fsd` runs on
+mains, so no on-battery Alert was sent.
+
+**Warning:** many CyberPower units ignore the shutdown command while on mains.
+If the outlets never cut, bunyip stays powered off until someone presses the
+power button. Only run this drill when someone is physically present.
+
+If the outlets never cut, check `journalctl -b -1 -u ups-killpower` after
+powering bunyip back on, and try different `offdelay`/`ondelay`.
 
 ## Troubleshooting
 
@@ -69,5 +80,5 @@ check `journalctl -b -1 -u ups-killpower`, and try different `offdelay`/`ondelay
 | upsd refuses `upsmon` login | `nut-upsmon.age` empty or changed without restart | `sudo wc -c /run/agenix/nut-upsmon` (expect 49); see deploy-stale-cache SOP for 0-byte secrets |
 | Beeper still sounds | firmware ignored `beeper.disable` | `systemctl status ups-beeper-off`; check `upscmd -l` for `beeper.mute` |
 | Self-test "Never run" | timer only fires on the 1st | `sudo systemctl start ups-selftest` |
-| Battery "needs replacing" Alert | `REPLBATT` from the UPS's own test | Replace the battery (RB7G9 ×2 for CP1500AVR); run the self-test afterwards |
+| Battery "needs replacing" Alert | `REPLBATT` from the UPS's own test | Replace the battery (RB1290X2; confirm on the unit's label); run the self-test afterwards |
 | Deferred job never ran after mains returned | `ups-catch-up.path` / marker stuck | `ls /var/lib/ups-deferred /run/upssched`; `sudo systemctl start ups-catch-up` |

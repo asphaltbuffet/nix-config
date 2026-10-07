@@ -28,10 +28,10 @@
   "panels": [
     {
       "id": 1, "type": "stat", "title": "State",
-      "description": "Mains, on battery, or low battery (shutdown imminent).",
+      "description": "Mains, on battery, or low battery (shutdown imminent). LB only counts while on battery: with ignorelb it can be set on mains while recharging.",
       "datasource": {"type": "prometheus", "uid": "${datasource}"},
       "gridPos": {"x": 0, "y": 0, "w": 5, "h": 5},
-      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "max(network_ups_tools_ups_status{flag=\"LB\"}) * 2 + max(network_ups_tools_ups_status{flag=\"OB\"})"}],
+      "targets": [{"refId": "A", "datasource": {"type": "prometheus", "uid": "${datasource}"}, "expr": "max(network_ups_tools_ups_status{flag=\"LB\"}) * max(network_ups_tools_ups_status{flag=\"OB\"}) * 2 + max(network_ups_tools_ups_status{flag=\"OB\"})"}],
       "fieldConfig": {"defaults": {
         "mappings": [{"type": "value", "options": {
           "0": {"text": "On mains", "color": "green"},

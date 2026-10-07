@@ -81,6 +81,14 @@
         fi
       }
 
+      # Once per shutdown: LOWBATT and FSD/SHUTDOWN all fire on the way down.
+      alert_shutdown() {
+        [[ -e ${stateDir}/shutdown-alerted ]] && exit 0
+        touch ${stateDir}/shutdown-alerted
+        ups_fields
+        ${alert} --priority 5 --tag ups "''${fields[@]}" -- "low battery: shutting down"
+      }
+
       case "''${1:-}" in
         onbatt) # on battery for 30 s
           # A flap within the 30 s mains-stable window re-arms the onbatt timer;
@@ -94,11 +102,16 @@
           touch ${runDir}/catch-up # ups-catch-up.path starts deferred jobs
           resolve "mains restored"
           ;;
-        lowbatt | fsd) # upsmon raises both on the way down; alert once
-          [[ -e ${stateDir}/shutdown-alerted ]] && exit 0
-          touch ${stateDir}/shutdown-alerted
-          ups_fields
-          ${alert} --priority 5 --tag ups "''${fields[@]}" -- "low battery: shutting down"
+        lowbatt)
+          # With ignorelb the driver raises LB from charge/runtime alone, so LB
+          # can be set on mains while recharging after a low-battery shutdown
+          # (e.g. "OL CHRG LB" at boot). Only page when actually on battery.
+          status=$(upsc ${upsAddr} ups.status 2> /dev/null) || status=""
+          [[ " $status " == *" OB "* ]] || exit 0
+          alert_shutdown
+          ;;
+        fsd) # forced shutdown (also SHUTDOWN): unconditional
+          alert_shutdown
           ;;
         nocomm) # NUT re-notifies every NOCOMMWARNTIME; alert once per outage
           [[ -e ${runDir}/nocomm-alerted ]] && exit 0
@@ -136,6 +149,7 @@
     AT ONLINE * START-TIMER mains-stable 30
     AT LOWBATT * EXECUTE lowbatt
     AT FSD * EXECUTE fsd
+    AT SHUTDOWN * EXECUTE fsd
     AT NOCOMM * EXECUTE nocomm
     AT COMMOK * EXECUTE commok
     AT REPLBATT * EXECUTE replbatt
@@ -182,6 +196,29 @@
       # ups.test.result is a closed set from the driver (ADR-0018-safe).
       if [[ $passed -eq 0 ]]; then
         ${alert} --priority 3 --tag ups --field "result=$result" --field "check=upsc ${upsAddr} ups.test.result" -- "UPS self-test did not pass"
+      fi
+    '';
+  };
+
+  # ExecCondition gate for ups-selftest: only test on mains with a charged
+  # battery, else a drained battery after an outage gives a false "did not pass".
+  # Exit 1 = skip, not a failure (no alert@).
+  selftestReady = pkgs.writeShellApplication {
+    name = "ups-selftest-ready";
+    runtimeInputs = [nut pkgs.coreutils];
+    text = ''
+      if ! status=$(upsc ${upsAddr} ups.status 2> /dev/null); then
+        echo "upsc failed: skipping self-test"
+        exit 1
+      fi
+      charge=$(upsc ${upsAddr} battery.charge 2> /dev/null) || charge=""
+      if [[ " $status " != *" OL "* || " $status " == *" OB "* ]]; then
+        echo "not on mains (ups.status: $status): skipping self-test"
+        exit 1
+      fi
+      if [[ ! $charge =~ ^[0-9]+$ ]] || ((charge < 95)); then
+        echo "battery charge '$charge' not numeric or below 95: skipping self-test"
+        exit 1
       fi
     '';
   };
@@ -241,18 +278,26 @@ in {
 
       schedulerRules = "${upsschedConf}";
 
-      # COMMBAD is deliberately absent: it fires on every upsd/driver restart.
-      # COMMOK is only used to re-arm the NOCOMM alert and never alerts.
-      # NOCOMM means the link has been down for NOCOMMWARNTIME (300 s).
-      upsmon.settings.NOTIFYFLAG =
-        map (event: [event "SYSLOG+EXEC"])
-        ["ONBATT" "ONLINE" "LOWBATT" "FSD" "NOCOMM" "COMMOK" "REPLBATT"];
+      upsmon = {
+        # COMMBAD is deliberately absent: it fires on every upsd/driver restart.
+        # COMMOK is only used to re-arm the NOCOMM alert and never alerts.
+        # NOCOMM means the link has been down for NOCOMMWARNTIME (300 s).
+        # A forced shutdown on a primary emits SHUTDOWN (not reliably FSD), so
+        # both map to the fsd event; the shutdown-alerted flag dedups the page.
+        settings.NOTIFYFLAG =
+          map (event: [event "SYSLOG+EXEC"])
+          ["ONBATT" "ONLINE" "LOWBATT" "FSD" "SHUTDOWN" "NOCOMM" "COMMOK" "REPLBATT"];
 
-      upsmon.monitor.${cfg.ups} = {
-        system = "${cfg.ups}@localhost";
-        user = "upsmon";
-        type = "primary";
-        powerValue = 1;
+        # Gives the priority-5 Alert's curl time to reach ntfy before
+        # `shutdown now` (default 5 s).
+        settings.FINALDELAY = 15;
+
+        monitor.${cfg.ups} = {
+          system = "${cfg.ups}@localhost";
+          user = "upsmon";
+          type = "primary";
+          powerValue = 1;
+        };
       };
     };
 
@@ -291,6 +336,7 @@ in {
             onFailure = ["alert@%n.service"];
             serviceConfig = {
               Type = "oneshot";
+              ExecCondition = lib.getExe selftestReady;
               ExecStart = lib.getExe selftest;
             };
           };
