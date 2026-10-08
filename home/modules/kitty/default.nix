@@ -28,6 +28,11 @@
       wayland_enable_ime = false;
       shell = ".";
       editor = ".";
+
+      # legibility: TUIs (e.g. micasa) stack ANSI faint on already-dim greys,
+      # which kitty's default dim_opacity (0.4) renders near-invisible.
+      dim_opacity = "0.75";
+      text_fg_override_threshold = "4.5 ratio"; # WCAG AA minimum contrast
     };
   };
 }
