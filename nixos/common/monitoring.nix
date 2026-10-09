@@ -16,6 +16,7 @@
 {
   config,
   lib,
+  pkgs,
   self,
   ...
 }: let
@@ -40,6 +41,32 @@
     config.host.tailnetSidecars
     ++ lib.concatMap (h: h.config.host.tailnetSidecars) (lib.attrValues otherHosts);
   expectedAlwaysOn = lib.unique (alwaysOnHosts ++ sidecars);
+
+  # The API's per-device `updateAvailable` flag is false for container
+  # sidecars and Android even when they trail the stable release, so the
+  # dashboard compares client_version against this instead.
+  latestTailscale = pkgs.writeShellApplication {
+    name = "tailscale-latest-stable";
+    runtimeInputs = [pkgs.coreutils pkgs.curl pkgs.jq];
+    text = ''
+      out="${config.services.nixosMetrics.textfileDirectory}/tailscale-latest.prom"
+      tmp="$(mktemp "$out.XXXXXX")"
+      trap 'rm -f "$tmp"' EXIT
+
+      version="$(curl -fsS --max-time 30 'https://pkgs.tailscale.com/stable/?mode=json' | jq -r .Version)"
+      # Refuse anything but a plain x.y.z; the previous file stays in place.
+      [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "unexpected version: $version" >&2; exit 1; }
+
+      cat > "$tmp" <<EOF
+      # HELP tailscale_latest_stable_info Latest stable Tailscale client release.
+      # TYPE tailscale_latest_stable_info gauge
+      tailscale_latest_stable_info{version="$version"} 1
+      EOF
+      chmod 0644 "$tmp"
+      mv "$tmp" "$out"
+      trap - EXIT
+    '';
+  };
 in {
   age.secrets = {
     grafanaKey = {
@@ -68,6 +95,26 @@ in {
   systemd.services = {
     grafana.serviceConfig.EnvironmentFile = rendererToken;
     grafana-image-renderer.serviceConfig.EnvironmentFile = rendererToken;
+  };
+
+  systemd = {
+    services.tailscale-latest-stable = {
+      description = "Record the latest stable Tailscale release for node_exporter";
+      after = ["network-online.target"];
+      wants = ["network-online.target"];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = lib.getExe latestTailscale;
+      };
+    };
+    timers.tailscale-latest-stable = {
+      wantedBy = ["timers.target"];
+      timerConfig = {
+        OnBootSec = "2min";
+        OnUnitActiveSec = "6h";
+        RandomizedDelaySec = "10min";
+      };
+    };
   };
 
   services = {

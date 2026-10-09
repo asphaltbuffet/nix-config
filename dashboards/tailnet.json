@@ -193,7 +193,7 @@
       "id": 4,
       "type": "stat",
       "title": "Updates available",
-      "description": "Devices running a Tailscale client that has a newer release.",
+      "description": "Devices whose client version differs from the latest stable release (pkgs.tailscale.com). Not Tailscale's own update flag, which is blank for container sidecars and Android.",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -211,7 +211,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "count(tailscale_devices_update_available == 1) or vector(0)",
+          "expr": "count((tailscale_devices_info unless on(client_version) label_replace(tailscale_latest_stable_info, \"client_version\", \"$1\", \"version\", \"(.*)\")) and on() tailscale_latest_stable_info) or vector(0)",
           "instant": true
         }
       ],
@@ -580,7 +580,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "max by (hostname) (tailscale_devices_update_available)",
+          "expr": "max by (hostname) ((tailscale_devices_info * 0 + 1) unless on(client_version) label_replace(tailscale_latest_stable_info, \"client_version\", \"$1\", \"version\", \"(.*)\") and on() tailscale_latest_stable_info) or max by (hostname) ((tailscale_devices_info * 0) and on(client_version) label_replace(tailscale_latest_stable_info, \"client_version\", \"$1\", \"version\", \"(.*)\"))",
           "instant": true,
           "format": "table"
         },
