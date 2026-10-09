@@ -175,8 +175,10 @@ generate_host_key() {
   local key_path="/mnt/etc/ssh/ssh_host_ed25519_key"
   local pub_path="${key_path}.pub"
 
-  mkdir -p /mnt/etc/ssh
-  chmod 700 /mnt/etc/ssh
+  # 755, not 700: sshd reads /etc/ssh/authorized_keys.d/%u as the target
+  # user, and NixOS activation won't reset an existing dir's mode (#231).
+  # The private key is protected by its own 600 mode.
+  install -d -m755 /mnt/etc/ssh
 
   if [[ -f "$pub_path" ]]; then
     echo "Host key already exists at $pub_path"
