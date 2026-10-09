@@ -22,15 +22,15 @@ build host=hostname:
 [group('build')]
 iso:
     nix build {{ flake }}#installer
-    echo "ISO: $(ls -1 result/iso/*.iso 2>/dev/null || echo 'build failed')"
+    echo "ISO: result/iso/nixos-installer.iso"
 
 # Boot the installer ISO in QEMU (SSH: ssh -p 2222 nixos@localhost, exit: Ctrl+A X)
 [group('build')]
 vm disk="vm-disk.qcow2":
     #!/usr/bin/env bash
     set -euo pipefail
-    iso=$(ls -1 result/iso/*.iso 2>/dev/null | head -1)
-    if [[ -z "$iso" ]]; then
+    iso=result/iso/nixos-installer.iso
+    if [[ ! -f "$iso" ]]; then
         echo "No ISO found — run 'just iso' first"
         exit 1
     fi

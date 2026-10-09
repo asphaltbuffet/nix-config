@@ -78,13 +78,13 @@ NixOS setup.
 
 ```bash
 just iso
-# ISO will be at result/iso/*.iso
+# ISO will be at result/iso/nixos-installer.iso
 ```
 
 Flash it to a USB drive:
 
 ```bash
-dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress
+dd if=result/iso/nixos-installer.iso of=/dev/sdX bs=4M status=progress
 ```
 
 ### Boot and Bootstrap

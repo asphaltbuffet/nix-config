@@ -11,7 +11,7 @@
 ```bash
 just iso    # build the ISO
 just vm     # test it in QEMU (optional)
-# Flash with: dd if=result/iso/*.iso of=/dev/sdX bs=4M
+# Flash with: dd if=result/iso/nixos-installer.iso of=/dev/sdX bs=4M
 ```
 The installer generates `/etc/ssh/ssh_host_ed25519_key` automatically.
 
