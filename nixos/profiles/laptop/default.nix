@@ -1,6 +1,7 @@
 # nixos/profiles/laptop.nix
 {pkgs, ...}: {
   imports = [
+    ../../common/1password-gui.nix
     ../../common/vivaldi.nix
   ];
 

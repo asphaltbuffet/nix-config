@@ -84,7 +84,7 @@
         PermitRootLogin = "no";
       };
       # Restrict to ed25519 only — removes weaker RSA/ECDSA/DSA host keys.
-      # NixOS generates this key automatically on first boot.
+      # nixos-bootstrap pre-generates this key (ADR-0006).
       hostKeys = [
         {
           path = "/etc/ssh/ssh_host_ed25519_key";
@@ -97,6 +97,10 @@
   # Refresh fwupd metadata weekly; only on AC power to avoid draining battery.
   # Persistent=true ensures it runs on next boot if the scheduled time was missed.
   systemd = {
+    # Keep /etc/ssh traversable: sshd reads authorized_keys.d/%u as the target
+    # user, so a 700 dir silently rejects every key — a lockout with password
+    # auth off (#231). `z` only fixes the mode of an existing path.
+    tmpfiles.rules = ["z /etc/ssh 0755 root root -"];
     timers.fwupd-refresh = {
       wantedBy = ["timers.target"];
       timerConfig = {
