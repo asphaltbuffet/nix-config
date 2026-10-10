@@ -21,8 +21,15 @@
       gh-notify # TUI browser for GitHub notifications
     ];
 
-    # gitCredentialHelper is disabled: jj handles git credentials via the
-    # 1Password SSH agent (configured in home/modules/ssh/default.nix).
-    gitCredentialHelper.enable = false;
+    # Reads from GitHub go over HTTPS with the gh token; pushes stay on SSH via
+    # the 1Password agent. This keeps the background jj-git-fetch timer from
+    # popping the 1Password unlock window while the vault is locked.
+    gitCredentialHelper.enable = true;
+  };
+
+  # pushInsteadOf maps SSH to itself, so it wins over insteadOf for pushes.
+  programs.git.settings.url = {
+    "https://github.com/".insteadOf = "git@github.com:";
+    "git@github.com:".pushInsteadOf = "git@github.com:";
   };
 }
