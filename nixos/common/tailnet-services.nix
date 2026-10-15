@@ -39,7 +39,7 @@
   sidecarContainer = key: s: let
     uid = toString s.uid;
   in {
-    image = "tailscale/tailscale:v1.102.5@sha256:c507f3a2a6ab1cabd8d809b98edeb41edbd5c3fb6ad9632ffd098b4c7d0b4065";
+    image = "tailscale/tailscale:v1.104.1@sha256:87c55d6be56ad85b3d8bceca5f87f73de288c609131460dd1be1874c250cc41d";
     environmentFiles = [config.age.secrets."${key}-ts-env".path];
     environment = {
       TS_HOSTNAME = s.hostname;
