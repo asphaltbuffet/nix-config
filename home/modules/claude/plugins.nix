@@ -16,6 +16,9 @@
   "hookify@claude-plugins-official" = false;
   "deep-research@daymade-skills" = false;
 
+  # ── MCP servers ────────────────────────────────────────────────────────
+  "grafana-mcp@claude-plugins-official" = true;
+
   # ── Output style ───────────────────────────────────────────────────────
   "explanatory-output-style@claude-plugins-official" = true;
 }

@@ -48,6 +48,13 @@
       # ── Plugins ──────────────────────────────────────────────────────────
       enabledPlugins = import ./plugins.nix;
 
+      # Non-sensitive plugin userConfig values. Sensitive ones (e.g. the
+      # Grafana service account token) live in ~/.claude/.credentials.json
+      # under pluginSecrets — set them via /plugin manage.
+      pluginConfigs = {
+        "grafana-mcp@claude-plugins-official".options.grafana_url = "http://bunyip.armadillo-toad.ts.net:3000";
+      };
+
       # ── Behaviour ─────────────────────────────────────────────────────────
       alwaysThinkingEnabled = false;
       effortLevel = "medium";
