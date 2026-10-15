@@ -22,6 +22,8 @@
 		"tag:stirling": ["autogroup:admin"],
 		// The micasa relay's Tailscale sidecar (its own OAuth client mints nodes with this tag).
 		"tag:micasa": ["autogroup:admin"],
+		// The atuin sync server's Tailscale sidecar (its own OAuth client mints nodes with this tag).
+		"tag:atuin": ["autogroup:admin"],
 	},
 
 	"grants": [
@@ -55,6 +57,11 @@
 		// over the sidecar's shared loopback; granting it would bypass Serve's
 		// TLS. Postgres is on an internal Docker network, not on this node.
 		{"src": ["autogroup:member"], "dst": ["tag:micasa"], "ip": ["tcp:443"]},
+
+		// atuin sync server: any tailnet member, 443 ONLY. The server listens on
+		// 8888 over the sidecar's shared loopback; granting it would bypass Serve's
+		// TLS. Postgres is on an internal Docker network, not on this node.
+		{"src": ["autogroup:member"], "dst": ["tag:atuin"], "ip": ["tcp:443"]},
 	],
 
 	// bunyip's advertised LAN route is approved without a console visit.
@@ -127,7 +134,7 @@
 		{
 			// A compromised sidecar reaches nothing.
 			"src": "tag:wherefolk",
-			"deny": ["tag:server:22", "tag:server:3000", "192.168.86.10:22"],
+			"deny": ["tag:server:22", "tag:server:3000", "tag:atuin:443", "192.168.86.10:22"],
 		},
 		{
 			// bunyip is not a general-purpose peer.
@@ -148,6 +155,7 @@
 				"tag:server:3000",
 				"tag:wherefolk:443",
 				"tag:micasa:443",
+				"tag:atuin:443",
 				"192.168.86.10:22",
 			],
 		},
@@ -165,6 +173,25 @@
 				"tag:server:3000",
 				"tag:wherefolk:443",
 				"tag:stirling:443",
+				"tag:atuin:443",
+				"192.168.86.10:22",
+			],
+		},
+		{
+			// Any member: atuin sync server 443 and nothing else on it.
+			"src":    "editor@example.com",
+			"accept": ["tag:atuin:443"],
+			"deny":   ["tag:atuin:22", "tag:atuin:8888", "tag:atuin:5432"],
+		},
+		{
+			// A compromised atuin sidecar reaches nothing.
+			"src": "tag:atuin",
+			"deny": [
+				"tag:server:22",
+				"tag:server:3000",
+				"tag:wherefolk:443",
+				"tag:stirling:443",
+				"tag:micasa:443",
 				"192.168.86.10:22",
 			],
 		},
