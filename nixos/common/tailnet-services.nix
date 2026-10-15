@@ -148,6 +148,13 @@ in {
     # store, i.e. a new node each restart).
     systemd.tmpfiles.rules = lib.mapAttrsToList (key: s: "d /var/lib/${key}-ts 0700 ${toString s.uid} ${toString s.uid} -") cfg;
 
+    # oci-containers units restart on exit; one that exhausts its start limit
+    # enters failed and pushes an Alert (ADR-0018).
+    systemd.services = lib.mkMerge (lib.mapAttrsToList (key: s:
+      lib.genAttrs (map (c: "docker-${c}") ([(sidecar key)] ++ s.apps))
+      (_: {onFailure = ["alert@%n.service"];}))
+    cfg);
+
     virtualisation.oci-containers = {
       backend = "docker";
       containers = lib.mkMerge (lib.mapAttrsToList (key: s:
