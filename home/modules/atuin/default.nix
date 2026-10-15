@@ -5,11 +5,11 @@ _: {
     settings = {
       ai.enabled = true;
 
-      auto-sync = true;
-      sync-frequency = "5m";
+      auto_sync = true;
+      sync_frequency = "5m";
 
-      enter-accept = true;
-      keymap-mode = "vim-normal";
+      enter_accept = true;
+      keymap_mode = "vim-normal";
 
       common_subcommands = [
         "just"
