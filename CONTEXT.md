@@ -153,7 +153,7 @@ _Avoid_: output dir, bootstrap files
 ### Hosted services
 
 **Tailnet service**:
-An application running in a container on an **Always-on host** that is reachable only over the tailnet, never on the home LAN. It has its own tailnet identity (via a [[Tailnet sidecar]]) and its own policy tag, so access to it is granted independently of access to the host. wherefolk, Stirling-PDF and the micasa relay are the three.
+An application running in a container on an **Always-on host** that is reachable only over the tailnet, never on the home LAN. It has its own tailnet identity (via a [[Tailnet sidecar]]) and its own policy tag, so access to it is granted independently of access to the host. wherefolk, Stirling-PDF, the micasa relay and the atuin sync server are the four.
 _Avoid_: homelab app, self-hosted app, docker service, "on the home network" (the home LAN is exactly where it is *not* reachable)
 
 **Tailnet sidecar**:
