@@ -24,8 +24,10 @@ in {
   # TAILSCALE_OAUTH_CLIENT_SECRET): a read-only OAuth client, ADR-0023. Only bunyip runs it.
   "tailscale-exporter-env.age".publicKeys = [grue bunyip];
 
-  # wherefolk container env (TS_AUTHKEY, passphrase, version). Only bunyip runs it.
-  "wherefolk-env.age".publicKeys = [grue bunyip];
+  # wherefolk (ADR-0024): one env file per container, so the sidecar never sees
+  # the Full-tier passphrase. Only bunyip runs them.
+  "wherefolk-ts-env.age".publicKeys = [grue bunyip];
+  "wherefolk-app-env.age".publicKeys = [grue bunyip];
 
   # Stirling-PDF Tailscale sidecar env (TS_AUTHKEY, OAuth client for tag:stirling). Only bunyip runs it.
   "stirling-env.age".publicKeys = [grue bunyip];

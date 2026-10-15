@@ -1,7 +1,7 @@
 # nixos/common/micasa.nix
 #
 # micasa sync relay as a Tailnet service (CONTEXT.md; ADR-0020, ADR-0021):
-# Tailscale sidecar + relay (sharing the sidecar's namespace) + Postgres on an
+# Tailscale sidecar (tailnet-services.nix) + relay (sharing the sidecar's namespace) + Postgres on an
 # internal Docker network the sidecar also joins, so Postgres is never on the
 # tailnet node. Tailnet side (tag:micasa, member -> 443, tests) lives in
 # tailscale/policy.hujson; runbook is docs/references/micasa-sop.md.
@@ -16,9 +16,6 @@
   ...
 }: let
   baseline = import ./container-baseline.nix;
-
-  # The sidecar's tailnet device name; also registered for the tailnet dashboard.
-  tsHostname = "micasa";
 
   # Containers that join micasa-egress / micasa-db, ordered after the unit that
   # creates them.
@@ -42,21 +39,19 @@
       User = "65534:65534";
     };
   };
-
-  # ${TS_CERT_DOMAIN} is expanded by containerboot, not Nix, hence the escapes.
-  serveConfig = pkgs.writeText "micasa-serve.json" (builtins.toJSON {
-    TCP."443".HTTPS = true;
-    Web."\${TS_CERT_DOMAIN}:443".Handlers."/".Proxy = "http://127.0.0.1:8080";
-    AllowFunnel."\${TS_CERT_DOMAIN}:443" = false;
-  });
 in {
-  host.tailnetSidecars = [tsHostname];
+  imports = [./tailnet-services.nix];
+
+  tailnetServices.micasa = {
+    uid = 61001;
+    authKeyFile = ../../secrets/micasa-ts-env.age;
+    apps = ["micasa-relay"];
+    # Egress for the control plane; micasa-db so the relay, which shares the
+    # sidecar's namespace, can reach micasa-postgres.
+    networks = ["micasa-egress" "micasa-db"];
+  };
 
   age.secrets = {
-    micasa-ts-env = {
-      file = ../../secrets/micasa-ts-env.age;
-      mode = "0400";
-    };
     micasa-db-env = {
       file = ../../secrets/micasa-db-env.age;
       mode = "0400";
@@ -88,11 +83,6 @@ in {
       '';
     };
 
-    # Non-root sidecar needs a state dir it owns: a fresh named volume is
-    # root-owned and tailscaled cannot chmod it (it falls back to an in-memory
-    # store, i.e. a new node each restart).
-    tmpfiles.rules = ["d /var/lib/micasa-ts 0700 61001 61001 -"];
-
     # Postgres refuses TCP while initdb runs on first boot; the relay exits and is
     # restarted. Without a delay, systemd's default start limit (5 in 10 s) can
     # trip and leave it failed.
@@ -100,7 +90,6 @@ in {
   };
 
   virtualisation.oci-containers = {
-    backend = "docker";
     containers = {
       micasa-postgres = {
         image = "postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24";
@@ -127,39 +116,6 @@ in {
           ];
       };
 
-      micasa-ts = {
-        image = "tailscale/tailscale:v1.102.5@sha256:c507f3a2a6ab1cabd8d809b98edeb41edbd5c3fb6ad9632ffd098b4c7d0b4065";
-        environmentFiles = [config.age.secrets.micasa-ts-env.path];
-        environment = {
-          TS_HOSTNAME = tsHostname;
-          # OAuth clients can only mint tagged nodes.
-          TS_EXTRA_ARGS = "--advertise-tags=tag:micasa";
-          # Without persisted state every restart authenticates as a new node.
-          TS_STATE_DIR = "/var/lib/tailscale";
-          TS_SERVE_CONFIG = "/config/serve.json";
-          # No tun device and no NET_ADMIN: the sidecar needs neither to serve.
-          TS_USERSPACE = "true";
-        };
-        volumes = [
-          "/var/lib/micasa-ts:/var/lib/tailscale"
-          "${serveConfig}:/config/serve.json:ro"
-        ];
-        # Egress for the control plane; micasa-db so the relay, which shares
-        # this namespace, can reach micasa-postgres.
-        networks = ["micasa-egress" "micasa-db"];
-        extraOptions =
-          baseline
-          ++ [
-            "--user=61001:61001"
-            "--read-only"
-            "--tmpfs=/tmp:rw,size=16m"
-            "--tmpfs=/var/run:rw,size=16m"
-            "--memory=256m"
-            "--cpus=0.5"
-            "--pids-limit=256"
-          ];
-      };
-
       micasa-relay = {
         image = "micasa-relay:${relayImage.imageTag}";
         imageStream = relayImage;
@@ -167,8 +123,9 @@ in {
         # relay so it rejoins the fresh namespace. A crash-restart of the sidecar
         # does not, leaving the relay in a dead namespace (Serve returns 502);
         # see the SOP. Postgres may still be initialising on first boot; the
-        # relay exits and systemd restarts it until it connects.
-        dependsOn = ["micasa-ts" "micasa-postgres"];
+        # relay exits and systemd restarts it until it connects. (The module
+        # adds micasa-ts, and the --network that joins its namespace.)
+        dependsOn = ["micasa-postgres"];
         environmentFiles = [config.age.secrets.micasa-relay-env.path];
         # BLOB_QUOTA deliberately unset (unlimited, ADR-0021).
         environment = {
@@ -178,7 +135,6 @@ in {
         extraOptions =
           baseline
           ++ [
-            "--network=container:micasa-ts"
             "--user=65534:65534"
             "--read-only"
             "--tmpfs=/tmp:rw,size=128m"

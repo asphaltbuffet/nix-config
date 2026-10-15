@@ -17,7 +17,7 @@ Tailnet service on bunyip: `stirling-ts` (Tailscale sidecar) + `stirling-pdf` (a
 | Symptom | Cause | Fix |
 |---|---|---|
 | Connection times out from a member device | Policy not pasted, or tag missing in console | Re-paste policy; check the node is tagged `tag:stirling` |
-| Sidecar logs "invalid key" / node never appears | Empty or wrong `stirling-env.age` | Check `/run/agenix/stirling-env` is non-empty; re-create OAuth client |
+| Sidecar logs "invalid key" / node never appears | Empty or wrong `stirling-env.age` | Check `/run/agenix/stirling-ts-env` is non-empty; re-create OAuth client |
 | New node every restart (`stirling-pdf-1`, `-2`…) | `/var/lib/stirling-ts` lost or wrong owner, or `TS_STATE_DIR` unset | Restore the dir; delete stale nodes in console |
 | `stirling-pdf` restarts in a loop, logs stop after the "Binary Versions" block | The init script lacks a capability it needs | `docker inspect -f "{{.State.ExitCode}}" stirling-pdf` and `journalctl -u docker-stirling-pdf`; add only the capability the error names |
 | Sidecar logs `chmod /var/lib/tailscale: operation not permitted` / "in-memory store" | State dir ownership wrong | `ls -ln /var/lib/stirling-ts` must show 61002; `systemd-tmpfiles --create` |

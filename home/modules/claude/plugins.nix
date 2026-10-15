@@ -16,6 +16,11 @@
   "hookify@claude-plugins-official" = false;
   "deep-research@daymade-skills" = false;
 
+  # ── MCP servers ────────────────────────────────────────────────────────
+  "grafana-mcp@claude-plugins-official" = true;
+  # Auth: Bearer $GITHUB_PERSONAL_ACCESS_TOKEN (agenix secret grue/githubMcp)
+  "github@claude-plugins-official" = true;
+
   # ── Output style ───────────────────────────────────────────────────────
   "explanatory-output-style@claude-plugins-official" = true;
 }
