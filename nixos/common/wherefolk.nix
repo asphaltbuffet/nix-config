@@ -1,58 +1,51 @@
 # nixos/common/wherefolk.nix
 #
-# Runs wherefolk (app + Tailscale sidecar) with the compose file shipped in the
-# wherefolk repo, pinned by flake.lock. The tailnet side (tag:wherefolk, the
-# 443-only grant) lives in tailscale/policy.hujson; the operator runbook is
-# docs/operations/deployment.md in the wherefolk repo.
+# wherefolk as a Tailnet service (CONTEXT.md; ADR-0020, ADR-0024): app container
+# joined to its Tailnet sidecar (tailnet-services.nix). Migrated off upstream's
+# deploy/compose.yaml. Tailnet side (tag:wherefolk, the 443-only grant for
+# group:wherefolk-users) lives in tailscale/policy.hujson; runbook is
+# docs/references/wherefolk-sop.md.
 #
-# Secret: secrets/wherefolk-env.age holds TS_AUTHKEY, WHEREFOLK_FULL_PASSPHRASE
-# and WHEREFOLK_VERSION (see deploy/.env.example upstream).
-{
-  config,
-  inputs,
-  lib,
-  pkgs,
-  ...
-}: let
-  composeFile = "${inputs.wherefolk}/deploy/compose.yaml";
-  envFile = config.age.secrets.wherefolk-env.path;
-  compose = "${lib.getExe pkgs.docker-compose} -f ${composeFile} --env-file ${envFile}";
-
-  # The compose file hard-codes the sidecar's name; keep ours in step with it.
-  tsHostname = "wherefolk";
+# Secrets, one per container: wherefolk-ts-env (TS_AUTHKEY), wherefolk-app-env
+# (WHEREFOLK_FULL_PASSPHRASE; empty leaves the Full tier unavailable).
+{config, ...}: let
+  baseline = import ./container-baseline.nix;
 in {
-  host.tailnetSidecars = [tsHostname];
+  imports = [./tailnet-services.nix];
 
-  assertions = [
-    {
-      assertion = lib.hasInfix "TS_HOSTNAME: ${tsHostname}" (builtins.readFile composeFile);
-      message = "wherefolk's compose file no longer sets TS_HOSTNAME: ${tsHostname}; update tsHostname in wherefolk.nix (the tailnet dashboard expects this device name).";
-    }
-  ];
+  tailnetServices.wherefolk = {
+    uid = 61003;
+    authKeyFile = ../../secrets/wherefolk-ts-env.age;
+    apps = ["wherefolk"];
+  };
 
-  age.secrets.wherefolk-env = {
-    file = ../../secrets/wherefolk-env.age;
+  age.secrets.wherefolk-app-env = {
+    file = ../../secrets/wherefolk-app-env.age;
     mode = "0400";
   };
 
-  systemd.services.wherefolk = {
-    description = "wherefolk (app + Tailscale sidecar)";
-    wantedBy = ["multi-user.target"];
-    after = ["docker.service" "network-online.target"];
-    requires = ["docker.service"];
-    wants = ["network-online.target"];
-    # A flake bump changes the compose store path and restarts the stack.
-    restartTriggers = [inputs.wherefolk];
+  # The Directory lives on the data disk so the Data-disk backup covers it
+  # (ADR-0024). Owned by the image's nonroot user; the app refuses to start
+  # without directory.json, which the cutover copies in (wherefolk-sop.md).
+  systemd.tmpfiles.rules = ["d /srv/wherefolk 0700 65532 65532 -"];
 
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      # A failed pull (registry down) must not stop an already-pulled stack.
-      ExecStartPre = "-${compose} pull";
-      ExecStart = "${compose} up -d";
-      # `stop`, never `down -v`: -v deletes the Directory (deployment.md §4).
-      ExecStop = "${compose} stop";
-      TimeoutStartSec = "300";
-    };
+  virtualisation.oci-containers.containers.wherefolk = {
+    image = "ghcr.io/asphaltbuffet/wherefolk:0.1.0@sha256:54122626b9271cef70c964cd883bad22f84741c588f1f4783cc10f3235556d8b";
+    environmentFiles = [config.age.secrets.wherefolk-app-env.path];
+    # Fixed: the module's serve.json proxies to this port (tailnetServices.port).
+    environment.WHEREFOLK_PORT = "8080";
+    volumes = ["/srv/wherefolk:/var/lib/wherefolk"];
+    # Full baseline: the image already runs as nonroot (65532) and writes only
+    # the Directory volume.
+    extraOptions =
+      baseline
+      ++ [
+        "--user=65532:65532"
+        "--read-only"
+        "--tmpfs=/tmp:rw,size=64m"
+        "--memory=512m"
+        "--cpus=1"
+        "--pids-limit=256"
+      ];
   };
 }

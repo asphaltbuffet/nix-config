@@ -41,12 +41,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Compose file and Tailscale Serve config for nixos/common/wherefolk.nix.
-    wherefolk = {
-      url = "github:asphaltbuffet/wherefolk";
-      flake = false;
-    };
-
     # micasa TUI (home/modules/micasa) and sync relay (nixos/common/micasa.nix).
     # Pinned to a release tag so bunyip never runs unreleased main (ADR-0021);
     # bump by editing the tag, then `nix flake update micasa`.
