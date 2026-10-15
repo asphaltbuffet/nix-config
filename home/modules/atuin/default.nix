@@ -5,6 +5,9 @@ _: {
     settings = {
       ai.enabled = true;
 
+      # Self-hosted sync server on bunyip (ADR-0025). AI is unaffected: it
+      # resolves ai.endpoint (unset -> hub.atuin.sh), never sync_address.
+      sync_address = "https://atuin.armadillo-toad.ts.net";
       auto_sync = true;
       sync_frequency = "5m";
 
