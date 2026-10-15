@@ -29,6 +29,10 @@ in {
   # without directory.json, which the cutover copies in (wherefolk-sop.md).
   systemd.tmpfiles.rules = ["d /srv/wherefolk 0700 65532 65532 -"];
 
+  # /srv is nofail: without this a slow or dead data disk leaves an empty
+  # /srv/wherefolk on the root fs, and the app restart-loops on it until failed.
+  systemd.services.docker-wherefolk.unitConfig.RequiresMountsFor = ["/srv/wherefolk"];
+
   virtualisation.oci-containers.containers.wherefolk = {
     image = "ghcr.io/asphaltbuffet/wherefolk:0.1.0@sha256:54122626b9271cef70c964cd883bad22f84741c588f1f4783cc10f3235556d8b";
     environmentFiles = [config.age.secrets.wherefolk-app-env.path];

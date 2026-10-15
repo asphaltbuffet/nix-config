@@ -15,7 +15,10 @@ restoring the Directory from a snapshot, not by reverting the pin alone.
 Run on bunyip as root, in order. Never `docker compose down -v`.
 
 0. Pause auto-deploy so the published (old) closure cannot switch back mid-cutover
-   and restart compose on the old volumes: `systemctl stop nixos-autodeploy.timer`
+   and restart compose on the old volumes. Stopping the timer is not enough: a run
+   deferred by a battery event is started by `ups-catch-up` when mains returns.
+       systemctl stop nixos-autodeploy.timer
+       systemctl mask --runtime nixos-autodeploy.service
 1. Stop the old stack: `systemctl stop wherefolk.service`
    (its ExecStop is `compose stop`; containers and volumes stay).
 2. Copy the sidecar's node state:
@@ -33,7 +36,8 @@ Run on bunyip as root, in order. Never `docker compose down -v`.
        nh os test -H bunyip --target-host bunyip .   # prints /nix/store/…-nixos-system-bunyip-…, then fails on sudo TTY
        ssh bunyip "sudo -n <that path>/bin/switch-to-configuration test"
    After verification, merge to main and let CI publish; once the published closure
-   is this one, `systemctl start nixos-autodeploy.timer` (its next run switches).
+   is this one, `systemctl unmask --runtime nixos-autodeploy.service` and
+   `systemctl start nixos-autodeploy.timer` (its next run switches).
    Until that switch the boot default is still the compose generation: a reboot
    (including a UPS low-battery shutdown) brings the old stack back on the old
    volumes. If bunyip reboots mid-cutover, run `systemctl stop wherefolk.service`
