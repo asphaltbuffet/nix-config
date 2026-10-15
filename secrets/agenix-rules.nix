@@ -38,6 +38,12 @@ in {
   "micasa-db-env.age".publicKeys = [grue bunyip];
   "micasa-relay-env.age".publicKeys = [grue bunyip];
 
+  # atuin sync server (ADR-0025): one env file per container, only bunyip runs them.
+  # The Postgres password appears in both db-env and server-env (ATUIN_DB_URI).
+  "atuin-ts-env.age".publicKeys = [grue bunyip];
+  "atuin-db-env.age".publicKeys = [grue bunyip];
+  "atuin-server-env.age".publicKeys = [grue bunyip];
+
   # restic repository passwords (ADR-0022): one per repo, readable only by the
   # owning host and the admin. A recovery copy lives in 1Password.
   "restic-wendigo.age".publicKeys = [grue wendigo];

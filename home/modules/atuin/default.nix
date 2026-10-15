@@ -5,11 +5,14 @@ _: {
     settings = {
       ai.enabled = true;
 
-      auto-sync = true;
-      sync-frequency = "5m";
+      # Self-hosted sync server on bunyip (ADR-0025). AI is unaffected: it
+      # resolves ai.endpoint (unset -> hub.atuin.sh), never sync_address.
+      sync_address = "https://atuin.armadillo-toad.ts.net";
+      auto_sync = true;
+      sync_frequency = "5m";
 
-      enter-accept = true;
-      keymap-mode = "vim-normal";
+      enter_accept = true;
+      keymap_mode = "vim-normal";
 
       common_subcommands = [
         "just"

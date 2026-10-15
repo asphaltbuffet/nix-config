@@ -7,6 +7,7 @@
     ../../common/wherefolk.nix
     ../../common/stirling-pdf.nix
     ../../common/micasa.nix
+    ../../common/atuin.nix
     ../../common/ups.nix
   ];
 
