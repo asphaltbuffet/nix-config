@@ -23,3 +23,4 @@ New containerised services on bunyip (first: Stirling-PDF) are declared with `vi
 - bunyip has two container idioms until wherefolk is migrated.
 - Creating the OAuth client and pasting the updated `tailscale/policy.hujson` into the console are manual steps the repo cannot do (ADR-0019).
 - Renovate is a second dependency bot alongside Dependabot.
+- Superseded in part by ADR-0024: wherefolk migrated to `oci-containers`; bunyip has one container idiom.
