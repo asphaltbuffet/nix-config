@@ -42,6 +42,11 @@
           "--project-from-cwd"
         ];
       };
+
+      nixos = {
+        command = "uvx";
+        args = ["mcp-nixos"];
+      };
     };
 
     settings = {
