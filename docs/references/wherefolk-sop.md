@@ -18,7 +18,16 @@ Run on bunyip as root, in order. Never `docker compose down -v`.
    and restart compose on the old volumes. Stopping the timer is not enough: a run
    deferred by a battery event is started by `ups-catch-up` when mains returns.
        systemctl stop nixos-autodeploy.timer
-       systemctl mask --runtime nixos-autodeploy.service
+       mkdir -p /run/systemd/system/nixos-autodeploy.service.d
+       printf '[Unit]\nConditionPathExists=/nonexistent\n' > /run/systemd/system/nixos-autodeploy.service.d/cutover-pause.conf
+       systemctl daemon-reload
+   (Not `systemctl mask --runtime`: NixOS units live in /etc/systemd/system, which
+   outranks /run, so a runtime mask is silently ignored. Drop-ins from every
+   directory merge, so this one applies; a start is skipped, not failed.)
+   Check (read-only; never test by starting the unit — if the pause did not
+   apply, that start IS the switch): `systemctl show -p DropInPaths
+   nixos-autodeploy.service` lists `cutover-pause.conf`, and
+   `systemctl is-active nixos-autodeploy.timer` prints `inactive`.
 1. Stop the old stack: `systemctl stop wherefolk.service`
    (its ExecStop is `compose stop`; containers and volumes stay).
 2. Copy the sidecar's node state:
@@ -31,13 +40,14 @@ Run on bunyip as root, in order. Never `docker compose down -v`.
        install -d -m 0700 -o 65532 -g 65532 /srv/wherefolk
        cp -a /var/lib/docker/volumes/wherefolk-data/_data/. /srv/wherefolk/
        chown -R 65532:65532 /srv/wherefolk
-       stat -c '%U:%G %a %n' /srv/wherefolk/directory.json   # expect 65532:65532 600
-5. Activate the new generation in test mode (from wendigo):
+       stat -c '%u:%g %a %n' /srv/wherefolk/directory.json   # expect 65532:65532 600 (numeric: no host user has these ids)
+5. Activate the new generation in test mode (from wendigo, in the checkout holding the change):
        nh os test -H bunyip --target-host bunyip .   # prints /nix/store/…-nixos-system-bunyip-…, then fails on sudo TTY
        ssh bunyip "sudo -n <that path>/bin/switch-to-configuration test"
    After verification, merge to main and let CI publish; once the published closure
-   is this one, `systemctl unmask --runtime nixos-autodeploy.service` and
-   `systemctl start nixos-autodeploy.timer` (its next run switches).
+   is this one, `rm -r /run/systemd/system/nixos-autodeploy.service.d`,
+   `systemctl daemon-reload` and `systemctl start nixos-autodeploy.timer`
+   (its next run switches).
    Until that switch the boot default is still the compose generation: a reboot
    (including a UPS low-battery shutdown) brings the old stack back on the old
    volumes. If bunyip reboots mid-cutover, run `systemctl stop wherefolk.service`
