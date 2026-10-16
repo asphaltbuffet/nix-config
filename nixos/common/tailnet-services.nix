@@ -70,8 +70,23 @@
       ];
   };
 
-  # dependsOn makes systemd Requires=: restarting the sidecar restarts the app
-  # too, so it rejoins the sidecar's fresh network namespace.
+  # The docker unit is Type=simple, "started" once `docker run` forks, before the
+  # container exists; an app ordered After= it can find no namespace to join
+  # (#271). Hold the sidecar unit in activating until the container runs. The
+  # bound matters: oci-containers sets TimeoutStartSec=0, and a sidecar that
+  # never comes up must fail and Alert rather than hang.
+  sidecarReady = key:
+    pkgs.writeShellScript "${sidecar key}-ready" ''
+      for _ in $(seq 1 30); do
+        [ "$(${config.virtualisation.docker.package}/bin/docker inspect -f '{{.State.Running}}' ${sidecar key} 2>/dev/null)" = true ] && exit 0
+        sleep 1
+      done
+      echo "${sidecar key} not running after 30s" >&2
+      exit 1
+    '';
+
+  # dependsOn makes systemd Requires=: explicitly restarting the sidecar
+  # restarts the app too, so it rejoins the sidecar's fresh network namespace.
   joinedApp = key: {
     dependsOn = [(sidecar key)];
     extraOptions = ["--network=container:${sidecar key}"];
@@ -150,10 +165,12 @@ in {
 
     # oci-containers units restart on exit; one that exhausts its start limit
     # enters failed and pushes an Alert (ADR-0018).
-    systemd.services = lib.mkMerge (lib.mapAttrsToList (key: s:
-      lib.genAttrs (map (c: "docker-${c}") ([(sidecar key)] ++ s.apps))
-      (_: {onFailure = ["alert@%n.service"];}))
-    cfg);
+    systemd.services = lib.mkMerge (lib.concatLists (lib.mapAttrsToList (key: s: [
+        (lib.genAttrs (map (c: "docker-${c}") ([(sidecar key)] ++ s.apps))
+          (_: {onFailure = ["alert@%n.service"];}))
+        {"docker-${sidecar key}".serviceConfig.ExecStartPost = ["${sidecarReady key}"];}
+      ])
+      cfg));
 
     virtualisation.oci-containers = {
       backend = "docker";
