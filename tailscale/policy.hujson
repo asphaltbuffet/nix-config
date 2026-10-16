@@ -41,6 +41,11 @@
 		// tailscale0 in its firewall, so this grant is the only gate on these ports.
 		{"src": ["tag:server"], "dst": ["group:operator"], "ip": ["tcp:9100", "tcp:9633"]},
 
+		// Users logged in on bunyip sync shell history to its own atuin sidecar.
+		// bunyip is tagged, so the autogroup:member grant below does not cover it.
+		// 443 ONLY, as for members.
+		{"src": ["tag:server"], "dst": ["tag:atuin"], "ip": ["tcp:443"]},
+
 		// Subnet router: operator reaches the home LAN through bunyip.
 		{"src": ["group:operator"], "dst": ["192.168.86.0/24"], "ip": ["*"]},
 
@@ -138,8 +143,9 @@
 		},
 		{
 			// bunyip is not a general-purpose peer.
-			"src": "tag:server",
-			"deny": ["tag:wherefolk:443", "192.168.86.10:22"],
+			"src":    "tag:server",
+			"accept": ["tag:atuin:443"],
+			"deny":   ["tag:wherefolk:443", "tag:atuin:8888", "192.168.86.10:22"],
 		},
 		{
 			// Any member: Stirling-PDF 443 and nothing else on it.

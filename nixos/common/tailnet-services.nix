@@ -70,8 +70,23 @@
       ];
   };
 
-  # dependsOn makes systemd Requires=: restarting the sidecar restarts the app
-  # too, so it rejoins the sidecar's fresh network namespace.
+  # The docker unit is Type=simple, "started" once `docker run` forks, before the
+  # container exists; an app ordered After= it can find no namespace to join
+  # (#271). Hold the sidecar unit in activating until the container runs. The
+  # bound matters: oci-containers sets TimeoutStartSec=0, and a sidecar that
+  # never comes up must fail and Alert rather than hang.
+  sidecarReady = key:
+    pkgs.writeShellScript "${sidecar key}-ready" ''
+      for _ in $(seq 1 30); do
+        [ "$(${config.virtualisation.docker.package}/bin/docker inspect -f '{{.State.Running}}' ${sidecar key} 2>/dev/null)" = true ] && exit 0
+        sleep 1
+      done
+      echo "${sidecar key} not running after 30s" >&2
+      exit 1
+    '';
+
+  # dependsOn makes systemd Requires=: explicitly restarting the sidecar
+  # restarts the app too, so it rejoins the sidecar's fresh network namespace.
   joinedApp = key: {
     dependsOn = [(sidecar key)];
     extraOptions = ["--network=container:${sidecar key}"];
@@ -148,12 +163,26 @@ in {
     # store, i.e. a new node each restart).
     systemd.tmpfiles.rules = lib.mapAttrsToList (key: s: "d /var/lib/${key}-ts 0700 ${toString s.uid} ${toString s.uid} -") cfg;
 
-    # oci-containers units restart on exit; one that exhausts its start limit
-    # enters failed and pushes an Alert (ADR-0018).
-    systemd.services = lib.mkMerge (lib.mapAttrsToList (key: s:
-      lib.genAttrs (map (c: "docker-${c}") ([(sidecar key)] ++ s.apps))
-      (_: {onFailure = ["alert@%n.service"];}))
-    cfg);
+    # oci-containers units restart on failure. With the default RestartMode=normal
+    # every failed attempt passes through `failed` and fires OnFailure=, so a
+    # crash that recovers on its own still Alerts. RestartMode=direct (systemd
+    # >= 254) skips that state: only a unit that exhausts its start limit enters
+    # failed and pushes an Alert (ADR-0018). That makes the start limit the
+    # Alert trigger, so it must be reachable by the slowest failing attempt: the
+    # default 5 in 10 s never trips for a sidecar failing sidecarReady (~31 s
+    # each) or micasa-relay (RestartSec=5s), which would then loop silently.
+    # 10 in 10 min catches both; a fast crash loop still Alerts in seconds.
+    systemd.services = lib.mkMerge (lib.concatLists (lib.mapAttrsToList (key: s: [
+        (lib.genAttrs (map (c: "docker-${c}") ([(sidecar key)] ++ s.apps))
+          (_: {
+            onFailure = ["alert@%n.service"];
+            serviceConfig.RestartMode = "direct";
+            startLimitIntervalSec = 600;
+            startLimitBurst = 10;
+          }))
+        {"docker-${sidecar key}".serviceConfig.ExecStartPost = ["${sidecarReady key}"];}
+      ])
+      cfg));
 
     virtualisation.oci-containers = {
       backend = "docker";
