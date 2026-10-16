@@ -84,8 +84,8 @@ in {
     };
 
     # Postgres refuses TCP while initdb runs on first boot; the relay exits and is
-    # restarted. Without a delay, systemd's default start limit (5 in 10 s) can
-    # trip and leave it failed.
+    # restarted. Without a delay, the start limit tailnet-services sets (10 in
+    # 10 min) can trip and leave it failed; 5 s gives initdb ~50 s.
     services.docker-micasa-relay.serviceConfig.RestartSec = "5s";
   };
 
