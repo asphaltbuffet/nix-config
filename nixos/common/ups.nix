@@ -10,10 +10,23 @@
   config,
   lib,
   pkgs,
+  utils,
   ...
 }: let
   cfg = config.services.upsMonitor;
   nut = config.power.ups.package;
+
+  # The USB IDs from the device's ups.conf directives ("vendorid = 0764").
+  directive = key: let
+    matches = map (builtins.match "${key} *= *([0-9a-fA-F]{4})") config.power.ups.ups.${cfg.ups}.directives;
+    found = lib.findFirst (m: m != null) null matches;
+  in
+    if found == null
+    then null
+    else lib.toLower (builtins.head found);
+  usbVendor = directive "vendorid";
+  usbProduct = directive "productid";
+  upsDevice = "${utils.escapeSystemdPath "/dev/ups-${cfg.ups}"}.device";
   alert = lib.getExe config.alerts.package;
   upsAddr = "${cfg.ups}@localhost";
   nutUser = config.power.ups.upsmon.user;
@@ -255,7 +268,13 @@ in {
 
   config = lib.mkIf cfg.enable {
     assertions =
-      map (unit: {
+      [
+        {
+          assertion = usbVendor != null && usbProduct != null;
+          message = "services.upsMonitor: power.ups.ups.${cfg.ups}.directives needs \"vendorid = XXXX\" and \"productid = XXXX\" to bind the driver to the USB device.";
+        }
+      ]
+      ++ map (unit: {
         assertion = (config.systemd.services.${unit}.serviceConfig.ExecStart or null) != null;
         message = "services.upsMonitor.deferOnBattery: ${unit} is not a service with an ExecStart on this host.";
       })
@@ -310,6 +329,19 @@ in {
 
       services =
         {
+          # upsdrvctl forks the driver and exits, so systemd never sees it hang.
+          # After a USB re-enumeration usbhid-ups can keep a dead handle forever
+          # (stale data, NOCOMM). Bind it to the device instead: unplug stops
+          # the driver, re-plug starts a fresh one (udev rule below).
+          upsdrv = {
+            bindsTo = [upsDevice];
+            after = [upsDevice];
+            # usbhid-ups logs "Signal 15: exiting" but hangs until SIGKILL;
+            # the 90 s default delays every unplug recovery and shutdown,
+            # including the low-battery one.
+            serviceConfig.TimeoutStopSec = "10s";
+          };
+
           # Sends the Resolution (and triggers catch-up) after a low-battery
           # shutdown, when no ONLINE event will ever arrive.
           ups-boot-check = {
@@ -375,6 +407,12 @@ in {
         pathConfig.PathExists = "${runDir}/catch-up";
       };
     };
+
+    # NUT's own rule only sets permissions; this gives systemd a stable device
+    # unit (/dev/ups-<name>) to bind upsdrv to, and restarts it on every add.
+    services.udev.extraRules = ''
+      SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="${toString usbVendor}", ATTR{idProduct}=="${toString usbProduct}", SYMLINK+="ups-${cfg.ups}", TAG+="systemd", ENV{SYSTEMD_WANTS}+="upsdrv.service"
+    '';
 
     services.prometheus = {
       # nut_exporter only exports what is listed (its default list omits runtime).
