@@ -36,4 +36,13 @@
     serviceConfig.Environment = "HOME=/root";
     onFailure = ["alert@%n.service"];
   };
+
+  # Upstream records its last deploy in /run/deployed-system, which a reboot
+  # wipes; if CI published in the meantime, every later run sees
+  # current != deployed != upstream and skips as "deployed manually" forever.
+  # Re-seed it at boot so a reboot counts as still being on what was deployed.
+  # `L` only creates when missing; the tool atomically replaces it on deploy.
+  systemd.tmpfiles.rules = lib.mkIf config.system.autoDeploy.enable [
+    "L /run/deployed-system - - - - /run/booted-system"
+  ];
 }
