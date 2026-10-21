@@ -1,5 +1,9 @@
 # nixos/profiles/laptop.nix
-{pkgs, ...}: {
+{
+  lib,
+  pkgs,
+  ...
+}: {
   imports = [
     ../../common/1password-gui.nix
     ../../common/vivaldi.nix
@@ -65,6 +69,20 @@
   systemd.services.cups-browsed = {
     after = ["avahi-daemon.service"];
     requires = ["avahi-daemon.service"];
+  };
+
+  # kde-baloo can start before KWin exports WAYLAND_DISPLAY; the daemon keeps
+  # that display-less env and every baloo_file_extractor it spawns aborts in
+  # QGuiApplication ("could not connect to display"), spamming crash
+  # notifications. The indexer draws nothing, so use Qt's headless platform.
+  # asDropin: the unit ships in the profile's share/systemd/user, not
+  # systemd.user.packages, so the default strategy would emit a full
+  # ExecStart-less unit in /etc/systemd/user that shadows it. Empty path keeps
+  # NixOS from injecting a minimal PATH over the session's.
+  systemd.user.services.kde-baloo = {
+    overrideStrategy = "asDropin";
+    path = lib.mkForce [];
+    environment.QT_QPA_PLATFORM = "offscreen";
   };
 
   #### Desktop-related system packages ####
