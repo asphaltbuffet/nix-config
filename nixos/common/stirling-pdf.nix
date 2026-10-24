@@ -19,7 +19,7 @@ in {
   };
 
   virtualisation.oci-containers.containers.stirling-pdf = {
-    image = "stirlingtools/stirling-pdf:3.1.0@sha256:b5b9e400c086e5334a4947a0d7cd589808f743f29267d7f41c18200cf4bc48b4";
+    image = "stirlingtools/stirling-pdf:3.2.1@sha256:f95b691c3df463373258e21a578b404f1eb4c7660e8170a40e3e03c9c8f208a4";
     environment.SECURITY_ENABLELOGIN = "false";
     # Shares the sidecar's namespace (the module adds --network and dependsOn):
     # 127.0.0.1:8080 here is where Serve proxies. No ports are published on the
