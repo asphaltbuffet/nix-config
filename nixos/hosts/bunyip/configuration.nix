@@ -8,6 +8,7 @@
     ../../common/stirling-pdf.nix
     ../../common/micasa.nix
     ../../common/atuin.nix
+    ../../common/wherehouse.nix
     ../../common/ups.nix
   ];
 

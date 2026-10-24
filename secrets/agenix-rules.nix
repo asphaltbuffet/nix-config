@@ -44,6 +44,9 @@ in {
   "atuin-db-env.age".publicKeys = [grue bunyip];
   "atuin-server-env.age".publicKeys = [grue bunyip];
 
+  # wherehouse Tailscale sidecar env (TS_AUTHKEY, OAuth client for tag:wherehouse). Only bunyip runs it.
+  "wherehouse-ts-env.age".publicKeys = [grue bunyip];
+
   # restic repository passwords (ADR-0022): one per repo, readable only by the
   # owning host and the admin. A recovery copy lives in 1Password.
   "restic-wendigo.age".publicKeys = [grue wendigo];
