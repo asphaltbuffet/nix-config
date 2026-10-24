@@ -24,6 +24,8 @@
 		"tag:micasa": ["autogroup:admin"],
 		// The atuin sync server's Tailscale sidecar (its own OAuth client mints nodes with this tag).
 		"tag:atuin": ["autogroup:admin"],
+		// The wherehouse Tailscale sidecar (its own OAuth client mints nodes with this tag).
+		"tag:wherehouse": ["autogroup:admin"],
 	},
 
 	"grants": [
@@ -67,6 +69,11 @@
 		// 8888 over the sidecar's shared loopback; granting it would bypass Serve's
 		// TLS. Postgres is on an internal Docker network, not on this node.
 		{"src": ["autogroup:member"], "dst": ["tag:atuin"], "ip": ["tcp:443"]},
+
+		// wherehouse: any tailnet member, 443 ONLY. The app has no auth of its own,
+		// so this grant is its only access control. It listens on 8080 over the
+		// sidecar's shared loopback; granting that would bypass Serve.
+		{"src": ["autogroup:member"], "dst": ["tag:wherehouse"], "ip": ["tcp:443"]},
 	],
 
 	// bunyip's advertised LAN route is approved without a console visit.
@@ -139,13 +146,13 @@
 		{
 			// A compromised sidecar reaches nothing.
 			"src": "tag:wherefolk",
-			"deny": ["tag:server:22", "tag:server:3000", "tag:atuin:443", "192.168.86.10:22"],
+			"deny": ["tag:server:22", "tag:server:3000", "tag:atuin:443", "tag:wherehouse:443", "192.168.86.10:22"],
 		},
 		{
 			// bunyip is not a general-purpose peer.
 			"src":    "tag:server",
 			"accept": ["tag:atuin:443"],
-			"deny":   ["tag:wherefolk:443", "tag:atuin:8888", "192.168.86.10:22"],
+			"deny":   ["tag:wherefolk:443", "tag:wherehouse:443", "tag:atuin:8888", "192.168.86.10:22"],
 		},
 		{
 			// Any member: Stirling-PDF 443 and nothing else on it.
@@ -162,6 +169,7 @@
 				"tag:wherefolk:443",
 				"tag:micasa:443",
 				"tag:atuin:443",
+				"tag:wherehouse:443",
 				"192.168.86.10:22",
 			],
 		},
@@ -180,6 +188,7 @@
 				"tag:wherefolk:443",
 				"tag:stirling:443",
 				"tag:atuin:443",
+				"tag:wherehouse:443",
 				"192.168.86.10:22",
 			],
 		},
@@ -198,6 +207,26 @@
 				"tag:wherefolk:443",
 				"tag:stirling:443",
 				"tag:micasa:443",
+				"tag:wherehouse:443",
+				"192.168.86.10:22",
+			],
+		},
+		{
+			// Any member: wherehouse 443 and nothing else on it.
+			"src":    "editor@example.com",
+			"accept": ["tag:wherehouse:443"],
+			"deny":   ["tag:wherehouse:22", "tag:wherehouse:8080"],
+		},
+		{
+			// A compromised wherehouse sidecar reaches nothing.
+			"src": "tag:wherehouse",
+			"deny": [
+				"tag:server:22",
+				"tag:server:3000",
+				"tag:wherefolk:443",
+				"tag:stirling:443",
+				"tag:micasa:443",
+				"tag:atuin:443",
 				"192.168.86.10:22",
 			],
 		},
