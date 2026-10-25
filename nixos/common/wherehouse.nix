@@ -6,7 +6,8 @@
 # tailscale/policy.hujson.
 #
 # Secret: wherehouse-ts-env (TS_AUTHKEY). The app has no secrets and no auth:
-# the tailnet grant is the only access control.
+# the tailnet grant is the only access control. Identity (for the event log
+# only) comes from Serve's header.
 let
   baseline = import ./container-baseline.nix;
 in {
@@ -28,12 +29,14 @@ in {
   systemd.services.docker-wherehouse.unitConfig.RequiresMountsFor = ["/srv/wherehouse"];
 
   virtualisation.oci-containers.containers.wherehouse = {
-    image = "ghcr.io/asphaltbuffet/wherehouse:0.6.2@sha256:9258e72efcc3ce84944fd4ad3927b7ec3949d69d99ef1e8b74389f62fcbed732";
+    image = "ghcr.io/asphaltbuffet/wherehouse:0.7.0@sha256:fc26217d342d1e2f1e31b803d3e29b654f7dfef2cbd8c644ae53d412145998f4";
     # The entrypoint binds 0.0.0.0, which in the sidecar's namespace includes its
     # default-bridge address: other containers could reach :8080 around Serve.
-    # Loopback only, so Serve is the sole path in (and its Tailscale-User-* headers
-    # stay trustworthy, asphaltbuffet/wherehouse#267). The last --bind wins.
-    cmd = ["--bind" "127.0.0.1"];
+    # Loopback only, so Serve is the sole path in. The last --bind wins.
+    # That makes Serve's Tailscale-User-Login header trustworthy, so it is
+    # recorded as the event actor (asphaltbuffet/wherehouse#267); requests
+    # without it (tagged nodes) fall back to "webui".
+    cmd = ["--bind" "127.0.0.1" "--actor-header" "Tailscale-User-Login"];
     volumes = ["/srv/wherehouse:/data"];
     # Full baseline: distroless static, writes only the database volume.
     extraOptions =
