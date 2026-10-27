@@ -2,6 +2,8 @@
 
 - Development work lives in `~/dev/`
 - VCS is **jujutsu** (`jj`). Do not use `git` commands directly.
+  - The installed jj is a recent release (0.46+). Older flags such as `--allow-new` no longer exist, and `jj git push --bookmark <name>` pushes a new bookmark directly.
+  - Before using a jj flag or subcommand you aren't sure of, check `jj <cmd> --help`; don't rely on remembered syntax.
 - **Token economy is important**: be concise, avoid re-reading files unnecessarily, and do not summarize what you just did.
 
 ## Preferred CLI Tools
