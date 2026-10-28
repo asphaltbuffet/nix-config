@@ -29,7 +29,7 @@ in {
   systemd.services.docker-wherehouse.unitConfig.RequiresMountsFor = ["/srv/wherehouse"];
 
   virtualisation.oci-containers.containers.wherehouse = {
-    image = "ghcr.io/asphaltbuffet/wherehouse:0.9.0@sha256:30b8828a523f0ee1869b55ac47ebfdbcdc15897b46da66b818a112ff60180423";
+    image = "ghcr.io/asphaltbuffet/wherehouse:0.9.1@sha256:25bc4ca3daee278da461fc46b8e3615d5b5ceb969709ea9682296e4e857973dd";
     # The entrypoint binds 0.0.0.0, which in the sidecar's namespace includes its
     # default-bridge address: other containers could reach :8080 around Serve.
     # Loopback only, so Serve is the sole path in. The last --bind wins.
