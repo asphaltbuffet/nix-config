@@ -80,7 +80,7 @@ jobs:
         # The update branch's store paths arrive via downloaded artifacts.
 
       - name: Free disk space
-        uses: jlumbroso/free-disk-space@v1.3.1
+        uses: jlumbroso/free-disk-space@3f13feab2962a87273d379ebc36ea159527e6cc9 # v1.3.2
         with:
           tool-cache: true
           android: true
