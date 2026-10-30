@@ -101,7 +101,7 @@ jobs:
           restore-prefixes-first-match: nix-${{ runner.os }}-diff-
           gc-max-store-size: 2000000000
 
-      - uses: cachix/cachix-action@v15
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
           name: nix-config-grue
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
