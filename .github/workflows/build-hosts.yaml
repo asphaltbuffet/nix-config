@@ -38,7 +38,7 @@ jobs:
     outputs:
       hosts: ${{ steps.discover.outputs.hosts }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: ${{ inputs.ref }}
 
@@ -63,7 +63,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: ${{ inputs.ref }}
 
@@ -78,7 +78,7 @@ jobs:
           docker-images: true
           swap-storage: true
 
-      - uses: cachix/install-nix-action@v31
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -86,7 +86,7 @@ jobs:
       # runs at the same lock stay warm. Cachix carries the paths across runs
       # regardless; this just speeds up the prime job itself.
       - name: Restore Nix store cache
-        uses: nix-community/cache-nix-action@v7
+        uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7
         with:
           primary-key: nix-${{ runner.os }}-prime-${{ hashFiles('flake.lock') }}
           restore-prefixes-first-match: nix-${{ runner.os }}-prime-
@@ -120,7 +120,7 @@ jobs:
         host: ${{ fromJSON(needs.generate-matrix.outputs.hosts) }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: ${{ inputs.ref }}
 
@@ -135,7 +135,7 @@ jobs:
           docker-images: true
           swap-storage: true
 
-      - uses: cachix/install-nix-action@v31
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -144,7 +144,7 @@ jobs:
       # is used as a warm starting point. gc-max-store-size keeps the cache under
       # GitHub's 10 GB per-repo limit.
       - name: Restore Nix store cache
-        uses: nix-community/cache-nix-action@v7
+        uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7
         with:
           primary-key: nix-${{ runner.os }}-${{ matrix.host }}-${{ hashFiles('flake.lock') }}
           restore-prefixes-first-match: nix-${{ runner.os }}-${{ matrix.host }}-
@@ -183,7 +183,7 @@ jobs:
 
       - name: Upload new store path for diff job
         if: inputs.upload-store-path-for-diff
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: new-store-path-${{ matrix.host }}
           path: /tmp/new-store-path-${{ matrix.host }}
@@ -204,7 +204,7 @@ jobs:
 
       - name: Upload pages fragment
         if: inputs.publish-pages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pages-${{ matrix.host }}
           path: pages-artifact/
