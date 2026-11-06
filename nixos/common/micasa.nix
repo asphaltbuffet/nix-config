@@ -92,7 +92,7 @@ in {
   virtualisation.oci-containers = {
     containers = {
       micasa-postgres = {
-        image = "postgres:17.11-alpine@sha256:562a6e0a66b5136bc28bef5944bbc2ddddf8ea0058d4016b96cee63f2edaf143";
+        image = "postgres:17.11-alpine@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac";
         environmentFiles = [config.age.secrets.micasa-db-env.path];
         environment = {
           POSTGRES_USER = "micasa";
