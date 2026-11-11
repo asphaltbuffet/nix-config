@@ -67,7 +67,7 @@ in {
 
   virtualisation.oci-containers.containers = {
     atuin-postgres = {
-      image = "postgres:17.11-alpine@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac";
+      image = "postgres:17.11-alpine@sha256:e5d2edd28b1f8d40a0a6c0c9cdc545b19b56a0d5d88f94bc11a97d970d4700d0";
       environmentFiles = [config.age.secrets.atuin-db-env.path];
       environment = {
         POSTGRES_USER = "atuin";
