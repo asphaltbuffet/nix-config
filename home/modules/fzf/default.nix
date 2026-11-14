@@ -12,4 +12,11 @@ _: {
     # Ctrl-R" eval warning.
     historyWidget.command = "";
   };
+
+  # `**<Tab>` completion ignores the commands above and calls these hooks
+  # (default: `find`). Route them through fd so .gitignore is respected.
+  programs.zsh.initContent = ''
+    _fzf_compgen_path() { fd --follow . "$1"; }
+    _fzf_compgen_dir() { fd --type d --follow . "$1"; }
+  '';
 }
