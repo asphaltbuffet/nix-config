@@ -95,6 +95,15 @@ in {
   systemd.services = {
     grafana.serviceConfig.EnvironmentFile = rendererToken;
     grafana-image-renderer.serviceConfig.EnvironmentFile = rendererToken;
+
+    # resolv.conf points only at MagicDNS (100.100.100.100), which answers once
+    # tailscaled is up. Started earlier, Go's resolver sees no usable nameserver,
+    # falls back to [::1]:53, and five fast restarts hit the start limit.
+    prometheus-tailscale-exporter = {
+      after = ["network-online.target" "tailscaled.service"];
+      wants = ["network-online.target" "tailscaled.service"];
+      serviceConfig.RestartSec = "10s";
+    };
   };
 
   systemd = {
