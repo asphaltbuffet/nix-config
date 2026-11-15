@@ -12,6 +12,7 @@
     inputs.nix-index-database.homeModules.nix-index
 
     ../modules/atuin
+    ../modules/bat
     ../modules/eza
     ../modules/fzf
     ../modules/git
@@ -35,7 +36,6 @@
 
   home = {
     packages = with pkgs; [
-      bat
       curl
       fd
       just

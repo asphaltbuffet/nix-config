@@ -20,6 +20,15 @@
       };
     };
 
+    # The external keyboard (0c45:7403, via KVM) swaps Caps/Esc in hardware so
+    # the Mac gets Caps→Esc for free. Undo that here so caps:swapescape above
+    # treats it like any other keyboard instead of swapping it back.
+    udev.extraHwdb = ''
+      evdev:input:b0003v0C45p7403*
+       KEYBOARD_KEY_70029=capslock
+       KEYBOARD_KEY_70039=esc
+    '';
+
     # Display manager
     displayManager.sddm.enable = true;
 
@@ -56,10 +65,18 @@
 
     # Grant the active console user access to the PC speaker evdev node without
     # adding them to the broad `input` group (which would expose all input devices).
-    udev.extraRules = ''
-      SUBSYSTEM=="input", ATTRS{name}=="PC Speaker", TAG+="uaccess"
-    '';
+    # Must sort before 73-seat-late.rules, which turns the uaccess tag into an ACL;
+    # udev.extraRules lands in 99-local.rules, too late for the tag to take effect.
+    udev.packages = [
+      (pkgs.writeTextDir "lib/udev/rules.d/70-pcspkr-uaccess.rules" ''
+        SUBSYSTEM=="input", ATTRS{name}=="PC Speaker", TAG+="uaccess"
+      '')
+    ];
   };
+
+  # NixOS's default kmod-blacklist blocks pcspkr from autoloading; load it
+  # explicitly so `beep` has a device to open.
+  boot.kernelModules = ["pcspkr"];
 
   hardware.bluetooth.enable = true;
 
