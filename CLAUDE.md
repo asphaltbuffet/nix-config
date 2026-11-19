@@ -166,7 +166,8 @@ See `docs/references/secrets-sop.md` when touching secrets, agenix, or the SSH m
 | Edit `home/modules/ssh/` | `docs/references/secrets-sop.md` | Use `matchBlocks."*"`, not `extraConfig`; set `enableDefaultConfig = false` |
 | Edit any GitHub Actions workflow | `docs/references/ci-github-actions-sop.md` | Permissions ceiling applies to all callers of `build-hosts.yaml` |
 | Add a step to `build-hosts.yaml` | `docs/references/ci-github-actions-sop.md` | Gate behind boolean input with `default: false` |
-| Add a new host | Host type matrix above + `just prep-host <hostname>` | `server.nix` and `laptop/` are mutually exclusive |
+| Add a new host | Host type matrix above + `just prep-host <hostname>` | `server.nix` and `laptop/` are mutually exclusive; laptops/desktops must set `host.workstation = true` or they get no GUI apps (ADR-0026) |
+| Add a role with GUI apps | `docs/adr/0026-gui-roles-gated-on-workstation-host-fact.md` | Gate on `osConfig.host.workstation`, or it lands on bunyip/arcade |
 | Add a new home-manager module | Module pattern: `home/modules/<tool>/default.nix`, import from roles | Never import directly from user files |
 | Create any new file | `jj file track <path>` before `just build` | Flake won't see untracked files |
 

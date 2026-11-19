@@ -19,4 +19,7 @@
   system.autoDeploy.enable = true;
 
   services.resticBackup.home.enable = true;
+
+  # A Workstation (CONTEXT.md): receives graphical applications from roles (ADR-0026).
+  host.workstation = true;
 }

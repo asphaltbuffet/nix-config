@@ -61,6 +61,7 @@ in {
     ../roles/admin.nix
     ../roles/dev.nix
     ../roles/player.nix
+    ../roles/maker.nix
 
     ../modules/ssh
     ../modules/protonmail
