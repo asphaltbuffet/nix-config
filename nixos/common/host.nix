@@ -13,6 +13,15 @@
         liveness expectations key off this.
       '';
     };
+    workstation = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Whether this is a Workstation (CONTEXT.md): a laptop or desktop a person
+        sits at. Only workstations receive graphical applications from roles
+        (ADR-0026); set it explicitly in each workstation's configuration.nix.
+      '';
+    };
     tailnetSidecars = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [];

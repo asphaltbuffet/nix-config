@@ -37,6 +37,10 @@ Create `nixos/hosts/<name>/configuration.nix` using the appropriate template bel
 
   networking.hostName = "<name>";
 
+  # A Workstation (CONTEXT.md): receives graphical applications from roles (ADR-0026).
+  # Without this line the host gets no browser, password manager or other GUI apps.
+  host.workstation = true;
+
   # Add any host-specific overrides here
 }
 ```

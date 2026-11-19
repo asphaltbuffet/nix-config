@@ -14,6 +14,10 @@ _Avoid_: node, machine, system, box
 A **Host** expected to be powered and reachable around the clock (bunyip, the arcade cabinet), as opposed to laptops and desktops that sleep or power off. Scheduled maintenance and liveness expectations key off this property.
 _Avoid_: server (a server is one kind of always-on host, not a synonym), headless
 
+**Workstation**:
+A **Host** a person sits at for daily work — a laptop or desktop (wendigo, kushtaka, snallygaster). Only workstations receive graphical applications from roles; bunyip and the arcade cabinet are not workstations, so a user who logs into them gets only the shell and CLI tooling. Not the complement of **Always-on host**: whether a host is a workstation and whether it is always-on are separate properties.
+_Avoid_: desktop (that is the role name), laptop (one kind of workstation), client
+
 **Profile**:
 A reusable NixOS-level bundle of system services and settings imported by one or more hosts. Lives in `nixos/profiles/`.
 _Avoid_: preset, template, base config
@@ -35,8 +39,12 @@ The `home/roles/cli.nix` role holding the shell/command-line foundation every lo
 _Avoid_: shell role, base-shell
 
 **desktop role**:
-The `home/roles/desktop.nix` role: the `cli` role plus the desktop daily-driver applications (browser, password manager, chat, media). The baseline for a person's workstation login, not for a kiosk. Named `desktop` (not `base`) because `cli` is the actual foundation it builds on, and to avoid colliding with `nixos/profiles/base.nix`.
+The `home/roles/desktop.nix` role: the `cli` role plus the desktop daily-driver applications (browser, password manager, chat, media). The baseline for a person's workstation login, not for a kiosk. Named `desktop` (not `base`) because `cli` is the actual foundation it builds on, and to avoid colliding with `nixos/profiles/base.nix`. Its `cli` half applies on every **Host**; its desktop applications apply only on a **Workstation**.
 _Avoid_: base role (renamed), default role
+
+**maker role**:
+The `home/roles/maker.nix` role holding tools for designing physical objects and preparing them for fabrication — CAD (FreeCAD, OpenSCAD, SolveSpace), mesh viewing and repair, and slicing for the household 3D printer. Applies only on a **Workstation**. Stops at the slicer: the print host that drives the printer (OctoPrint on its own Raspberry Pi) is outside this flake, and the slicer reaches it over the network.
+_Avoid_: printing role (collides with paper printing / CUPS), 3d-printing role, fabrication role
 
 **Browser policy**:
 A browser setting enforced on a **Host** for every account, through the browser's enterprise-policy mechanism. The browser treats it as managed, and a locked policy can't be overridden in the browser's UI. Lives at the NixOS layer, one file per browser in `nixos/common/`.
