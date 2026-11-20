@@ -34,7 +34,7 @@ in {
   systemd.services.docker-wherefolk.unitConfig.RequiresMountsFor = ["/srv/wherefolk"];
 
   virtualisation.oci-containers.containers.wherefolk = {
-    image = "ghcr.io/asphaltbuffet/wherefolk:0.2.0@sha256:e7be9c9bdfc71422f6534271473a69b76f88c608bc3a34b359b868c3674ffe80";
+    image = "ghcr.io/asphaltbuffet/wherefolk:0.3.0@sha256:0665b2ca1e107bc1e739f76938f1e93248fbf3a9115831e0dc62f789d5182a92";
     environmentFiles = [config.age.secrets.wherefolk-app-env.path];
     # Fixed: the module's serve.json proxies to this port (tailnetServices.port).
     environment.WHEREFOLK_PORT = "8080";
