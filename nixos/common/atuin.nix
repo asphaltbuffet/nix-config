@@ -92,7 +92,7 @@ in {
     };
 
     atuin-server = {
-      image = "ghcr.io/atuinsh/atuin:18.24.8@sha256:2bc3a558b236283cd64ce64cf9aa463c24e34f97fc36a4b1a5b2b1853a5dcb49";
+      image = "ghcr.io/atuinsh/atuin:18.25.0@sha256:0981faad9f0205761e0588ab89d963032132c392f90ee824568a90a581f13839";
       # The image's entrypoint is atuin-server with no Cmd; without a
       # subcommand clap exits 2 and the unit restarts forever.
       cmd = ["start"];
