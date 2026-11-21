@@ -1,4 +1,9 @@
-{pkgs, ...}: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   users = {
     # GID/UID allocation policy — read before adding either.
     #
@@ -35,12 +40,17 @@
         uid = 2001;
         group = "grue";
         description = "grue";
-        extraGroups = [
-          "docker"
-          "games"
-          "networkmanager"
-          "wheel"
-        ];
+        extraGroups =
+          [
+            "docker"
+            "games"
+            "networkmanager"
+            "wheel"
+          ]
+          # Serial devices (/dev/ttyACM*, /dev/ttyUSB*) for flashing
+          # microcontrollers without sudo. Only on a Workstation — that is
+          # where a board gets plugged in (#366).
+          ++ lib.optional config.host.workstation "dialout";
         shell = pkgs.zsh;
 
         openssh.authorizedKeys.keys = [
